@@ -52,6 +52,20 @@ data class AlarmDraft(
     val viewMode: AlarmViewMode
 )
 
+data class HourlySignalUiState(
+    val enabled: Boolean = false,
+    val startHour: Int = 7,
+    val endHour: Int = 18,
+    val showDialog: Boolean = false,
+)
+
+sealed class HourlySignalAction {
+    data class SetEnabled(val on: Boolean) : HourlySignalAction()
+    data object OpenDialog : HourlySignalAction()
+    data class SaveWindow(val startHour: Int, val endHour: Int) : HourlySignalAction()
+    data object DismissDialog : HourlySignalAction()
+}
+
 fun alarmHash(
     hour: Int,
     minute: Int,
@@ -97,6 +111,9 @@ class AlarmViewModel @Inject constructor(
     private val _editorTarget = MutableStateFlow<AlarmDraft?>(null)
     val editorTarget: StateFlow<AlarmDraft?> = _editorTarget.asStateFlow()
 
+    private val _hourlySignal = MutableStateFlow(HourlySignalUiState())
+    val hourlySignal: StateFlow<HourlySignalUiState> = _hourlySignal.asStateFlow()
+
     private var exactAlarmPermissionRequested = false
     private val eventSubscriberName = "AlarmViewModel-${System.identityHashCode(this)}"
     val lastSync: StateFlow<AlarmSyncStorage.SyncRecord?> = alarmSyncState.lastSync
@@ -138,6 +155,26 @@ class AlarmViewModel @Inject constructor(
             AlarmSyncStorage.loadAlarms(appContext)?.let {
                 _alarms.value = it
             }
+
+            val signalSettings = if (!HourlySignalSettings.isMigrated(appContext)) {
+                val legacyChime = AlarmSyncStorage.loadAlarms(appContext)
+                    ?.getOrNull(0)?.hasHourlyChime ?: false
+                val initial = if (legacyChime) {
+                    HourlySignalSettings(enabled = true, startHour = 1, endHour = 0)
+                } else {
+                    HourlySignalSettings.Default
+                }
+                HourlySignalSettings.save(appContext, initial)
+                HourlySignalSettings.markMigrated(appContext)
+                initial
+            } else {
+                HourlySignalSettings.load(appContext)
+            }
+            _hourlySignal.value = HourlySignalUiState(
+                enabled   = signalSettings.enabled,
+                startHour = signalSettings.startHour,
+                endHour   = signalSettings.endHour,
+            )
         }
         loadAlarms()
         startFireTimeTick()
@@ -260,6 +297,43 @@ class AlarmViewModel @Inject constructor(
 
     fun toggleHourlyChime(enabled: Boolean) =
         updateAlarm(0) { it.copy(hasHourlyChime = enabled) }
+
+    fun onHourlySignalAction(action: HourlySignalAction) {
+        when (action) {
+            is HourlySignalAction.SetEnabled -> {
+                val updated = _hourlySignal.value.copy(enabled = action.on)
+                _hourlySignal.value = updated
+                HourlySignalSettings.save(
+                    appContext,
+                    HourlySignalSettings(
+                        enabled   = updated.enabled,
+                        startHour = updated.startHour,
+                        endHour   = updated.endHour,
+                    )
+                )
+            }
+            is HourlySignalAction.OpenDialog ->
+                _hourlySignal.value = _hourlySignal.value.copy(showDialog = true)
+            is HourlySignalAction.SaveWindow -> {
+                val updated = _hourlySignal.value.copy(
+                    startHour  = action.startHour,
+                    endHour    = action.endHour,
+                    showDialog = false,
+                )
+                _hourlySignal.value = updated
+                HourlySignalSettings.save(
+                    appContext,
+                    HourlySignalSettings(
+                        enabled   = updated.enabled,
+                        startHour = updated.startHour,
+                        endHour   = updated.endHour,
+                    )
+                )
+            }
+            is HourlySignalAction.DismissDialog ->
+                _hourlySignal.value = _hourlySignal.value.copy(showDialog = false)
+        }
+    }
 
     fun setViewMode(mode: AlarmViewMode) {
         _viewMode.value = mode
