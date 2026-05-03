@@ -21,15 +21,10 @@
     След като алармите са настроени, можете да ги изпратите към часовника или да ги изпратите в приложението Alarm Clock на телефона.]]></string>
     <string name="events_screen_info"><![CDATA[Този екран показва събития от вашия <b>Google Calendar</b> и ви позволява да ги изпратите в напомнянията на часовника.\n\nАко няма събития, уверете се, че имате бъдещи събития или не са изтекли повтарящи се събития в Google календара.]]>
 </string>
-    <string name="actions">Действия</string>
-    <string name="title_actions">Действия</string>
-    <string name="actions_screen_info"><![CDATA[Избраните действия се стартират, когато потребителят <b>кратко натисне</b> бутона <b>ДЕСЕН-ДОЛЕН</b> на часовника от началния екран. С тези действия часовникът действа като дистанционно управление за вашия телефон.]]></string>
     <string name="feb_22_mar_24">Фев-22 - Мар-24</string>
     <string name="weekly">СЕДМИЧНО</string>
     <string name="action_item">Действие</string>
     <string name="voice_assistant">Гласов асистент</string>
-    <string name="front_cam">Предна</string>
-    <string name="back_cam">Задна</string>
     <string name="take_a_photo">Направи снимка</string>
     <string name="info">Информация</string>
     <string name="daily">Ежедневно</string>
@@ -97,40 +92,13 @@
     <string name="set_time">Настройка на часа</string>
     <string name="find_phone">Намери телефона</string>
     <string name="set_reminders">Настройте напомняния от\nGoogle Calendar</string>
-    <string name="take_photo">Направете снимка</string>
     <string name="toggle_flashlight">Фенерче</string>
-    <string name="start_voice_assistant">Гласов асистент</string>
-    <string name="next_track">Следващото парче</string>
-    <string name="emergency_actions">Спешни действия:</string>
-    <string name="make_phonecall">Извършете телефонно обаждане</string>
     <string name="adjustment_time_info"><![CDATA[
     <li>Автоматичното регулиране на времето се извършва 4 пъти на ден, някъде след 12:00, 6:00, 12:00 и 18:00.</li>
     <li>Тази настройка определя броя на минутите след часа, когато се извършва регулирането на времето. Така че, ако зададете тази стойност на 25, регулирането на времето ще се извърши в 12:25, 6:25, 12:25 и 18:25.</li>
     <li>Ако имате няколко часовника, можете да контролирате кога да се настрои времето за всеки от тях поотделно.</li>
 ]]></string>
     <string name="adjustment_time_minutes">Кога да се стартира\n(минути след часа)</string>
-    <string name="skip_to_next_track_info"><![CDATA[
-    Ако възпроизвеждате музика или видео в медийния плеър, като Spotify, YouTube или YTMusic на телефона си, това действие ще пропусне към следващата песен или видео.
-    Работи и с Android Auto
-]]></string>
-    <string name="set_prayer_alarms">Молитвените аларми</string>
-    <string name="prayer_times_info"><![CDATA[
-    <li>Това действие ще настрои 5 аларми на часовника за муслиманските молитви <b>Фаджр</b>, <b>Духр</b>, <b>Аср</b>, <b>Магриб</b> и <b>Иша</b>.</li>
-    <li>Часовете варират в зависимост от вашето местоположение и текущата дата, затова за най-добра точност, изпълнявайте това действие ежедневно.
-    Ако това действие е активирано, алармите ще се обновяват автоматично по време на авто-налаштаване на времето, 4 пъти на ден.</li>
-    <li>Използват се следните методи за изчисление, в зависимост от вашето местоположение:
-        <b>СЕВЕРНА АМЕРИКА</b>,
-        <b>ДИЯНЕТ</b>,
-        <b>ЕГИПЕТСКИ</b>,
-        <b>ДУБАЙ</b>,
-        <b>УММ АЛ КУРА</b>,
-        <b>КАТАР</b>,
-        <b>СИНГАПУР</b>,
-        <b>КУВЕЙТ</b> и
-        <b>МУСУЛМАНСКИ СВЕТОВЕН СЪЮЗ</b> навсякъде другаде.
-    </li>
-    <li>За предложения и корекции се свържете с <a href="mailto:izivkov@gmail.com">izivkov@gmail.com</a></li>
-]]></string>
     <string name="do_not_disturb_dnd">Не безпокойте (DnD)</string>
     <string name="mirror_phone_s_dnd">Оразмеряване на DnD на телефона</string>
     <string name="DnD_info_message"><![CDATA[
@@ -150,7 +118,6 @@
     ако вашият часовник е 2,5 секунди напред спрямо актуалното време, задайте тази стойност на -2500, за да го синхронизирате точно.
 ]]></string>
     <string name="required_permissions_denied_cannot_access_screen">Отказани са необходими разрешения. Не може да се достъпи екрана!</string>
-    <string name="required_permissions_denied_cannot_access_actions">Отказани са необходими разрешения. Не може да се достъпи действията.</string>
     <string name="calendar_permission_denied_cannot_access_events">Отказано е разрешение за календара. Не може да се достъпват събитията.</string>
     <string name="clear_app_storage_from_android_setting_and_restart_the_app_to_add_permissions">"Изчистете данни от приложението от настройките на Android и рестартирайте приложението, за да добавите разрешения."</string>
     <string name="phone_number">Телефонен номер</string>
@@ -166,13 +133,8 @@
     <string name="bluetooth_is_not_enabled">Bluetooth не е активиран.</string>
     <string name="disconnected_due_to_inactivity">Прекъснато поради неактивност.</string>
     <string name="when_found_lift_phone_to_stop_ringing">Когато бъде открит, вдигнете телефона, за да спрете звъненето</string>
-    <string name="voice_assistant_not_available_on_this_device">Гласовият асистент не е наличен на това устройство!</string>
-    <string name="cannot_go_to_next_track">Не може да се премине към следващото парче!</string>
-    <string name="image_captured">Снимка заснета: %1$s</string>
     <string name="emaillocationaction_emailaddress">EmailLocationAction: имейл адрес: %1$s</string>
-    <string name="camera_capture_error">Грешка при заснемане на изображението: %1$s</string>
     <string name="flashlight_not_available">Тези лампа не е налична</string>
-    <string name="unable_to_get_default_sound_uri">Не може да се получи стандартен URI за звук</string>
     <string name="alarms_set_to_watch">Алармите са настроени на часовника</string>
     <string name="events_set">Настроени събития</string>
     <string name="reminders_sent_to_watch">Напомнянията са изпратени към часовника</string>
@@ -182,7 +144,6 @@
     <string name="permission_required_to_turn_on_bluetooth">Необходими са разрешения за включване на Bluetooth.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">Нямате разрешения за включване на Bluetooth. Моля, включете го ръчно.</string>
     <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Разрешенията са постоянно отказани. Моля, активирайте ги в настройките на приложението.</string>
-    <string name="you_have_not_given_permission_to_to_run_action">Не сте дали разрешение да се изпълни действието %1$s.</string>
     <string name="timer_set">Таймерът е настроен</string>
     <string name="press_and_hold_for_3_seconds">Задръж\n3 сек</string>
     <string name="short_press_to_run_actions">Натисни за\nдействия</string>
@@ -195,7 +156,6 @@
     <string name="cover_connected">Свързан</string>
     <!-- "h" as in hours = "часа", abbreviated as "ч" -->
     <string name="find_phone_instruction">За да изпълните действията, стартирайте функцията „Намиране телефон“ на часовника</string>
-    <string name="actions_saved">Действията са запазени</string>
     <string name="press_and_hold_connection_button_to_continue">Натиснете и задръжте бутона CONNECTION (обикновено ДОЛУ ВЛЯВО) на часовника си за 3 секунди, за да го сдвоите.</string>
     <string name="looking_for_a_device">Търсене на устройство.</string>
     <string name="add_watch">Добавяне на часовник</string>
@@ -214,7 +174,6 @@
     <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
-    <string name="actions_save_failed">Failed to save actions.</string>
     <string name="manage_watches">Manage watches</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>

@@ -22,15 +22,10 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="events_screen_info"><![CDATA[Esta pantalla muestra los eventos de tu <b>Google Calendar</b> y te permite enviarlos a los
     <b>recordatorios</b> del reloj.\n\nSi no aparecen eventos, asegúrate de tener eventos futuros o eventos repetitivos no vencidos en tu Google Calendar.]]>
 </string>
-    <string name="actions">Acciones</string>
-    <string name="title_actions">Acciones</string>
-    <string name="actions_screen_info"><![CDATA[Las acciones seleccionadas se ejecutan cuando el usuario <b>presiona brevemente</b> el botón <b>ABAJO-DERECHO</b> del reloj desde la pantalla inicial. Con estas acciones, el reloj actúa como un control remoto para tu teléfono.]]></string>
     <string name="feb_22_mar_24">Feb-22 - Mar-24</string>
     <string name="weekly">SEMANAL</string>
     <string name="action_item">Elemento de acción</string>
     <string name="voice_assistant">Asistente de voz</string>
-    <string name="front_cam">Cámara frontal</string>
-    <string name="back_cam">Cámara trasera</string>
     <string name="take_a_photo">Tomar una foto</string>
     <string name="info">Información</string>
     <string name="daily">Diaria</string>
@@ -98,40 +93,13 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="set_time">Configurar hora</string>
     <string name="find_phone">Buscar teléfono</string>
     <string name="set_reminders">Establecer recordatorios\nGoogle Calendar</string>
-    <string name="take_photo">Tomar una foto</string>
     <string name="toggle_flashlight">Alternar linterna</string>
-    <string name="start_voice_assistant">Iniciar asistente de voz</string>
-    <string name="next_track">Saltar a la siguiente pista</string>
-    <string name="emergency_actions">Acciones de emergencia:</string>
-    <string name="make_phonecall">Hacer una llamada telefónica</string>
     <string name="adjustment_time_info"><![CDATA[
         <li>El ajuste automático de la hora ocurre 4 veces al día, en algún momento después de las 12:00 AM, 6:00 AM, 12:00 PM y 6:00 PM.</li>
         <li>Esta configuración establece el número de minutos después de la hora en que ocurre el ajuste de la hora. Por ejemplo, si configuras este valor en 25, el ajuste de la hora ocurrirá a las 12:25 AM, 6:25 AM, 12:25 PM y 6:25 PM.</li>
         <li>Si tienes varios relojes, puedes controlar cuándo establecer la hora individualmente.</li>
     ]]></string>
     <string name="adjustment_time_minutes">Cuándo ejecutar\n(minutos después de la hora)</string>
-    <string name="skip_to_next_track_info"><![CDATA[
-        Si estás reproduciendo música o un video en un reproductor de medios como Spotify, YouTube o YTMusic en tu teléfono, esta acción saltará a la siguiente canción o video.
-        También funciona con Android Auto
-    ]]></string>
-    <string name="set_prayer_alarms">Alarmas oración</string>
-    <string name="prayer_times_info"><![CDATA[
-        <li>Esta acción configurará las 5 alarmas del reloj para las oraciones musulmanas <b>Fajr</b>, <b>Dhuhr</b>, <b>Asr</b>, <b>Maghrib</b> y <b>Isha</b>.</li>
-        <li>Los horarios varían según tu ubicación y la fecha actual, por lo que para obtener la mejor precisión, ejecuta esta acción a diario.
-        Si esta acción está habilitada, las alarmas también se actualizarán automáticamente durante el ajuste automático de la hora, 4 veces al día.</li>
-        <li>Se utilizan los siguientes métodos de cálculo, según tu ubicación:
-            <b>AMÉRICA DEL NORTE</b>,
-            <b>DİYANET</b>,
-            <b>EGIPCIO</b>,
-            <b>EMIRATOS ÁRABES UNIDOS</b>,
-            <b>UMM AL QURA</b>,
-            <b>QATAR</b>,
-            <b>SINGAPUR</b>,
-            <b>KUWAIT</b> y
-            <b>LA LIGA MUSULMANA MUNDIAL</b> en otros lugares.
-        </li>
-        <li>Para sugerencias y correcciones contacta a <a href="mailto:izivkov@gmail.com">izivkov@gmail.com</a></li>
-    ]]></string>
     <string name="do_not_disturb_dnd">No molestar (DnD)</string>
     <string name="mirror_phone_s_dnd">Reflejar DnD del teléfono</string>
     <string name="DnD_info_message"><![CDATA[
@@ -151,7 +119,6 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
         si tu reloj está 2.5 segundos adelantado respecto a la hora real, configura este valor en -2500 para sincronizarlo con precisión.
     ]]></string>
     <string name="required_permissions_denied_cannot_access_screen">Permisos requeridos denegados. ¡No se puede acceder a la pantalla!</string>
-    <string name="required_permissions_denied_cannot_access_actions">Permisos requeridos denegados. No se puede acceder a las acciones.</string>
     <string name="calendar_permission_denied_cannot_access_events">Permiso de calendario denegado. No se puede acceder a los eventos.</string>
     <string name="clear_app_storage_from_android_setting_and_restart_the_app_to_add_permissions">"Borrar el almacenamiento de la app desde la configuración de Android y reiniciar la app para agregar permisos."</string>
     <string name="phone_number">Número de teléfono</string>
@@ -167,13 +134,8 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="bluetooth_is_not_enabled">Bluetooth no está habilitado.</string>
     <string name="disconnected_due_to_inactivity">Desconectado debido a inactividad.</string>
     <string name="when_found_lift_phone_to_stop_ringing">Cuando lo encuentre, levante el teléfono para detener el timbre</string>
-    <string name="voice_assistant_not_available_on_this_device">¡Asistente de voz no disponible en este dispositivo!</string>
-    <string name="cannot_go_to_next_track">¡No se puede ir a la siguiente pista!</string>
-    <string name="image_captured">Imagen capturada: %1$s</string>
     <string name="emaillocationaction_emailaddress">EmailLocationAction: dirección de correo electrónico: %1$s</string>
-    <string name="camera_capture_error">Error al capturar imagen: %1$s</string>
     <string name="flashlight_not_available">Linterna no disponible</string>
-    <string name="unable_to_get_default_sound_uri">No se puede obtener el URI de sonido predeterminado</string>
     <string name="alarms_set_to_watch">Alarmas configuradas en el reloj</string>
     <string name="events_set">Eventos configurados</string>
     <string name="reminders_sent_to_watch">Recordatorios enviados al reloj</string>
@@ -183,7 +145,6 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="permission_required_to_turn_on_bluetooth">Se requieren permisos para activar Bluetooth.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">No tiene permisos para activar Bluetooth. Por favor, actívelo manualmente.</string>
     <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Los permisos están permanentemente denegados. Habilítelos en la configuración de la aplicación.</string>
-    <string name="you_have_not_given_permission_to_to_run_action">No ha otorgado permiso para ejecutar la acción %1$s.</string>
     <string name="timer_set">Temporizador configurado</string>
     <string name="press_and_hold_for_3_seconds">Mantén\n3 seg</string>
     <string name="short_press_to_run_actions">Pulsar para\nacciones</string>
@@ -195,7 +156,6 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="cover_connected">Conectado</string>
     <!-- "h" is commonly used for "hora" in Spanish as well -->
     <string name="find_phone_instruction">Para ejecutar acciones, inicia la función "Buscar teléfono" en el reloj</string>
-    <string name="actions_saved">Acciones guardadas</string>
     <string name="press_and_hold_connection_button_to_continue">Mantén pulsado el botón de CONEXIÓN (normalmente el inferior izquierdo) de tu reloj durante 3 segundos para emparejarlo.</string>
     <string name="looking_for_a_device">Buscando un dispositivo.</string>
     <string name="add_watch">Añadir reloj</string>
@@ -214,7 +174,6 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
-    <string name="actions_save_failed">Failed to save actions.</string>
     <string name="manage_watches">Manage watches</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>

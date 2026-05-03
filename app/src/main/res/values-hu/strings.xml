@@ -19,15 +19,10 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="alarms_screen_info"><![CDATA[A <b>B5600/B5000/B2100</b> órákon 5 külön ébresztési időpontot lehet beállítani, és itt lehet az óránkénti csipogást ("SIG") is be/kikapcsolni. Az ébresztési időpontokat külön lehet bállítani. Ha ez megvolt, akkor az "Átküldés az órára" gombbal lehet az új beállításokat érvénybe helyezni. Ezen kívül, az itt beállított ébresztési időpontokat az Android rendszer órájára is át lehet küldeni az "Átküldés a telefonra" gombbal. Így az óra és a telefon egyszerre tud ébreszteni.]]></string>
     <string name="events_screen_info"><![CDATA[Itt a <b>Google Naptár</b> eseményei láthatóak, és itt van lehetőség az óra emlékeztető funkciókát ("REM") a naptárbeli eseményekkel összerendelni.]]>
 </string>
-    <string name="actions">Feladatok</string>
-    <string name="title_actions">Feladatok</string>
-    <string name="actions_screen_info"><![CDATA[A beállított feladatot az óra <b>JOBB-ALSÓ</b> gombjának megnyomásával lehet indítani.]]></string>
     <string name="feb_22_mar_24">Feb-22 - Már-24</string>
     <string name="weekly">HETI</string>
     <string name="action_item">Feladat</string>
     <string name="voice_assistant">Hangasszisztens</string>
-    <string name="front_cam">Szelfi-\nkamera</string>
-    <string name="back_cam">Fő-\nkamera</string>
     <string name="take_a_photo">Fényképezés</string>
     <string name="info">Infó</string>
     <string name="daily">Napi</string>
@@ -92,37 +87,13 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="find_phone">Telefonkereső</string>
     <string name="set_reminders">Google Naptár\nEmlékeztetők</string>
 
-    <string name="take_photo">Fényképezés</string>
     <string name="toggle_flashlight">Zseblámpa bekapcsolása</string>
-    <string name="start_voice_assistant">Hangasszisztens indítása</string>
-    <string name="next_track">Következő zeneszám</string>
-    <string name="emergency_actions">Vészhelyzeti feladat:</string>
-    <string name="make_phonecall">Telefonhívás</string>
     <string name="adjustment_time_info"><![CDATA[
         <li>Az automatikus időbeállítás naponta négyszer történik: 00:00, 06:00, 12:00 és 18:00-kor.</li>
         <li>A funckió percre pontos időpontját itt külön lehet beállítani. Ha itt például \'25\' perc van megadva, akkor az időbeállítás rendre 00:25, 06:25, 12:25 és 18:25-kor for megtörténni.</li>
         <li>Így meg lehet akadályozni, hogy több óra egyszerre akarjon a telefonnal időt beállítani.</li>
         ]]></string>
     <string name="adjustment_time_minutes">Időbeállítás késleltetése\n(perc)</string>
-    <string name="skip_to_next_track_info"><![CDATA[
-        Ha a telefonon támogatott zenelejátszó alkalmazás fut (pl. Spotify, Youtube, YouTube Music), akkor az óra jobb alsó gombjának megnyomásával a következő zeneszámra lehet léptetni. Ez a funkció Android Auto-val is működik.]]></string>
-    <string name="set_prayer_alarms">Imaidők</string>
-    <string name="prayer_times_info"><![CDATA[
-        <li>Az Iszlám vallásban a napi imák ideje (<b>Fadzsr</b>, <b>Dhúr</b>, <b>Ászr</b>, <b>Magrib</b>, és <b>Isa</b>) napi szinten változik.</li>
-        <li>Az imaidők a telefon helymeghatározási szoltáltatása alapján kerülnek kiszámításra. Ezt a feladatot célszerű naponta futtatni, hogy az imaidőt pontosan jelezze. Ha ez be van kapcsolva, akkor az öt ébresztési időpont automatikusan a napi/helyi imaidőkre lesz állítva.</li>
-        <li>Az alábbi helyekre külön számítási algoritmus van az alkalmazásban:
-            <b>Észak-Amerika</b>,
-            <b>Diyanet</b>,
-            <b>Egyiptom</b>,
-            <b>Dubaj</b>,
-            <b>Umm Al Kura</b>,
-            <b>Katar</b>,
-            <b>Szingapúr</b>,
-            <b>Kuvait</b> és
-            <b>Muszlim világliga</b> a világ bármely más részén.
-        </li>
-        <li>Ha bármi kérés van ezzel kapcsolatban, akkor (angolul) ide lehet írni: <a href="mailto:izivkov@gmail.com">izivkov@gmail.com</a></li>
-    ]]></string>
     <string name="do_not_disturb_dnd">Ne zavarjanak mód</string>
     <string name="mirror_phone_s_dnd">A telefon "ne zavarjanak" beállítását használja</string>
     <string name="DnD_info_message"><![CDATA[
@@ -138,7 +109,6 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="fine_adjustment_info"><![CDATA[
     Néha az időbeállítás nem sikerül túl pontosan, pár másodpercnyi különbség előfordulhat. Ilyenkor a kézi finombeállítás segíthet a helyzeten. +/- 10000 milliszekundum tartományban működik.]]></string>
     <string name="required_permissions_denied_cannot_access_screen">Ez a funckió nem elérhető, mert egy szükséges engedély meg lett tagadva.</string>
-    <string name="required_permissions_denied_cannot_access_actions">Ez a funckió nem elérhető, mert egy szükséges engedély meg lett tagadva.</string>
     <string name="calendar_permission_denied_cannot_access_events">Ez a funckió nem elérhető, mert a Google Naptár hozzáférés nincs engedélyezve.</string>
     <string name="clear_app_storage_from_android_setting_and_restart_the_app_to_add_permissions">"Az engedélyek újbóli kéréséhez ki kell törölni az alkalmazás teljes tárhelyét."</string>
     <string name="phone_number">Telefonszám</string>
@@ -153,13 +123,8 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="bluetooth_is_not_enabled">Bluetooth ki van kapcsolva.</string>
     <string name="disconnected_due_to_inactivity">Időtúllépés, szétkapcsolva.</string>
     <string name="when_found_lift_phone_to_stop_ringing">Ha meglett a telefon, felemeléskor csendesendjen el</string>
-    <string name="voice_assistant_not_available_on_this_device">Ezen az eszközön nem elérhető a hangasszisztens!</string>
-    <string name="cannot_go_to_next_track">Nem sikerült zeneszámot léptetni!!</string>
-    <string name="image_captured">Fotó: %1$s</string>
     <string name="emaillocationaction_emailaddress">EmailLocationAction: emailAddress: %1$s</string>
-    <string name="camera_capture_error">Fotó készítése sikertelen: %1$s</string>
     <string name="flashlight_not_available">A zseblámpa hibát jelzett.</string>
-    <string name="unable_to_get_default_sound_uri">Unable to get default sound URI</string>
     <string name="alarms_set_to_watch">Az ébresztési időpontok sikeresen át lettek küldve az órára.</string>
     <string name="events_set">Események beállítva</string>
     <string name="reminders_sent_to_watch">Emlékeztetők elküldve az órára</string>
@@ -169,7 +134,6 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="permission_required_to_turn_on_bluetooth">Bluetooth-használati engedély szükséges.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">Bluetooth-használati engedély megtagadva. A Bluetooth-t kézzel kell bekapcsolni.</string>
     <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Az engedélyek nincsenek megadva. Az alkamazás beállításainál lehet az engedélyeket megadni.</string>
-    <string name="you_have_not_given_permission_to_to_run_action">%1$s: Sajnos ehhez a feladathoz nincs engedély megadva.</string>
     <string name="timer_set">Időzítő beállítva.</string>
     <string name="press_and_hold_for_3_seconds">Kapcsolódás:\nTartsa nyomva\n3 másodpercig</string>
     <string name="short_press_to_run_actions">Ezzel a\ngombbal lehet\nfeladatot futtatni</string>
@@ -182,7 +146,6 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="cover_connected">Csatlakoztatva</string>
     <!-- "ó" is short for "óra" (hour) -->
     <string name="find_phone_instruction">A műveletek végrehajtásához indítsa el az „Telefon keresése” funkciót az órán</string>
-    <string name="actions_saved">Feladatok mentve</string>
     <string name="press_and_hold_connection_button_to_continue">A párosításhoz tartsa lenyomva a CONNECTION gombot (általában a BAL ALSÓ gombot) az óráján 3 másodpercig.</string>
     <string name="looking_for_a_device">Eszköz keresése.</string>
     <string name="add_watch">Óra hozzáadása</string>
@@ -201,7 +164,6 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
-    <string name="actions_save_failed">Failed to save actions.</string>
     <string name="manage_watches">Manage watches</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>

@@ -24,15 +24,10 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="events_screen_info"><![CDATA[Dieser Bildschirm zeigt Ereignisse aus Ihrem <b>Google Kalender</b> an und ermöglicht es Ihnen, diese an die
 <b>Erinnerungen</b> der Uhr zu senden.\n\nWenn keine Ereignisse angezeigt werden, stellen Sie sicher, dass Sie zukünftige Ereignisse oder nicht abgelaufene wiederkehrende Ereignisse in Ihrem Google Kalender haben.]]></string>
 
-    <string name="actions">Aktionen</string>
-    <string name="title_actions">Aktionen</string>
-    <string name="actions_screen_info"><![CDATA[Die ausgewählten Aktionen werden ausgeführt, wenn der Benutzer die <b>UNTERE-RECHTE</b>-Taste der Uhr im Startbildschirm <b>kurz drückt</b>. Mit diesen Aktionen fungiert die Uhr als Fernbedienung für Ihr Telefon.]]></string>
     <string name="feb_22_mar_24">22. Feb - 24. Mär</string>
     <string name="weekly">WÖCHENTLICH</string>
     <string name="action_item">Aktionspunkt</string>
     <string name="voice_assistant">Sprachassistent</string>
-    <string name="front_cam">Frontkamera</string>
-    <string name="back_cam">Rückkamera</string>
     <string name="take_a_photo">Foto aufnehmen</string>
     <string name="info">Info</string>
     <string name="daily">Täglich</string>
@@ -99,40 +94,13 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="set_time">Zeit einstellen</string>
     <string name="find_phone">Telefon suchen</string>
     <string name="set_reminders">Erinnerungen aus\nGoogle Kalender festlegen</string>
-    <string name="take_photo">Foto machen</string>
     <string name="toggle_flashlight">Taschenlampe</string>
-    <string name="start_voice_assistant">Sprachassistent starten</string>
-    <string name="next_track">Nächster Titel</string>
-    <string name="emergency_actions">Notfallaktionen:</string>
-    <string name="make_phonecall">Telefonanruf tätigen</string>
     <string name="adjustment_time_info"><![CDATA[
     <li>Die automatische Zeiteinstellung erfolgt 4-mal täglich, nach den Stunden 00:00 Uhr, 06:00 Uhr, 12:00 Uhr und 18:00 Uhr.</li>
     <li>Diese Einstellung legt die Anzahl der Minuten nach der vollen Stunde fest, wann die Zeiteinstellung erfolgt. Wenn Sie diesen Wert auf 25 setzen, erfolgt die Zeiteinstellung um 00:25 Uhr, 06:25 Uhr, 12:25 Uhr und 18:25 Uhr.</li>
     <li>Wenn Sie mehrere Uhren haben, können Sie individuell festlegen, wann deren Zeit eingestellt werden soll.</li>
     ]]></string>
     <string name="adjustment_time_minutes">Wann ausführen\n(Minuten nach Stunde)</string>
-    <string name="skip_to_next_track_info"><![CDATA[
-    Wenn Sie Musik oder ein Video in einem Media Player wie Spotify, YouTube oder YTMusic auf Ihrem Telefon abspielen, überspringt diese Aktion den aktuellen Titel und spielt den nächsten ab.
-    Sie funktioniert auch mit Android Auto.
-    ]]></string>
-    <string name="set_prayer_alarms">Gebetsalarme einstellen</string>
-    <string name="prayer_times_info"><![CDATA[
-    <li>Diese Aktion stellt die 5 Alarme auf der Uhr auf die islamischen Gebetszeiten <b>Fajr</b>, <b>Dhuhr</b>, <b>Asr</b>, <b>Maghrib</b> und <b>Isha</b> ein.</li>
-    <li>Die Zeiten variieren je nach Ihrem Standort und dem aktuellen Datum, daher wird empfohlen, diese Aktion täglich auszuführen.
-    Wenn diese Aktion aktiviert ist, werden die Alarme auch automatisch während der automatischen Zeiteinstellung 4-mal täglich aktualisiert.</li>
-    <li>Die folgenden Berechnungsmethoden werden je nach Ihrem Standort verwendet:
-        <b>NORDAMERIKA</b>,
-        <b>DİYANET</b>,
-        <b>EGYPTISCH</b>,
-        <b>DUBAI</b>,
-        <b>UMM AL QURA</b>,
-        <b>QATAR</b>,
-        <b>SINGAPUR</b>,
-        <b>KUWAIT</b> und
-        <b>ISLAMISCHE WELTVERBAND</b> überall anders.
-    </li>
-    <li>Für Vorschläge und Korrekturen kontaktieren Sie <a href="mailto:izivkov@gmail.com">izivkov@gmail.com</a></li>
-]]></string>
     <string name="do_not_disturb_dnd">Nicht stören (DnD)</string>
     <string name="mirror_phone_s_dnd">Spiegeln des DnD des Telefons</string>
     <string name="DnD_info_message"><![CDATA[
@@ -151,7 +119,6 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     Der Wert, in Millisekunden, wird zur Zeit hinzugefügt, die von der App an die Uhr gesendet wird. Sie können Werte zwischen -5000 und 5000 einstellen. Wenn Ihre Uhr beispielsweise 2,5 Sekunden vor der tatsächlichen Zeit liegt, setzen Sie diesen Wert auf -2500, um sie genau abzugleichen.
 ]]></string>
     <string name="required_permissions_denied_cannot_access_screen">Erforderliche Berechtigungen abgelehnt. Kann auf den Bildschirm nicht zugreifen!</string>
-    <string name="required_permissions_denied_cannot_access_actions">Erforderliche Berechtigungen abgelehnt. Kann auf Aktionen nicht zugreifen.</string>
     <string name="calendar_permission_denied_cannot_access_events">Kalenderberechtigung abgelehnt. Kann nicht auf Ereignisse zugreifen.</string>
     <string name="clear_app_storage_from_android_setting_and_restart_the_app_to_add_permissions">"Löschen Sie den App-Speicher in den Android-Einstellungen und starten Sie die App neu, um Berechtigungen hinzuzufügen."</string>
     <string name="phone_number">Telefonnummer</string>
@@ -167,13 +134,8 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="bluetooth_is_not_enabled">Bluetooth ist nicht aktiviert.</string>
     <string name="disconnected_due_to_inactivity">Getrennt aufgrund von Inaktivität.</string>
     <string name="when_found_lift_phone_to_stop_ringing">Wenn gefunden, heben Sie das Telefon an, um das Klingeln zu stoppen</string>
-    <string name="voice_assistant_not_available_on_this_device">Sprachassistent auf diesem Gerät nicht verfügbar!</string>
-    <string name="cannot_go_to_next_track">Kann nicht zum nächsten Titel wechseln!</string>
-    <string name="image_captured">Bild aufgenommen: %1$s</string>
     <string name="emaillocationaction_emailaddress">EmailLocationAction: emailAdresse: %1$s</string>
-    <string name="camera_capture_error">Kamera-Aufnahmefehler: %1$s</string>
     <string name="flashlight_not_available">Taschenlampe nicht verfügbar</string>
-    <string name="unable_to_get_default_sound_uri">Kann die Standard-Sound-URI nicht abrufen</string>
     <string name="alarms_set_to_watch">Wecker auf die Uhr gestellt</string>
     <string name="events_set">Ereignisse gesetzt</string>
     <string name="reminders_sent_to_watch">Erinnerungen an die Uhr gesendet</string>
@@ -183,7 +145,6 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="permission_required_to_turn_on_bluetooth">Berechtigung erforderlich, um Bluetooth zu aktivieren.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">Sie haben keine Berechtigung, Bluetooth zu aktivieren. Bitte aktivieren Sie es manuell.</string>
     <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Berechtigungen sind dauerhaft abgelehnt. Bitte aktivieren Sie sie in den App-Einstellungen.</string>
-    <string name="you_have_not_given_permission_to_to_run_action">Sie haben keine Berechtigung erteilt, die Aktion %1$s auszuführen.</string>
     <string name="timer_set">Timer eingestellt</string>
     <string name="press_and_hold_for_3_seconds">Halte\n3 Sek</string>
     <string name="short_press_to_run_actions">Drücken für\nAktionen</string>
@@ -196,7 +157,6 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="cover_connected">Verbunden</string>
     <!-- "h" as in hours = "Stunden", abbreviated as "Std" -->
     <string name="find_phone_instruction">Um Aktionen auszuführen, starten Sie die Funktion „Telefon finden“ auf der Uhr</string>
-    <string name="actions_saved">Aktionen gespeichert</string>
     <string name="press_and_hold_connection_button_to_continue">Halten Sie die Verbindungstaste (normalerweise UNTEN LINKS) an Ihrer Uhr 3 Sekunden lang gedrückt, um sie zu koppeln.</string>
     <string name="looking_for_a_device">Suche nach einem Gerät.</string>
     <string name="add_watch">Uhr hinzufügen</string>
@@ -215,7 +175,6 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
-    <string name="actions_save_failed">Failed to save actions.</string>
     <string name="manage_watches">Manage watches</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>

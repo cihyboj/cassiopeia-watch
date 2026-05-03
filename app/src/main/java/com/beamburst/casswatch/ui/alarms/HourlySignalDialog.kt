@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.alarms
 
+import android.annotation.SuppressLint
 import android.graphics.Paint
 import android.widget.EditText
 import android.widget.NumberPicker
@@ -32,6 +33,7 @@ private val END_HOURS         = intArrayOf(6, 12, 18, 0)
 private val START_DISPLAYED   = arrayOf("01", "07", "13", "19")
 private val END_DISPLAYED_ALL = arrayOf("06", "12", "18", "00")
 
+@SuppressLint("SoonBlockedPrivateApi")
 private fun NumberPicker.applyTextStyle(colorArgb: Int, textSizePx: Float) {
     runCatching {
         val paintField = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint")

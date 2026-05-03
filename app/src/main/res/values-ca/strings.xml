@@ -29,15 +29,10 @@
     Un cop configurades les alarmes, podeu enviar-les al rellotge o a l\'aplicació de rellotge del telèfon.]]></string>
     <string name="events_screen_info"><![CDATA[Aquesta pantalla mostra els Esdeveniments del teu <b>Google Calendar</b> i permet enviar-los als <b>recordatoris</b> del rellotge.\n\nSi no apareixen esdeveniments, assegura\'t que tens esdeveniments futurs o esdeveniments repetitius no caducats al teu calendari de Google.]]>
 </string>
-    <string name="actions">Accions</string>
-    <string name="title_actions">Accions</string>
-    <string name="actions_screen_info"><![CDATA[Les accions seleccionades s\'executen quan l\'usuari prem breument el botó <b>INFERIOR DRET</b> del rellotge a la pantalla inicial. Amb aquestes accions, el rellotge funciona com un comandament a distància pel telèfon.]]></string>
     <string name="feb_22_mar_24">22 febr. - 24 març</string>
     <string name="weekly">SETMANAL</string>
     <string name="action_item">Element d\'acció</string>
     <string name="voice_assistant">Assistent de veu</string>
-    <string name="front_cam">Càmera frontal</string>
-    <string name="back_cam">Càmera posterior</string>
     <string name="take_a_photo">Fer una foto</string>
     <string name="info">Info</string>
     <string name="daily">Diari</string>
@@ -106,40 +101,13 @@
     <string name="find_phone">Trobar telèfon</string>
     <string name="set_reminders">Configurar recordatoris des de\nGoogle Calendar</string>
 
-    <string name="take_photo">Fer una foto</string>
     <string name="toggle_flashlight">Canviar llanterna</string>
-    <string name="start_voice_assistant">Iniciar assistent de veu</string>
-    <string name="next_track">Saltar a la següent pista</string>
-    <string name="emergency_actions">Accions d\'emergència:</string>
-    <string name="make_phonecall">Fer una trucada</string>
     <string name="adjustment_time_info"><![CDATA[
         <li>L\'ajust automàtic de l\'hora es fa 4 vegades al dia, normalment després de les 00:00, 06:00, 12:00 i 18:00.</li>
         <li>Aquesta configuració estableix els minuts després de l\'hora quan s\'executa l\'ajust. Per exemple, si poses 25, l\'ajust serà a les 00:25, 06:25, 12:25 i 18:25.</li>
         <li>Si tens diversos rellotges, pots controlar individualment quan ajustar l\'hora de cadascun.</li>
         ]]></string>
     <string name="adjustment_time_minutes">Quan executar\n(minuts després de l\'hora)</string>
-    <string name="skip_to_next_track_info"><![CDATA[
-        Si estàs reproduint música o vídeo en un reproductor com Spotify, YouTube o YTMusic, aquesta acció passarà a la següent cançó o vídeo.
-        També funciona amb Android Auto.
-        ]]></string>
-    <string name="set_prayer_alarms">Alarmes de pregària</string>
-    <string name="prayer_times_info"><![CDATA[
-        <li>Aquesta acció configura les 5 alarmes del rellotge als horaris musulmans de pregària: <b>Fajr</b>, <b>Dhuhr</b>, <b>Asr</b>, <b>Maghrib</b> i <b>Isha</b>.</li>
-        <li>Els horaris varien segons la teva ubicació i data actual, per això és recomanable executar aquesta acció diàriament.
-        Si està activada, les alarmes també s\'actualitzaran automàticament durant l\'ajust d\'hora, 4 vegades al dia.</li>
-        <li>Els mètodes de càlcul utilitzats, segons la ubicació, són:
-            <b>NORD-AMÈRICA</b>,
-            <b>DİYANET</b>,
-            <b>EGIPTE</b>,
-            <b>DUBAI</b>,
-            <b>UMM AL QURA</b>,
-            <b>QATAR</b>,
-            <b>SINGAPORE</b>,
-            <b>KUWAIT</b> i
-            <b>MUSLIM WORLD LEAGUE</b> a la resta de llocs.
-        </li>
-        <li>Per suggeriments i correccions, contacta amb <a href="mailto:izivkov@gmail.com">izivkov@gmail.com</a></li>
-    ]]></string>
     <string name="do_not_disturb_dnd">No molestar (DnD)</string>
     <string name="mirror_phone_s_dnd">Reflectir DnD del telèfon</string>
     <string name="DnD_info_message"><![CDATA[
@@ -159,7 +127,6 @@
     si el rellotge va 2,5 segons avançat, posa -2500 per sincronitzar-lo correctament.
     ]]></string>
     <string name="required_permissions_denied_cannot_access_screen">Permisos requerits denegats. No es pot accedir a la pantalla!</string>
-    <string name="required_permissions_denied_cannot_access_actions">Permisos requerits denegats. No es pot accedir a les Accions.</string>
     <string name="calendar_permission_denied_cannot_access_events">Permís de calendari denegat. No es pot accedir als Esdeveniments.</string>
     <string name="clear_app_storage_from_android_setting_and_restart_the_app_to_add_permissions">Neteja l\'emmagatzematge de l\'app des de la configuració d\'Android i reinicia l\'app per afegir permisos.</string>
     <string name="phone_number">Número de telèfon</string>
@@ -174,13 +141,8 @@
     <string name="bluetooth_is_not_enabled">El Bluetooth no està activat.</string>
     <string name="disconnected_due_to_inactivity">Desconnectat per inactivitat.</string>
     <string name="when_found_lift_phone_to_stop_ringing">Quan es troba, aixeca el telèfon per aturar la trucada</string>
-    <string name="voice_assistant_not_available_on_this_device">Assistència de veu no disponible en aquest dispositiu!</string>
-    <string name="cannot_go_to_next_track">No es pot passar a la següent pista!</string>
-    <string name="image_captured">Imatge capturada: %1$s</string>
     <string name="emaillocationaction_emailaddress">Acció correu ubicació: correu: %1$s</string>
-    <string name="camera_capture_error">Error de captura de càmera: %1$s</string>
     <string name="flashlight_not_available">Llanterna no disponible</string>
-    <string name="unable_to_get_default_sound_uri">No s\'ha pogut obtenir l\'URI de so predeterminat</string>
     <string name="alarms_set_to_watch">Alarmes configurades al rellotge</string>
     <string name="events_set">Esdeveniments configurats</string>
     <string name="reminders_sent_to_watch">Recordatoris enviats al rellotge</string>
@@ -190,7 +152,6 @@
     <string name="permission_required_to_turn_on_bluetooth">Es necessita permís per activar el Bluetooth.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">No tens permisos per activar el Bluetooth. Activa\'l manualment, si us plau.</string>
     <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Els permisos estan denegats permanentment. Activa\'ls a la configuració de l\'aplicació.</string>
-    <string name="you_have_not_given_permission_to_to_run_action">No has donat permís per executar l\'acció %1$s.</string>
     <string name="timer_set">Temporitzador configurat</string>
     <string name="press_and_hold_for_3_seconds">Prem i mantén\npremut durant 3\nsegons</string>
     <string name="short_press_to_run_actions">Pressió curta\nper executar\naccions</string>
@@ -201,7 +162,6 @@
     <string name="cover_hold_to_unlock">Mantén premut per desbloquejar</string>
     <string name="cover_connected">Connectat</string>
     <string name="find_phone_instruction">Per executar accions, inicia la funció \"Troba el telèfon\" al rellotge</string>
-    <string name="actions_saved">Accions desades</string>
     <string name="press_and_hold_connection_button_to_continue">Manteniu premut el botó CONNECTION (normalment a baix a l\'esquerra) del rellotge durant 3 segons per vincular-lo.</string>
     <string name="looking_for_a_device">Buscant un dispositiu.</string>
     <string name="add_watch">Afegir rellotge</string>
@@ -220,7 +180,6 @@
     <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
-    <string name="actions_save_failed">Failed to save actions.</string>
     <string name="manage_watches">Manage watches</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>

@@ -33,15 +33,10 @@
     <string name="events_screen_info"><![CDATA[This screen displays Events from your <b>Google Calendar</b> and allows you to send them to the watch\'s
     <b>reminders</b>.\n\nIf no events appear, make sure you have future events, or non-expired repeating events in your Google calendar.]]>
 </string>
-    <string name="actions">Actions</string>
-    <string name="title_actions">Actions</string>
-    <string name="actions_screen_info"><![CDATA[The selected actions are run when the user <b>short-presses</b> the <b>LOWER-RIGHT</b> watch button from the initial screen. With these actions, the watch acts as a remote control for your phone.]]></string>
     <string name="feb_22_mar_24">Feb-22 - Mar-24</string>
     <string name="weekly">WEEKLY</string>
     <string name="action_item">Action Item</string>
     <string name="voice_assistant">Voice Assistant</string>
-    <string name="front_cam">Front Cam</string>
-    <string name="back_cam">Back Cam</string>
     <string name="take_a_photo">Take a photo</string>
     <string name="info">Info</string>
     <string name="daily">Daily</string>
@@ -131,40 +126,13 @@
     <string name="find_phone">Find Phone</string>
     <string name="set_reminders">Set Reminders from\nGoogle Calendar</string>
 
-    <string name="take_photo">Take a photo</string>
     <string name="toggle_flashlight">Toggle Flashlight</string>
-    <string name="start_voice_assistant">Start Voice Assist</string>
-    <string name="next_track">Skip to next track</string>
-    <string name="emergency_actions">Emergency Actions:</string>
-    <string name="make_phonecall">Make a phone call</string>
     <string name="adjustment_time_info"><![CDATA[
         <li>Automatic time adjustment occurs 4 times per day, sometime after the hours of 12:00AM, 6:00AM, 12:00PM and 6:00PM.</li>
         <li>This setting sets the number of minutes after the hour when time adjustment occurs. So if you set this value to 25, time adjustment will happen at 12:25AM, 6:25AM, 12:25PM and 6:25PM.</li>
         <li>If you have multiple watches, you can control when to set their time individually.</li>
         ]]></string>
     <string name="adjustment_time_minutes">When to run\n(minutes after hour)</string>
-    <string name="skip_to_next_track_info"><![CDATA[
-        If you are playing music or a video in a media player such as Spotify, YouTube, or YTMusic on your phone, this action will skip to the next song or video.
-        It also works with Android Auto
-        ]]></string>
-    <string name="set_prayer_alarms">Prayer Alarms</string>
-    <string name="prayer_times_info"><![CDATA[
-        <li>This action will set the 5 alarms on the watch to the Muslim prayers <b>Fajr</b>, <b>Dhuhr</b>, <b>Asr</b>, <b>Maghrib</b>, and <b>Isha</b> times.</li>
-        <li>The times vary based on your location and current date, so for best accuracy, run this action daily.
-        If this action is enabled, the alarms will also be automatically updated during the auto-time adjustment, 4 times per day.</li>
-        <li>The following calculation methods are used, based on your location:
-            <b>NORTH AMERICA</b>,
-            <b>DİYANET</b>,
-            <b>EGYPTIAN</b>,
-            <b>DUBAI</b>,
-            <b>UMM AL QURA</b>,
-            <b>QATAR</b>,
-            <b>SINGAPORE</b>,
-            <b>KUWAIT</b> and
-            <b>MUSLIM WORLD LEAGUE</b> everywhere else.
-        </li>
-        <li>For suggestions and corrections contact <a href="mailto:izivkov@gmail.com">izivkov@gmail.com</a></li>
-    ]]></string>
     <string name="do_not_disturb_dnd">Do Not Disturb (DnD)</string>
     <string name="mirror_phone_s_dnd">Mirror Phone\'s DnD</string>
     <string name="DnD_info_message"><![CDATA[
@@ -184,7 +152,6 @@
     if your watch is 2.5 seconds ahead of the actual time, set this value to -2500 to sync it accurately.
     ]]></string>
     <string name="required_permissions_denied_cannot_access_screen">Required permissions denied. Cannot access screen!</string>
-    <string name="required_permissions_denied_cannot_access_actions">Required permissions denied. Cannot access Actions.</string>
     <string name="calendar_permission_denied_cannot_access_events">Calendar permission denied. Cannot access Events.</string>
     <string name="clear_app_storage_from_android_setting_and_restart_the_app_to_add_permissions">" Clear app storage from Android Setting and restart the app to add permissions."</string>
     <string name="phone_number">Phone Number</string>
@@ -199,13 +166,8 @@
     <string name="bluetooth_is_not_enabled">Bluetooth is not enabled.</string>
     <string name="disconnected_due_to_inactivity">Disconnected due to inactivity.</string>
     <string name="when_found_lift_phone_to_stop_ringing">When found, lift phone to stop ringing</string>
-    <string name="voice_assistant_not_available_on_this_device">Voice Assistant not available on this device!</string>
-    <string name="cannot_go_to_next_track">Cannot go to Next Track!</string>
-    <string name="image_captured">Image captured: %1$s</string>
     <string name="emaillocationaction_emailaddress">EmailLocationAction: emailAddress: %1$s</string>
-    <string name="camera_capture_error">Camera capture error: %1$s</string>
     <string name="flashlight_not_available">Flashlight not available</string>
-    <string name="unable_to_get_default_sound_uri">Unable to get default sound URI</string>
     <string name="alarms_set_to_watch">Alarms Set to Watch</string>
     <string name="events_set">Events Set</string>
     <string name="reminders_sent_to_watch">Reminders sent to watch</string>
@@ -215,7 +177,6 @@
     <string name="permission_required_to_turn_on_bluetooth">Permission required to turn on Bluetooth.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">You have no permissions to turn on Bluetooth. Please turn it on manually.</string>
     <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Permissions are permanently denied. Please enable them in the app settings.</string>
-    <string name="you_have_not_given_permission_to_to_run_action">You have not given permission to run action %1$s.</string>
     <string name="timer_set">Timer Set</string>
     <string name="press_and_hold_for_3_seconds">Press and\nhold for 3\nseconds</string>
     <string name="short_press_to_run_actions">Short-press\nto run\nActions</string>
@@ -241,8 +202,6 @@
     <string name="exact_alarm_dialog_not_now">Not now</string>
 
     <string name="find_phone_instruction">To run actions, start the \"Find Phone\" function on the watch</string>
-    <string name="actions_saved">Actions Saved</string>
-    <string name="actions_save_failed">Failed to save actions.</string>
     <string name="press_and_hold_connection_button_to_continue">Press and hold the CONNECTION button (usually BOTTOM-LEFT) on your watch for 3 seconds to pair.</string>
     <string name="looking_for_a_device">Looking for a device.</string>
     <string name="add_watch">Add Watch</string>

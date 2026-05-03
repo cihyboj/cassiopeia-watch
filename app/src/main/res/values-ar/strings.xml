@@ -21,15 +21,10 @@
     <string name="alarms_screen_info"><![CDATA[تحتوي ساعات <b>B5600/B5000/B2100</b> على 5 منبهات وإعدادات "الإشارة" (جرس الساعة) الموضحة هنا. يمكن تحديث المنبهات بالضغط على قيمة وقت كل منبه. ستظهر نافذة جديدة تتيح لك ضبط وقت المنبه. بعد ضبط المنبهات، يمكنك إرسالها إلى الساعة أو إلى تطبيق المنبهات على الهاتف.]]></string>
     <string name="events_screen_info"><![CDATA[تعرض هذه الشاشة الأحداث من <b>تقويم Google</b> وتتيح لك إرسالها إلى <b>التذكيرات</b> في الساعة.\n\nإذا لم تظهر أي أحداث، فتأكد من وجود أحداث مستقبلية أو أحداث مكررة غير منتهية في تقويم Google الخاص بك.]]>
     </string>
-    <string name="actions">الإجراءات</string>
-    <string name="title_actions">الإجراءات</string>
-    <string name="actions_screen_info"><![CDATA[يتم تنفيذ الإجراءات المحددة عندما يقوم المستخدم <b>بالضغط القصير</b> على زر <b>اليمين السفلي</b> للساعة من الشاشة الرئيسية. باستخدام هذه الإجراءات، تعمل الساعة كجهاز تحكم عن بعد لهاتفك.]]></string>
     <string name="feb_22_mar_24">22-فبراير - 24-مارس</string>
     <string name="weekly">أسبوعياً</string>
     <string name="action_item">عنصر الإجراء</string>
     <string name="voice_assistant">المساعد الصوتي</string>
-    <string name="front_cam">الكاميرا الأمامية</string>
-    <string name="back_cam">الكاميرا الخلفية</string>
     <string name="take_a_photo">التقاط صورة</string>
     <string name="info">معلومات</string>
     <string name="daily">يومياً</string>
@@ -92,40 +87,13 @@
     <string name="set_time">ضبط الوقت</string>
     <string name="find_phone">ابحث عن الهاتف</string>
     <string name="set_reminders">تعيين التذكيرات من\nتقويم Google</string>
-    <string name="take_photo">التقاط صورة</string>
     <string name="toggle_flashlight">تشغيل/إيقاف المصباح</string>
-    <string name="start_voice_assistant">تشغيل مساعد الصوت</string>
-    <string name="next_track">تخطي إلى المسار التالي</string>
-    <string name="emergency_actions">الإجراءات الطارئة:</string>
-    <string name="make_phonecall">إجراء مكالمة هاتفية</string>
     <string name="adjustment_time_info"><![CDATA[
     <li>يتم ضبط الوقت تلقائيًا 4 مرات يوميًا، بعد ساعات 12:00 صباحًا، 6:00 صباحًا، 12:00 ظهرًا و6:00 مساءً.</li>
     <li>هذا الإعداد يحدد عدد الدقائق بعد الساعة التي يتم فيها ضبط الوقت. إذا قمت بضبط هذه القيمة على 25، سيتم ضبط الوقت في الساعة 12:25 صباحًا، 6:25 صباحًا، 12:25 ظهرًا و6:25 مساءً.</li>
     <li>إذا كان لديك ساعات متعددة، يمكنك التحكم في وقت ضبط كل ساعة بشكل فردي.</li>
 ]]></string>
     <string name="adjustment_time_minutes">متى يتم الضبط\n(الدقائق بعد الساعة)</string>
-    <string name="skip_to_next_track_info"><![CDATA[
-    إذا كنت تستمع إلى موسيقى أو تشاهد فيديو في مشغل وسائط مثل Spotify أو YouTube أو YTMusic على هاتفك، سيقوم هذا الإجراء بتخطي الأغنية أو الفيديو التالي.
-    يعمل أيضًا مع Android Auto.
-]]></string>
-    <string name="set_prayer_alarms">ضبط تنبيهات الصلاة</string>
-    <string name="prayer_times_info"><![CDATA[
-    <li>هذا الإجراء سيضبط التنبيهات الخمس في الساعة لأوقات الصلاة الإسلامية <b>الفجر</b>، <b>الظهر</b>، <b>العصر</b>، <b>المغرب</b> و<b>العشاء</b>.</li>
-    <li>تختلف الأوقات بناءً على موقعك والتاريخ الحالي، لذا لتحقيق أفضل دقة، قم بتشغيل هذا الإجراء يوميًا.
-    إذا كان هذا الإجراء مفعّلًا، فسيتم تحديث التنبيهات تلقائيًا أثناء ضبط الوقت التلقائي، 4 مرات يوميًا.</li>
-    <li>تُستخدم طرق الحساب التالية بناءً على موقعك:
-        <b>أمريكا الشمالية</b>,
-        <b>ديانات</b>,
-        <b>المصري</b>,
-        <b>دبي</b>,
-        <b>أم القرى</b>,
-        <b>قطر</b>,
-        <b>سنغافورة</b>,
-        <b>الكويت</b> و
-        <b>رابطة العالم الإسلامي</b> في كل مكان آخر.
-    </li>
-    <li>للاقتراحات والتصحيحات، يرجى التواصل عبر <a href="mailto:izivkov@gmail.com">izivkov@gmail.com</a></li>
-]]></string>
     <string name="do_not_disturb_dnd">عدم الإزعاج (DnD)</string>
     <string name="mirror_phone_s_dnd">نسخ وضع عدم الإزعاج للهاتف</string>
     <string name="DnD_info_message"><![CDATA[
@@ -145,7 +113,6 @@
     إذا كانت ساعتك متقدمة بمقدار 2.5 ثانية عن الوقت الفعلي، قم بضبط هذه القيمة إلى -2500 لمزامنتها بدقة.
 ]]></string>
     <string name="required_permissions_denied_cannot_access_screen">تم رفض الأذونات المطلوبة. لا يمكن الوصول إلى الشاشة!</string>
-    <string name="required_permissions_denied_cannot_access_actions">تم رفض الأذونات المطلوبة. لا يمكن الوصول إلى الإجراءات.</string>
     <string name="calendar_permission_denied_cannot_access_events">تم رفض إذن الوصول إلى التقويم. لا يمكن الوصول إلى الأحداث.</string>
     <string name="clear_app_storage_from_android_setting_and_restart_the_app_to_add_permissions">" قم بمسح تخزين التطبيق من إعدادات Android وأعد تشغيل التطبيق لإضافة الأذونات."</string>
     <string name="phone_number">رقم الهاتف</string>
@@ -160,13 +127,8 @@
     <string name="bluetooth_is_not_enabled">البلوتوث غير مفعل.</string>
     <string name="disconnected_due_to_inactivity">تم قطع الاتصال بسبب عدم النشاط.</string>
     <string name="when_found_lift_phone_to_stop_ringing">عند العثور عليه، ارفع الهاتف لإيقاف الرنين</string>
-    <string name="voice_assistant_not_available_on_this_device">المساعد الصوتي غير متوفر على هذا الجهاز!</string>
-    <string name="cannot_go_to_next_track">لا يمكن الانتقال إلى المسار التالي!</string>
-    <string name="image_captured">تم التقاط الصورة: %1$s</string>
     <string name="emaillocationaction_emailaddress">إجراء تحديد الموقع عبر البريد الإلكتروني: عنوان البريد الإلكتروني: %1$s</string>
-    <string name="camera_capture_error">خطأ في التقاط الصورة: %1$s</string>
     <string name="flashlight_not_available">المصباح غير متوفر</string>
-    <string name="unable_to_get_default_sound_uri">غير قادر على الحصول على رابط الصوت الافتراضي</string>
     <string name="alarms_set_to_watch">تم ضبط المنبهات على الساعة</string>
     <string name="events_set">تم ضبط الأحداث</string>
     <string name="reminders_sent_to_watch">تم إرسال التذكيرات إلى الساعة</string>
@@ -176,7 +138,6 @@
     <string name="permission_required_to_turn_on_bluetooth">يتطلب الإذن لتشغيل البلوتوث.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">ليس لديك أذونات لتشغيل البلوتوث. يرجى تشغيله يدوياً.</string>
     <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">تم رفض الأذونات بشكل دائم. يرجى تمكينها في إعدادات التطبيق.</string>
-    <string name="you_have_not_given_permission_to_to_run_action">لم تمنح الإذن لتشغيل الإجراء %1$s.</string>
     <string name="timer_set">تم تعيين المؤقت</string>
     <string name="press_and_hold_for_3_seconds">اضغط\n٣ ثواني</string>
     <string name="short_press_to_run_actions">اضغط\nللإجراءات</string>
@@ -189,7 +150,6 @@
     <string name="cover_connected">متصل</string>
     <!-- "h" as in hours = "ساعات", short form is "س" -->
     <string name="find_phone_instruction">لتنفيذ الإجراءات، ابدأ وظيفة "البحث عن الهاتف" في الساعة</string>
-    <string name="actions_saved">تم حفظ الإجراءات</string>
     <string name="press_and_hold_connection_button_to_continue">اضغط مع الاستمرار على زر الاتصال (عادة ما يكون أسفل اليسار) في ساعتك لمدة 3 ثوانٍ للاقتران.</string>
     <string name="looking_for_a_device">جاري البحث عن جهاز.</string>
     <string name="add_watch">إضافة ساعة</string>
@@ -208,7 +168,6 @@
     <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
-    <string name="actions_save_failed">Failed to save actions.</string>
     <string name="manage_watches">Manage watches</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>

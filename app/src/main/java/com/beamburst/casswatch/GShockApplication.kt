@@ -24,7 +24,6 @@ import com.beamburst.casswatch.ui.alarms.WeeklyAlarmScheduler
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.common.CrashLogDialog
 import com.beamburst.casswatch.ui.others.CoverScreen
-import com.beamburst.casswatch.ui.others.RunFindPhoneScreen
 import com.beamburst.casswatch.utils.ActivityProvider
 import timber.log.Timber
 import javax.inject.Inject
@@ -169,8 +168,6 @@ class GShockApplication : Application(), IScreenManager {
         when {
             repository.isAlwaysConnectedConnectionPressed() ->
                 CoverScreen(onUnlock = onUnlocked, isConnected = repository.isConnected())
-            repository.isFindPhoneButtonPressed() ->
-                RunFindPhoneScreen()
             else ->
                 BottomNavigationBarWithPermissions(repository = repository)
         }

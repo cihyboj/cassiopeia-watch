@@ -46,23 +46,13 @@ data class BottomNavigationItem(
             )
         }
 
-        // Add remaining items
-        baseItems.addAll(
-            listOf(
-                BottomNavigationItem(
-                    label = Utils.shortenString(
-                        stringResource(R.string.actions), 7
-                    ),
-                    icon = ImageVector.vectorResource(id = R.drawable.generic_action_item),
-                    route = Screens.Actions.route
+        baseItems.add(
+            BottomNavigationItem(
+                label = Utils.shortenString(
+                    stringResource(R.string.settings), 7
                 ),
-                BottomNavigationItem(
-                    label = Utils.shortenString(
-                        stringResource(R.string.settings), 7
-                    ),
-                    icon = ImageVector.vectorResource(id = R.drawable.ic_settings),
-                    route = Screens.Settings.route
-                )
+                icon = ImageVector.vectorResource(id = R.drawable.ic_settings),
+                route = Screens.Settings.route
             )
         )
 
