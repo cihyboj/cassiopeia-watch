@@ -8,6 +8,8 @@ import android.app.AlertDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.session.WatchSessionUiBridge
 import com.beamburst.casswatch.services.NotificationMonitorService
@@ -15,6 +17,7 @@ import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.utils.ActivityProvider
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.Utils
+import com.beamburst.casswatch.utils.SyncHistoryLogger
 import org.avmedia.gshockapi.AppNotification
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
@@ -25,10 +28,15 @@ class MainEventHandler(
     private val repository: GShockRepository,
     private val screenManager: IScreenManager,
     private val sessionUiBridge: WatchSessionUiBridge,
+    private val syncLogger: SyncHistoryLogger,
 ) {
+    companion object {
+        private const val EVENT_SUBSCRIBER_ID = "MainEventHandler"
+    }
+
     fun setupEventSubscription() {
         val eventActions = arrayOf(
-            EventAction("ConnectionSetupComplete") {},
+            EventAction("ConnectionSetupComplete") { logConnection(SyncTrigger.CONNECTION_CONNECTED, true) },
             EventAction("WatchInitializationCompleted") { handleWatchInitialization() },
             EventAction("ConnectionFailed") { handleConnectionFailure() },
             EventAction("Error") { handleError() },
@@ -39,7 +47,7 @@ class MainEventHandler(
             EventAction("LocationServicesDisabled") { handleLocationServicesDisabled() }
         )
 
-        ProgressEvents.runEventActions(Utils.AppHashCode(), eventActions)
+        ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, eventActions)
     }
 
     private fun handleWatchInitialization() {
@@ -81,6 +89,7 @@ class MainEventHandler(
 
     private fun handleConnectionFailure() {
         Timber.e("Failed to connect to the watch")
+        logConnection(SyncTrigger.CONNECTION_FAILED, false, "Failed to connect")
     }
 
     private fun handleError() {
@@ -104,6 +113,18 @@ class MainEventHandler(
         disconnectedDevice?.name
             ?.takeIf { it.isNotBlank() }
             ?.let { name -> AppSnackbar("$name disconnected") }
+        logConnection(SyncTrigger.CONNECTION_DISCONNECTED, true)
+    }
+
+    private fun logConnection(trigger: SyncTrigger, success: Boolean, error: String? = null) {
+        CoroutineScope(Dispatchers.IO).launch {
+            syncLogger.record(
+                trigger = trigger,
+                kinds = setOf(SyncKind.CONNECTION),
+                success = success,
+                errorMessage = error,
+            )
+        }
     }
 
     private fun handleWaitForConnection() {

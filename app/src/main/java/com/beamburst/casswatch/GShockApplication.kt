@@ -26,6 +26,7 @@ import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.common.CrashLogDialog
 import com.beamburst.casswatch.ui.others.CoverScreen
 import com.beamburst.casswatch.utils.ActivityProvider
+import com.beamburst.casswatch.utils.SyncHistoryLogger
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -68,6 +69,9 @@ class GShockApplication : Application(), IScreenManager {
 
     @Inject
     lateinit var watchSessionUiBridge: WatchSessionUiBridge
+  
+    @Inject
+    lateinit var syncHistoryLogger: SyncHistoryLogger
 
     fun init() {
         Timber.i("Initializing GShockApplication")
@@ -88,6 +92,7 @@ class GShockApplication : Application(), IScreenManager {
                 repository = repository,
                 screenManager = this,
                 sessionUiBridge = watchSessionUiBridge,
+                syncLogger = syncHistoryLogger
             )
         eventHandler.setupEventSubscription()
 

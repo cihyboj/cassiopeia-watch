@@ -12,7 +12,6 @@ object AlarmSyncStorage {
     private const val ALARMS_DIRTY_KEY = "PhoneAlarmDraftsDirty"
     private const val ALARM_VIEW_MODE_KEY = "AlarmViewMode"
     private const val ALARM_DAYS_KEY = "AlarmDaySelections"
-    private const val FALLBACK_LAST_SYNC_KEY = "AlarmFallbackLastSync"
 
     private val gson = Gson()
 
@@ -23,11 +22,6 @@ object AlarmSyncStorage {
         val hasHourlyChime: Boolean,
         val name: String?,
         val firedAt: Long? = null
-    )
-
-    data class SyncRecord(
-        val syncedAt: Long,
-        val sentAlarmHashes: List<String>  // Gson deserializes JSON arrays as ArrayList; List avoids type-erasure ambiguity
     )
 
     fun saveAlarms(context: Context, alarms: List<Alarm>, dirty: Boolean, firedAts: Map<Int, Long> = emptyMap()) {
@@ -92,15 +86,6 @@ object AlarmSyncStorage {
             }.toSet()
             index to days
         }.toMap()
-    }
-
-    fun saveSyncRecord(context: Context, record: SyncRecord) {
-        LocalDataStorage.put(context, FALLBACK_LAST_SYNC_KEY, gson.toJson(record))
-    }
-
-    fun loadSyncRecord(context: Context): SyncRecord? {
-        val json = LocalDataStorage.get(context, FALLBACK_LAST_SYNC_KEY) ?: return null
-        return runCatching { gson.fromJson(json, SyncRecord::class.java) }.getOrNull()
     }
 
     fun loadFiredAts(context: Context): Map<Int, Long> =

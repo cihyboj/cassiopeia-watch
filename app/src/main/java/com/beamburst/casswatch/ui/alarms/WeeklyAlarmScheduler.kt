@@ -5,8 +5,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.beamburst.casswatch.data.local.SyncDetails
+import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.repository.GShockRepository
-import com.beamburst.casswatch.utils.Utils
+import com.beamburst.casswatch.utils.SyncHistoryLogger
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
 import timber.log.Timber
@@ -17,12 +20,16 @@ import javax.inject.Singleton
 @Singleton
 class WeeklyAlarmScheduler @Inject constructor(
     private val api: GShockRepository,
-    private val alarmSyncState: AlarmSyncState,
+    private val syncLogger: SyncHistoryLogger,
     @param:ApplicationContext private val context: Context
 ) {
+    companion object {
+        private const val EVENT_SUBSCRIBER_ID = "WeeklyAlarmScheduler"
+    }
+
     init {
         ProgressEvents.runEventActions(
-            Utils.AppHashCode() + "WeeklyAlarmScheduler",
+            EVENT_SUBSCRIBER_ID,
             arrayOf(
                 EventAction("WatchInitializationCompleted") {
                     CoroutineScope(Dispatchers.IO).launch { applyTodaySchedule() }
@@ -57,15 +64,29 @@ class WeeklyAlarmScheduler @Inject constructor(
         )
 
         if (newAlarms != currentAlarms) {
-            runCatching { api.setAlarms(ArrayList(newAlarms)) }.onFailure {
+            val hashes = desiredAlarms.mapIndexed { index, alarm ->
+                val days = alarmDays[index] ?: emptySet()
+                alarmHash(alarm.hour, alarm.minute, days, alarm.enabled)
+            }
+
+            val setResult = runCatching { api.setAlarms(ArrayList(newAlarms)) }
+            syncLogger.record(
+                trigger = SyncTrigger.AUTO_ON_RECONNECT,
+                kinds = setOf(SyncKind.ALARMS),
+                success = setResult.isSuccess,
+                errorMessage = setResult.exceptionOrNull()?.message,
+                details = SyncDetails(
+                    alarmHashes = hashes,
+                    eventCount = null,
+                    hourlySignalTarget = null,
+                    timeMs = null,
+                ),
+            )
+
+            setResult.onFailure {
                 Timber.e(it, "Failed to apply per-alarm day schedule")
             }.onSuccess {
                 AlarmSyncStorage.saveAlarms(context, desiredAlarms, dirty = false, firedAts = firedAts)
-                val hashes = desiredAlarms.mapIndexed { index, alarm ->
-                    val days = alarmDays[index] ?: emptySet()
-                    alarmHash(alarm.hour, alarm.minute, days, alarm.enabled)
-                }.toSet().toList()
-                alarmSyncState.update(AlarmSyncStorage.SyncRecord(System.currentTimeMillis(), hashes))
             }
         } else if (AlarmSyncStorage.isDirty(context)) {
             AlarmSyncStorage.saveAlarms(context, desiredAlarms, dirty = false, firedAts = firedAts)

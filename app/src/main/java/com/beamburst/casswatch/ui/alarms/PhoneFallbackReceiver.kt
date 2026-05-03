@@ -4,6 +4,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.provider.AlarmClock
+import com.beamburst.casswatch.data.local.SyncHistoryStore
+import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.utils.LocalDataStorage
 import timber.log.Timber
 
 class PhoneFallbackReceiver : BroadcastReceiver() {
@@ -21,9 +24,14 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
         val alarmIndex = intent.getIntExtra(EXTRA_ALARM_INDEX, -1)
         val expectedHash = intent.getStringExtra(EXTRA_EXPECTED_HASH) ?: return
 
-        val syncRecord = AlarmSyncStorage.loadSyncRecord(context)
-        if (syncRecord != null && expectedHash in syncRecord.sentAlarmHashes) {
-            Timber.d("Phone fallback: alarm $alarmIndex hash matched sync record; trusting watch")
+        val store = SyncHistoryStore(context)
+        val addr = LocalDataStorage.getDeviceAddresses(context).firstOrNull()
+        val entries = if (addr != null) store.load(addr) else emptyList()
+        val lastSuccess = entries.firstOrNull { it.success && SyncKind.ALARMS in it.kinds }
+        val watchHasAlarm = lastSuccess?.details?.alarmHashes?.contains(expectedHash) == true
+
+        if (watchHasAlarm) {
+            Timber.d("Phone fallback: alarm $alarmIndex hash matched sync history; trusting watch")
             return
         }
 

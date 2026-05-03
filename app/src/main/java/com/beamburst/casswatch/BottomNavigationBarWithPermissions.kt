@@ -37,6 +37,7 @@ import com.beamburst.casswatch.services.InactivityHandler
 import com.beamburst.casswatch.ui.alarms.AlarmsScreen
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.events.EventsScreen
+import com.beamburst.casswatch.ui.history.SyncHistoryScreen
 import com.beamburst.casswatch.ui.settings.SettingsScreen
 import com.beamburst.casswatch.ui.time.TimeScreen
 import kotlin.time.Duration.Companion.seconds
@@ -61,6 +62,17 @@ fun BottomNavigationBarWithPermissions(
         InactivityHandler(timeout = (3 * 60).seconds) {
             repository.disconnect()
             AppSnackbar(appContext.getString(R.string.disconnected_due_to_inactivity))
+        }
+    }
+
+    fun navigateToTab(route: String) {
+        navController.popBackStack(Screens.SyncHistory.route, inclusive = true)
+        navController.navigate(route) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
         }
     }
 
@@ -109,13 +121,7 @@ fun BottomNavigationBarWithPermissions(
                                 )
                             },
                             onClick = {
-                                navController.navigate(navigationItem.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                                navigateToTab(navigationItem.route)
                             },
                             alwaysShowLabel = true,
                             colors = NavigationBarItemDefaults.colors(
@@ -139,7 +145,14 @@ fun BottomNavigationBarWithPermissions(
                 TimeScreen()
             }
             composable(Screens.Alarms.route) {
-                AlarmsScreen()
+                AlarmsScreen(
+                    onNavigateToHistory = {
+                        navController.navigate(Screens.SyncHistory.route) {
+                            launchSingleTop = true
+                            restoreState = false
+                        }
+                    }
+                )
             }
             composable(Screens.Events.route) {
                 NavigateWithPermissions(
@@ -152,7 +165,17 @@ fun BottomNavigationBarWithPermissions(
                 )
             }
             composable(Screens.Settings.route) {
-                SettingsScreen()
+                SettingsScreen(
+                    onNavigateToHistory = {
+                        navController.navigate(Screens.SyncHistory.route) {
+                            launchSingleTop = true
+                            restoreState = false
+                        }
+                    }
+                )
+            }
+            composable(Screens.SyncHistory.route) {
+                SyncHistoryScreen(onBack = { navController.popBackStack() })
             }
         }
     }

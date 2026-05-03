@@ -48,7 +48,6 @@ fun LocalTimeView(
                     .padding(horizontal = Spacing.lg),
             ) {
                 AppTextLarge(
-                    modifier = Modifier.padding(start = Spacing.sm),
                     text = stringResource(
                         id = R.string.local_time
                     ),
@@ -62,7 +61,6 @@ fun LocalTimeView(
                     TimeZoneTextView(
                         modifier = Modifier
                             .align(Alignment.CenterStart)
-                            .padding(start = Spacing.sm)
                     )
                 }
             }
@@ -92,7 +90,7 @@ fun LocalTimeView(
 fun TextClockComposable(
     modifier: Modifier = Modifier,
 ) {
-    RealTimeClock(modifier = modifier.padding(start = Spacing.xxs))
+    RealTimeClock(modifier = modifier)
 }
 
 @Composable

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -74,8 +73,7 @@ fun HourlySignalCard(
                 checked = state.enabled,
                 onCheckedChange = { on ->
                     alarmViewModel.onHourlySignalAction(HourlySignalAction.SetEnabled(on))
-                },
-                modifier = Modifier.graphicsLayer(scaleX = 0.82f, scaleY = 0.82f)
+                }
             )
         }
     }

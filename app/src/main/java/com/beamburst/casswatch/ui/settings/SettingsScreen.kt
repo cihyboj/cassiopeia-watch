@@ -33,7 +33,7 @@ import org.avmedia.gshockapi.WatchInfo
 
 @SuppressLint("MutableCollectionMutableState")
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(onNavigateToHistory: () -> Unit = {}) {
     CassiopeiaWatchTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -53,7 +53,7 @@ fun SettingsScreen() {
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(Spacing.sm)
                 ) {
-                    SettingsList()
+                    SettingsList(onNavigateToHistory)
                 }
 
                 BottomRow(
@@ -67,7 +67,7 @@ fun SettingsScreen() {
 }
 
 @Composable
-fun SettingsList() {
+fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
 
     LaunchedEffect(Unit) {
@@ -82,8 +82,6 @@ fun SettingsList() {
 
     // ── Actions replacement: top-of-Settings rows ─────────────────────────
     val pressCards by settingsViewModel.pressCards.collectAsState()
-
-    SetTimeRow()
 
     PressCard(
         title = stringResource(R.string.short_button_press),
@@ -100,6 +98,9 @@ fun SettingsList() {
                 onSave = { extras ->
                     settingsViewModel.onPressCardAction(PressCardAction.SaveShortExtras(extras))
                     onDismiss()
+                },
+                onSendTest = { extras ->
+                    settingsViewModel.sendTestBroadcast(BroadcastSpec.Short, extras)
                 },
                 onDismiss = onDismiss,
             )
@@ -122,6 +123,9 @@ fun SettingsList() {
                     settingsViewModel.onPressCardAction(PressCardAction.SaveLongExtras(extras))
                     onDismiss()
                 },
+                onSendTest = { extras ->
+                    settingsViewModel.sendTestBroadcast(BroadcastSpec.Long, extras)
+                },
                 onDismiss = onDismiss,
             )
         }
@@ -134,15 +138,19 @@ fun SettingsList() {
         onEnabledChange = { on ->
             settingsViewModel.onPressCardAction(PressCardAction.ToggleFindPhone(on))
         },
-    )
-
-    PressCard(
-        title = stringResource(R.string.toggle_flashlight),
-        subtitle = stringResource(R.string.flashlight_card_subtitle),
-        enabled = pressCards.flashlight.enabled,
-        onEnabledChange = { on ->
-            settingsViewModel.onPressCardAction(PressCardAction.ToggleFlashlight(on))
-        },
+        dialogContent = { onDismiss ->
+            FindPhoneConfigDialog(
+                volumePercent = pressCards.findPhone.volumePercent,
+                melody = pressCards.findPhone.melody,
+                onDismiss = onDismiss,
+                onSave = { volume, melody ->
+                    settingsViewModel.onPressCardAction(
+                        PressCardAction.SaveFindPhoneConfig(volume, melody)
+                    )
+                    onDismiss()
+                }
+            )
+        }
     )
 
     HorizontalDivider()
@@ -163,6 +171,7 @@ fun SettingsList() {
 
     SettingsSectionTitle(stringResource(R.string.settings_section_sync))
     TimeAdjustment(settingsViewModel::onSettingUpdated)
+    SyncHistoryRow(onNavigate = onNavigateToHistory)
 }
 
 @Composable

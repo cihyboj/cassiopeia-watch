@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.alarms
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
@@ -16,22 +17,24 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun AlarmsFooter(
     modifier: Modifier = Modifier,
-    alarmViewModel: AlarmViewModel
+    alarmViewModel: AlarmViewModel,
+    onLastSyncClick: () -> Unit = {},
 ) {
-    val lastSync by alarmViewModel.lastSync.collectAsState()
+    val lastAlarmSync by alarmViewModel.lastAlarmSync.collectAsState()
 
-    val syncedHashes = lastSync?.sentAlarmHashes.orEmpty()
+    val syncedHashes = lastAlarmSync?.details?.alarmHashes.orEmpty()
     val activeCount = syncedHashes.count { parseEnabled(it) }
     val disabledCount = syncedHashes.size - activeCount
 
-    val syncText = lastSync?.let { formatTimeAgo(it.syncedAt) }
+    val syncText = lastAlarmSync?.let { formatTimeAgo(it.timestamp) }
         ?: stringResource(R.string.footer_never)
 
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         AppText(
             text = stringResource(R.string.footer_last_sync, syncText),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.clickable(onClick = onLastSyncClick),
         )
         AppText(
             text = "•",

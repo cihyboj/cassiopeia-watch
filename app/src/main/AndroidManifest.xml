@@ -126,6 +126,10 @@
             android:name=".ui.alarms.PhoneFallbackReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".receivers.PhoneFinderStopReceiver"
+            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
