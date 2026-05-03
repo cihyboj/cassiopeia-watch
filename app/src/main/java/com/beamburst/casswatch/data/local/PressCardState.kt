@@ -17,7 +17,6 @@ data class ToggleCardState(val enabled: Boolean = false)
 
 data class ShortPressCards(
     val broadcast: BroadcastCardState,
-    val flashlight: ToggleCardState,
 )
 
 data class LongPressCards(

@@ -11,7 +11,6 @@ import android.service.notification.StatusBarNotification
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import com.beamburst.casswatch.utils.Utils
 import org.avmedia.gshockapi.AppNotification
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.NotificationType
@@ -51,7 +50,7 @@ class NotificationMonitorService : NotificationListenerService() {
     }
 
     private fun subscribeToEvents() {
-        ProgressEvents.runEventActions(Utils.AppHashCode(), state.value.eventActions.toTypedArray())
+        ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, state.value.eventActions.toTypedArray())
     }
 
     private fun updateRunningState(running: Boolean) {
@@ -61,6 +60,11 @@ class NotificationMonitorService : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         Timber.i("Notification listener service connected")
+    }
+
+    override fun onDestroy() {
+        ProgressEvents.subscriber.stop(EVENT_SUBSCRIBER_ID)
+        super.onDestroy()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -136,6 +140,7 @@ class NotificationMonitorService : NotificationListenerService() {
     }
 
     companion object {
+        private const val EVENT_SUBSCRIBER_ID = "NotificationMonitorService"
         private var isRunning = false
 
         private fun isNotificationGranted(context: Context): Boolean {

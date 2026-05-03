@@ -17,7 +17,6 @@ import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.utils.SyncHistoryLogger
-import com.beamburst.casswatch.utils.Utils
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import org.avmedia.gshockapi.Event
 import org.avmedia.gshockapi.EventAction
@@ -34,6 +33,9 @@ class EventViewModel @Inject constructor(
     @param:ApplicationContext private val appContext: Context,
     private val syncLogger: SyncHistoryLogger,
 ) : ViewModel() {
+    companion object {
+        private const val EVENT_SUBSCRIBER_ID = "EventViewModel.listenForUpdateRequest"
+    }
 
     private val _events = MutableStateFlow<List<Event>>(emptyList())
     val events: StateFlow<List<Event>> = _events
@@ -73,9 +75,14 @@ class EventViewModel @Inject constructor(
         )
 
         ProgressEvents.runEventActions(
-            Utils.AppHashCode() + "listenForUpdateRequest",
+            EVENT_SUBSCRIBER_ID,
             eventActions
         )
+    }
+
+    override fun onCleared() {
+        ProgressEvents.subscriber.stop(EVENT_SUBSCRIBER_ID)
+        super.onCleared()
     }
 
     private fun String.sanitizeEventTitle(): String {

@@ -131,9 +131,13 @@ fun HourlySignalDialog(
                                     setOnValueChangedListener { _, _, newVal ->
                                         selectedStartIndex = newVal
                                         selectedEndLocalIndex = 0
+                                        applyTextStyle(pickerTextColorArgb, pickerTextSizePx)
                                     }
                                     applyTextStyle(pickerTextColorArgb, pickerTextSizePx)
                                 }
+                            },
+                            update = { picker ->
+                                picker.applyTextStyle(pickerTextColorArgb, pickerTextSizePx)
                             }
                         )
                         AppText(
@@ -163,6 +167,7 @@ fun HourlySignalDialog(
                                     value = initialEndLocalIndex
                                     setOnValueChangedListener { _, _, newVal ->
                                         selectedEndLocalIndex = newVal
+                                        applyTextStyle(pickerTextColorArgb, pickerTextSizePx)
                                     }
                                     applyTextStyle(pickerTextColorArgb, pickerTextSizePx)
                                 }
@@ -178,6 +183,7 @@ fun HourlySignalDialog(
                                 picker.maxValue = displayed.size - 1
                                 picker.displayedValues = displayed
                                 picker.value = selectedEndLocalIndex.coerceIn(0, displayed.size - 1)
+                                picker.applyTextStyle(pickerTextColorArgb, pickerTextSizePx)
                             }
                         )
                         AppText(

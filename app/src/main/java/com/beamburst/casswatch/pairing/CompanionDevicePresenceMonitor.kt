@@ -5,7 +5,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.repository.GShockRepository
-import com.beamburst.casswatch.utils.Utils
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
 import timber.log.Timber
@@ -17,6 +16,10 @@ class CompanionDevicePresenceMonitor @Inject constructor(
     // 1. Inject the repository directly in the constructor
     private val repository: GShockRepository
 ) {
+    companion object {
+        private const val EVENT_SUBSCRIBER_ID = "CompanionDevicePresenceMonitor"
+    }
+
     // Use a class-level scope to manage coroutines safely
     private val monitorScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -59,6 +62,6 @@ class CompanionDevicePresenceMonitor @Inject constructor(
     )
 
     init {
-        ProgressEvents.runEventActions(Utils.AppHashCode(), eventActions)
+        ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, eventActions)
     }
 }

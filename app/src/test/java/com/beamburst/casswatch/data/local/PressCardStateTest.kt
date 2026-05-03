@@ -28,10 +28,8 @@ class PressCardStateTest {
     @Test fun shortPressCardsAggregatesBothCards() {
         val s = ShortPressCards(
             broadcast  = BroadcastCardState(enabled = true),
-            flashlight = ToggleCardState(enabled = false),
         )
         assertTrue(s.broadcast.enabled)
-        assertFalse(s.flashlight.enabled)
     }
 
     @Test fun longPressCardsAggregatesBothCards() {

@@ -1,15 +1,10 @@
 package com.beamburst.casswatch
 
 import android.content.Context
-import android.content.Intent
-import com.beamburst.casswatch.data.local.BroadcastExtra
-import com.beamburst.casswatch.data.local.ExtraType
 import com.beamburst.casswatch.data.local.PressCardRepository
 import com.beamburst.casswatch.ui.events.CalendarEvents
 import com.beamburst.casswatch.ui.events.EventsModel
-import com.beamburst.casswatch.utils.FlashlightHelper
 import com.beamburst.casswatch.utils.PhoneFinder
-import com.beamburst.casswatch.utils.Utils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,10 +29,14 @@ class WatchButtonDispatcher @Inject constructor(
     private val calendarEvents: CalendarEvents,
     private val autoSyncCoordinator: AutoSyncCoordinator,
 ) {
+    companion object {
+        private const val EVENT_SUBSCRIBER_ID = "WatchButtonDispatcher"
+    }
+
     private val scope = CoroutineScope(Dispatchers.IO)
 
     init {
-        ProgressEvents.runEventActions(Utils.AppHashCode(), arrayOf(
+        ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, arrayOf(
             EventAction("ButtonPressedInfoReceived") { scope.launch { onPress() } },
         ))
     }
@@ -54,13 +53,12 @@ class WatchButtonDispatcher @Inject constructor(
 
     private fun handleShort() {
         val cards = cardRepository.shortPress()
-        if (cards.broadcast.enabled) sendBroadcast(BroadcastSpec.Short, cards.broadcast.extras)
-        if (cards.flashlight.enabled) FlashlightHelper.toggle(context)
+        if (cards.broadcast.enabled) PressBroadcastEmitter.send(context, BroadcastSpec.Short, cards.broadcast.extras)
     }
 
     private fun handleLong() {
         val cards = cardRepository.longPress()
-        if (cards.broadcast.enabled) sendBroadcast(BroadcastSpec.Long, cards.broadcast.extras)
+        if (cards.broadcast.enabled) PressBroadcastEmitter.send(context, BroadcastSpec.Long, cards.broadcast.extras)
         if (cards.findPhone.enabled) PhoneFinder.ring(context)
     }
 
@@ -71,17 +69,4 @@ class WatchButtonDispatcher @Inject constructor(
         }
     }
 
-    private fun sendBroadcast(spec: BroadcastSpec, extras: List<BroadcastExtra>) {
-        val intent = Intent(spec.action).apply {
-            addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
-            extras.forEach { ex ->
-                when (ex.type) {
-                    ExtraType.STRING  -> putExtra(ex.key, ex.value)
-                    ExtraType.INT     -> putExtra(ex.key, ex.value.toIntOrNull() ?: 0)
-                    ExtraType.BOOLEAN -> putExtra(ex.key, ex.value.toBooleanStrictOrNull() ?: false)
-                }
-            }
-        }
-        context.sendBroadcast(intent)
-    }
 }

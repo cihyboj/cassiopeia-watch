@@ -19,7 +19,6 @@ class PressCardRepository @Inject constructor(
         const val KEY_SHORT_EXTRAS  = "PressCard.Short.extras"
         const val KEY_LONG_ENABLED  = "PressCard.Long.enabled"
         const val KEY_LONG_EXTRAS   = "PressCard.Long.extras"
-        const val KEY_FLASHLIGHT    = "PressCard.Flashlight.enabled"
         const val KEY_FIND_PHONE    = "PressCard.FindPhone.enabled"
     }
 
@@ -28,7 +27,6 @@ class PressCardRepository @Inject constructor(
             enabled = getBool(KEY_SHORT_ENABLED),
             extras  = getExtras(KEY_SHORT_EXTRAS),
         ),
-        flashlight = ToggleCardState(enabled = getBool(KEY_FLASHLIGHT)),
     )
 
     fun longPress(): LongPressCards = LongPressCards(
@@ -48,9 +46,6 @@ class PressCardRepository @Inject constructor(
         LocalDataStorage.put(context, KEY_LONG_ENABLED, state.enabled.toString())
         putExtras(KEY_LONG_EXTRAS, state.extras)
     }
-
-    fun saveFlashlightEnabled(enabled: Boolean) =
-        LocalDataStorage.put(context, KEY_FLASHLIGHT, enabled.toString())
 
     fun saveFindPhoneEnabled(enabled: Boolean) =
         LocalDataStorage.put(context, KEY_FIND_PHONE, enabled.toString())

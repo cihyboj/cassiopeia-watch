@@ -20,7 +20,6 @@ import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.pairing.DeviceAssociationManager
 import com.beamburst.casswatch.utils.CrashReportHelper
 import com.beamburst.casswatch.utils.LocalDataStorage
-import com.beamburst.casswatch.utils.Utils
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ICDPDelegate
 import org.avmedia.gshockapi.ProgressEvents
@@ -36,6 +35,7 @@ constructor(
 
     // Constants for internal state keys and strings
     private companion object {
+        const val EVENT_SUBSCRIBER_ID = "PreConnectionViewModel"
         const val KEY_LAST_DEVICE_NAME = "LastDeviceName"
         const val KEY_LAST_DEVICE_ADDRESS = "LastDeviceAddress"
         const val EVENT_DEVICE_NAME = "DeviceName"
@@ -177,7 +177,12 @@ constructor(
                 // Handle no devices if necessary
             }
         )
-        ProgressEvents.runEventActions(Utils.AppHashCode(), eventActions)
+        ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, eventActions)
+    }
+
+    override fun onCleared() {
+        ProgressEvents.subscriber.stop(EVENT_SUBSCRIBER_ID)
+        super.onCleared()
     }
 
     fun associate(context: Context, delegate: ICDPDelegate) {

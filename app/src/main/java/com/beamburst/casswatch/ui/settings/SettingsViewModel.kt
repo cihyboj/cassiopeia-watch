@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.R
+import com.beamburst.casswatch.BroadcastSpec
+import com.beamburst.casswatch.PressBroadcastEmitter
 import com.beamburst.casswatch.data.local.BroadcastCardState
 import com.beamburst.casswatch.data.local.BroadcastExtra
 import com.beamburst.casswatch.data.local.PressCardRepository
@@ -53,14 +55,12 @@ sealed class UiEvent {
 data class PressCardsUiState(
     val shortBroadcast: BroadcastCardState = BroadcastCardState(),
     val longBroadcast:  BroadcastCardState = BroadcastCardState(),
-    val flashlight:     ToggleCardState    = ToggleCardState(),
     val findPhone:      ToggleCardState    = ToggleCardState(),
 )
 
 sealed class PressCardAction {
     data class ToggleShortBroadcast(val on: Boolean)  : PressCardAction()
     data class ToggleLongBroadcast(val on: Boolean)   : PressCardAction()
-    data class ToggleFlashlight(val on: Boolean)      : PressCardAction()
     data class ToggleFindPhone(val on: Boolean)       : PressCardAction()
     data class SaveShortExtras(val extras: List<BroadcastExtra>) : PressCardAction()
     data class SaveLongExtras(val extras: List<BroadcastExtra>)  : PressCardAction()
@@ -378,7 +378,6 @@ constructor(
             _pressCards.value = PressCardsUiState(
                 shortBroadcast = short.broadcast,
                 longBroadcast  = long.broadcast,
-                flashlight     = short.flashlight,
                 findPhone      = long.findPhone,
             )
         }
@@ -396,10 +395,6 @@ constructor(
                 _pressCards.value = _pressCards.value.copy(longBroadcast = updated)
                 pressCardRepository.saveLongBroadcast(updated)
             }
-            is PressCardAction.ToggleFlashlight -> {
-                _pressCards.value = _pressCards.value.copy(flashlight = ToggleCardState(action.on))
-                pressCardRepository.saveFlashlightEnabled(action.on)
-            }
             is PressCardAction.ToggleFindPhone -> {
                 _pressCards.value = _pressCards.value.copy(findPhone = ToggleCardState(action.on))
                 pressCardRepository.saveFindPhoneEnabled(action.on)
@@ -415,6 +410,10 @@ constructor(
                 pressCardRepository.saveLongBroadcast(updated)
             }
         }
+    }
+
+    fun sendTestBroadcast(spec: BroadcastSpec, extras: List<BroadcastExtra>) {
+        PressBroadcastEmitter.send(appContext, spec, extras)
     }
 
     fun setTimeNow() = viewModelScope.launch {

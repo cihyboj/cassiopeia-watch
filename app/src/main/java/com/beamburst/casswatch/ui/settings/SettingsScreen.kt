@@ -101,6 +101,9 @@ fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
                     settingsViewModel.onPressCardAction(PressCardAction.SaveShortExtras(extras))
                     onDismiss()
                 },
+                onSendTest = { extras ->
+                    settingsViewModel.sendTestBroadcast(BroadcastSpec.Short, extras)
+                },
                 onDismiss = onDismiss,
             )
         }
@@ -122,6 +125,9 @@ fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
                     settingsViewModel.onPressCardAction(PressCardAction.SaveLongExtras(extras))
                     onDismiss()
                 },
+                onSendTest = { extras ->
+                    settingsViewModel.sendTestBroadcast(BroadcastSpec.Long, extras)
+                },
                 onDismiss = onDismiss,
             )
         }
@@ -133,15 +139,6 @@ fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
         enabled = pressCards.findPhone.enabled,
         onEnabledChange = { on ->
             settingsViewModel.onPressCardAction(PressCardAction.ToggleFindPhone(on))
-        },
-    )
-
-    PressCard(
-        title = stringResource(R.string.toggle_flashlight),
-        subtitle = stringResource(R.string.flashlight_card_subtitle),
-        enabled = pressCards.flashlight.enabled,
-        onEnabledChange = { on ->
-            settingsViewModel.onPressCardAction(PressCardAction.ToggleFlashlight(on))
         },
     )
 

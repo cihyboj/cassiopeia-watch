@@ -61,6 +61,7 @@
     <string name="broadcast_action_label">Action string</string>
     <string name="broadcast_extras_label">Extras</string>
     <string name="broadcast_add_extra">+ Add extra</string>
+    <string name="broadcast_send_test" translatable="false">Send test broadcast</string>
     <string name="broadcast_copy_action">Copy to clipboard</string>
     <string name="broadcast_how_to_receive">How to receive</string>
     <string name="broadcast_help_text">Tasker → Profile → Event → System → Intent Received → Action: (paste above).\nMacroDroid: Trigger → Intent Received → Action: (paste above).\nAutomate: Start → Wait for broadcast → Action: (paste above).</string>

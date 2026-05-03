@@ -10,7 +10,6 @@ import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.utils.SyncHistoryLogger
-import com.beamburst.casswatch.utils.Utils
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
 import timber.log.Timber
@@ -24,9 +23,13 @@ class WeeklyAlarmScheduler @Inject constructor(
     private val syncLogger: SyncHistoryLogger,
     @param:ApplicationContext private val context: Context
 ) {
+    companion object {
+        private const val EVENT_SUBSCRIBER_ID = "WeeklyAlarmScheduler"
+    }
+
     init {
         ProgressEvents.runEventActions(
-            Utils.AppHashCode() + "WeeklyAlarmScheduler",
+            EVENT_SUBSCRIBER_ID,
             arrayOf(
                 EventAction("WatchInitializationCompleted") {
                     CoroutineScope(Dispatchers.IO).launch { applyTodaySchedule() }

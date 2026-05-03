@@ -16,7 +16,6 @@ import com.beamburst.casswatch.ui.events.CalendarEvents
 import com.beamburst.casswatch.ui.events.EventsModel
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.SyncHistoryLogger
-import com.beamburst.casswatch.utils.Utils
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.IGShockAPI
 import org.avmedia.gshockapi.ProgressEvents
@@ -36,10 +35,14 @@ class AutoSyncCoordinator @Inject constructor(
     private val notificationProvider: NotificationProvider,
     private val syncLogger: SyncHistoryLogger,
 ) {
+    companion object {
+        private const val EVENT_SUBSCRIBER_ID = "AutoSyncCoordinator"
+    }
+
     private val scope = CoroutineScope(Dispatchers.IO)
 
     init {
-        ProgressEvents.runEventActions(Utils.AppHashCode(), arrayOf(
+        ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, arrayOf(
             EventAction("ButtonPressedInfoReceived") {
                 if (api.isAutoTimeStarted()) scope.launch { runChain() }
             },

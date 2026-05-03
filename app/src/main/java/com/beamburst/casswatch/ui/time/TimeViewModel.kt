@@ -54,6 +54,9 @@ class TimeViewModel @Inject constructor(
     @param:ApplicationContext private val appContext: Context,
     private val syncLogger: SyncHistoryLogger,
 ) : ViewModel() {
+    companion object {
+        private const val EVENT_SUBSCRIBER_ID = "TimeViewModel"
+    }
 
     private val _state = MutableStateFlow(TimeState())
     val state = _state.asStateFlow()
@@ -63,16 +66,23 @@ class TimeViewModel @Inject constructor(
 
     init {
         ProgressEvents.runEventActions(
-            Utils.AppHashCode(),
+            EVENT_SUBSCRIBER_ID,
             arrayOf(
                 EventAction("WatchInitializationCompleted") { onWatchConnected() },
                 EventAction("ConnectionSetupComplete") { onWatchConnected() },
+                EventAction("DeviceName") { refreshState() },
+                EventAction("DeviceAddress") { refreshState() },
                 EventAction("Disconnect") { refreshState() },
                 EventAction("DeviceDisappeared") { refreshState() },
                 EventAction("ConnectionFailed") { refreshState() },
             )
         )
         refreshState()
+    }
+
+    override fun onCleared() {
+        ProgressEvents.subscriber.stop(EVENT_SUBSCRIBER_ID)
+        super.onCleared()
     }
 
     fun onAction(action: TimeAction) {
@@ -151,8 +161,15 @@ class TimeViewModel @Inject constructor(
     }
 
     private fun resolveWatchName(): String {
+        val lastAddress = LocalDataStorage.get(appContext, "LastDeviceAddress", "")
+        if (!lastAddress.isNullOrBlank()) {
+            val perDevice = LocalDataStorage.getDeviceName(appContext, lastAddress)
+            if (!perDevice.isNullOrBlank()) return perDevice.removePrefix("CASIO").trim()
+        }
         val stored = LocalDataStorage.get(appContext, "LastDeviceName", "")
         if (!stored.isNullOrBlank()) return stored.removePrefix("CASIO").trim()
+        val connectedName = if (api.isConnected()) WatchInfo.name else ""
+        if (!connectedName.isNullOrBlank()) return connectedName.removePrefix("CASIO").trim()
         return appContext.getString(R.string.no_watch)
     }
 

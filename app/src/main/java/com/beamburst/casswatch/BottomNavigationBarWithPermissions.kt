@@ -65,6 +65,17 @@ fun BottomNavigationBarWithPermissions(
         }
     }
 
+    fun navigateToTab(route: String) {
+        navController.popBackStack(Screens.SyncHistory.route, inclusive = true)
+        navController.navigate(route) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
     DisposableEffect(Unit) {
         inactivityHandler.startMonitoring()
         onDispose {
@@ -110,13 +121,7 @@ fun BottomNavigationBarWithPermissions(
                                 )
                             },
                             onClick = {
-                                navController.navigate(navigationItem.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                                navigateToTab(navigationItem.route)
                             },
                             alwaysShowLabel = true,
                             colors = NavigationBarItemDefaults.colors(
@@ -141,7 +146,12 @@ fun BottomNavigationBarWithPermissions(
             }
             composable(Screens.Alarms.route) {
                 AlarmsScreen(
-                    onNavigateToHistory = { navController.navigate(Screens.SyncHistory.route) }
+                    onNavigateToHistory = {
+                        navController.navigate(Screens.SyncHistory.route) {
+                            launchSingleTop = true
+                            restoreState = false
+                        }
+                    }
                 )
             }
             composable(Screens.Events.route) {
@@ -156,7 +166,12 @@ fun BottomNavigationBarWithPermissions(
             }
             composable(Screens.Settings.route) {
                 SettingsScreen(
-                    onNavigateToHistory = { navController.navigate(Screens.SyncHistory.route) }
+                    onNavigateToHistory = {
+                        navController.navigate(Screens.SyncHistory.route) {
+                            launchSingleTop = true
+                            restoreState = false
+                        }
+                    }
                 )
             }
             composable(Screens.SyncHistory.route) {
