@@ -8,6 +8,6 @@ object HourlySignalEvaluator {
         if (!settings.enabled) return false
         val endNorm = if (settings.endHour == 0) 24 else settings.endHour
         val nextHourBoundary = now.hour + 1
-        return nextHourBoundary in settings.startHour until endNorm
+        return nextHourBoundary in settings.startHour..endNorm
     }
 }

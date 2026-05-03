@@ -1,5 +1,7 @@
 package com.beamburst.casswatch.ui.alarms
 
+import android.graphics.Paint
+import android.widget.EditText
 import android.widget.NumberPicker
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,7 +17,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.theme.Spacing
@@ -26,6 +31,26 @@ private val START_HOURS       = intArrayOf(1, 7, 13, 19)
 private val END_HOURS         = intArrayOf(6, 12, 18, 0)
 private val START_DISPLAYED   = arrayOf("01", "07", "13", "19")
 private val END_DISPLAYED_ALL = arrayOf("06", "12", "18", "00")
+
+private fun NumberPicker.applyTextStyle(colorArgb: Int, textSizePx: Float) {
+    runCatching {
+        val paintField = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint")
+        paintField.isAccessible = true
+        (paintField.get(this) as? Paint)?.apply {
+            color = colorArgb
+            textSize = textSizePx
+        }
+    }
+    runCatching {
+        val inputField = NumberPicker::class.java.getDeclaredField("mInputText")
+        inputField.isAccessible = true
+        (inputField.get(this) as? EditText)?.apply {
+            setTextColor(colorArgb)
+            setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, textSizePx)
+        }
+    }
+    invalidate()
+}
 
 private fun validEndIndicesFor(startIndex: Int): List<Int> {
     val s = START_HOURS[startIndex]
@@ -51,6 +76,10 @@ fun HourlySignalDialog(
     var selectedStartIndex     by remember { mutableIntStateOf(initialStartIndex) }
     var selectedEndLocalIndex  by remember { mutableIntStateOf(initialEndLocalIndex) }
 
+    // Capture theme values here (composable scope) for use inside AndroidView factory
+    val pickerTextColorArgb = MaterialTheme.colorScheme.onSurface.toArgb()
+    val pickerTextSizePx    = with(LocalDensity.current) { 18.sp.toPx() }
+
     fun currentStartHourValue() = START_HOURS[selectedStartIndex]
     fun currentEndHourValue(): Int {
         val validEnds = validEndIndicesFor(selectedStartIndex)
@@ -62,14 +91,16 @@ fun HourlySignalDialog(
         val s = currentStartHourValue()
         val e = currentEndHourValue()
         val endNorm = if (e == 0) 24 else e
-        return (endNorm - s).coerceAtLeast(0)
+        return (endNorm - s + 1).coerceAtLeast(0)  // inclusive
     }
 
     fun chimeHoursText(): String {
         val s = currentStartHourValue()
         val e = currentEndHourValue()
         val endNorm = if (e == 0) 24 else e
-        return (s until endNorm).joinToString(", ") { String.format("%02d:00", it) }
+        return (s..endNorm).joinToString(", ") { h ->  // inclusive
+            String.format("%02d:00", if (h == 24) 0 else h)
+        }
     }
 
     AlertDialog(
@@ -99,6 +130,7 @@ fun HourlySignalDialog(
                                         selectedStartIndex = newVal
                                         selectedEndLocalIndex = 0
                                     }
+                                    applyTextStyle(pickerTextColorArgb, pickerTextSizePx)
                                 }
                             }
                         )
@@ -130,6 +162,7 @@ fun HourlySignalDialog(
                                     setOnValueChangedListener { _, _, newVal ->
                                         selectedEndLocalIndex = newVal
                                     }
+                                    applyTextStyle(pickerTextColorArgb, pickerTextSizePx)
                                 }
                             },
                             update = { picker ->
