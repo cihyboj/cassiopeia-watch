@@ -20,12 +20,10 @@ import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.pairing.CompanionDevicePresenceMonitor
 import com.beamburst.casswatch.pairing.DeviceAssociationManager
 import com.beamburst.casswatch.services.DeviceManager
-import com.beamburst.casswatch.ui.actions.ActionRunner
 import com.beamburst.casswatch.ui.alarms.WeeklyAlarmScheduler
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.common.CrashLogDialog
 import com.beamburst.casswatch.ui.others.CoverScreen
-import com.beamburst.casswatch.ui.others.RunActionsScreen
 import com.beamburst.casswatch.ui.others.RunFindPhoneScreen
 import com.beamburst.casswatch.utils.ActivityProvider
 import timber.log.Timber
@@ -36,7 +34,6 @@ enum class AppScreen {
     PRE_CONNECTION,
     CONTENT_SELECTOR,
     MAIN_NAVIGATION,
-    RUN_ACTIONS,
     ERROR
 }
 
@@ -62,6 +59,12 @@ class GShockApplication : Application(), IScreenManager {
 
     @Inject
     lateinit var weeklyAlarmScheduler: WeeklyAlarmScheduler
+
+    @Inject
+    lateinit var watchButtonDispatcher: WatchButtonDispatcher
+
+    @Inject
+    lateinit var autoSyncCoordinator: AutoSyncCoordinator
 
     fun init() {
         Timber.i("Initializing GShockApplication")
@@ -95,10 +98,6 @@ class GShockApplication : Application(), IScreenManager {
         currentScreen = AppScreen.CONTENT_SELECTOR
     }
 
-    override fun showRunActionsScreen() {
-        currentScreen = AppScreen.RUN_ACTIONS
-    }
-
     private fun goToNavigationScreen() {
         currentScreen = AppScreen.MAIN_NAVIGATION
     }
@@ -119,9 +118,6 @@ class GShockApplication : Application(), IScreenManager {
 
     @Composable
     fun Run(contentPadding: PaddingValues) {
-        // Start ActionRunner here so we can run actions on connection
-        ActionRunner(context = this, api = repository)
-
         StartScreen(contentPadding) { BottomNavigationBarWithPermissions(repository = repository) }
         LaunchedEffect(key1 = System.currentTimeMillis()) {
             deviceAssociationManager.checkPairedDevicesOrNotify()
@@ -157,43 +153,26 @@ class GShockApplication : Application(), IScreenManager {
                         onUnlocked = { goToNavigationScreen() }
                     )
                 }
-
             AppScreen.MAIN_NAVIGATION ->
                 StartScreen(contentPadding) {
                     BottomNavigationBarWithPermissions(repository = repository)
                 }
-
-            AppScreen.RUN_ACTIONS -> StartScreen(contentPadding) { RunActionsScreen() }
-            AppScreen.ERROR -> {
-                // Keep showing previous screen or a default one, but show error snackbar
-                // Or show a specific error screen if needed
+            AppScreen.ERROR ->
                 StartScreen(contentPadding) {
                     BottomNavigationBarWithPermissions(repository = repository)
                 }
-            }
         }
     }
 
     @Composable
     private fun ContentSelector(repository: GShockRepository, onUnlocked: () -> Unit) {
         when {
-            repository.isAlwaysConnectedConnectionPressed() -> {
+            repository.isAlwaysConnectedConnectionPressed() ->
                 CoverScreen(onUnlock = onUnlocked, isConnected = repository.isConnected())
-            }
-
-            repository.isActionButtonPressed() || repository.isAutoTimeStarted() -> {
-                RunActionsScreen()
-            }
-
-            repository.isFindPhoneButtonPressed() -> {
+            repository.isFindPhoneButtonPressed() ->
                 RunFindPhoneScreen()
-            }
-
-            else -> {
-                BottomNavigationBarWithPermissions(
-                    repository = repository,
-                )
-            }
+            else ->
+                BottomNavigationBarWithPermissions(repository = repository)
         }
     }
 
