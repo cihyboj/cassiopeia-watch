@@ -27,7 +27,7 @@
 
     ]]></string>
 
-    <string name="alarms_screen_info"><![CDATA[The <b>B5600/B5000/B2100</b> watches have 5 alarms and a "signal" (hourly chime) settings shown here.
+    <string name="alarms_screen_info"><![CDATA[The <b>B5600/B5000/B2100</b> watches have 5 alarms shown here.
     The alarms can be updated by pressing on the time value of each alarm. A new dialog will appear, which allows you to set the alarm\'s time.
     Once the alarms have been set, you can send them to the watch, or send them to the Alarm Clock app on the phone.]]></string>
     <string name="events_screen_info"><![CDATA[This screen displays Events from your <b>Google Calendar</b> and allows you to send them to the watch\'s
@@ -50,6 +50,12 @@
     <string name="email_example_com">me@example.com</string>
     <string name="watch_alarms">Watch Alarms</string>
     <string name="signal_chime">Signal (chime)</string>
+    <string name="hourly_signal_title">Hourly signal</string>
+    <string name="hourly_signal_window_caption">%1$s:00 – %2$s:00</string>
+    <string name="hourly_signal_chimes_at">Chimes at %1$s (%2$d chimes / day)</string>
+    <string name="hourly_signal_requires_auto_sync">Requires automatic sync. The watch updates at 0:00, 6:00, 12:00 and 18:00.</string>
+    <string name="hourly_signal_picker_start">start</string>
+    <string name="hourly_signal_picker_end">end</string>
     <string name="google_calendar_events">Google Calendar Events</string>
     <string name="local_time">Local Time</string>
     <string name="send_to_watch">Send to\nWatch</string>

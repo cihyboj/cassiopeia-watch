@@ -216,4 +216,10 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="watches">Watches</string>
     <string name="no_paired_watches">No paired watches</string>
     <string name="watch_not_connected">Watch not connected</string>
+    <string name="hourly_signal_title">Hourly signal</string>
+    <string name="hourly_signal_window_caption">%1$s:00 – %2$s:00</string>
+    <string name="hourly_signal_chimes_at">Chimes at %1$s (%2$d chimes / day)</string>
+    <string name="hourly_signal_requires_auto_sync">Requires automatic sync. The watch updates at 0:00, 6:00, 12:00 and 18:00.</string>
+    <string name="hourly_signal_picker_start">start</string>
+    <string name="hourly_signal_picker_end">end</string>
 </resources>
