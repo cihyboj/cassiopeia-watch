@@ -1,6 +1,7 @@
 package com.beamburst.casswatch.ui.time
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -115,12 +117,16 @@ fun WatchSummaryCard(
 
 @Composable
 private fun StatusPill(connected: Boolean) {
-    val containerColor =
-        if (connected) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surfaceVariant
-    val contentColor =
-        if (connected) MaterialTheme.colorScheme.onPrimaryContainer
-        else MaterialTheme.colorScheme.onSurfaceVariant
+    val (containerColor, contentColor) =
+        if (connected) {
+            if (isSystemInDarkTheme()) {
+                Color(0xFF1B5E20) to Color(0xFFC8E6C9)
+            } else {
+                Color(0xFFE8F5E9) to Color(0xFF1B5E20)
+            }
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+        }
 
     Surface(
         color = containerColor,
@@ -128,7 +134,7 @@ private fun StatusPill(connected: Boolean) {
         shape = MaterialTheme.shapes.small
     ) {
         AppText(
-            text = if (connected) stringResource(R.string.status_live) else stringResource(R.string.status_offline),
+            text = if (connected) stringResource(R.string.status_online) else stringResource(R.string.status_offline),
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)
         )

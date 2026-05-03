@@ -177,7 +177,9 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="manage_watches">Manage watches</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>
-    <string name="status_live">Live</string>
+    <string name="status_online">En línea</string>
+    <string name="watch_snackbar_connected">%1$s conectado</string>
+    <string name="watch_snackbar_connected_no_name">Reloj conectado</string>
     <string name="status_offline">Offline</string>
     <string name="metric_battery">Battery</string>
     <string name="metric_temperature">Temperature</string>

@@ -183,7 +183,9 @@
     <string name="manage_watches">Manage watches</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>
-    <string name="status_live">Live</string>
+    <string name="status_online">En línia</string>
+    <string name="watch_snackbar_connected">%1$s connectat</string>
+    <string name="watch_snackbar_connected_no_name">Rellotge connectat</string>
     <string name="status_offline">Offline</string>
     <string name="metric_battery">Battery</string>
     <string name="metric_temperature">Temperature</string>
