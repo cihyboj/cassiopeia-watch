@@ -212,9 +212,7 @@ fun AlarmsScreen(alarmViewModel: AlarmViewModel = hiltViewModel()) {
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(Spacing.sm)
                 ) {
-                    AlarmChimeSwitch(
-                        onUpdate = { isChecked -> alarmViewModel.toggleHourlyChime(isChecked) }
-                    )
+                    HourlySignalCard()
                     AlarmsActionRow(alarmViewModel = alarmViewModel)
                 }
             }

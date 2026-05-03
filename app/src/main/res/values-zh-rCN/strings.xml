@@ -38,7 +38,6 @@
     <string name="email_item">电子邮件对象</string>
     <string name="email_example_com">me@example.com</string>
     <string name="watch_alarms">手表闹钟</string>
-    <string name="signal_chime">整点提醒</string>
     <string name="google_calendar_events">Google Calendar事件</string>
     <string name="local_time">本地时间</string>
     <string name="send_to_watch">发送到手表</string>
@@ -220,4 +219,10 @@
     <string name="timerDialogTitle">Timer</string>
     <string name="info_home_time">Home Time</string>
     <string name="time_adjustment_info">Time Adjustment</string>
+    <string name="hourly_signal_title">Hourly signal</string>
+    <string name="hourly_signal_window_caption">%1$s:00 – %2$s:00</string>
+    <string name="hourly_signal_chimes_at">Chimes at %1$s (%2$d chimes / day)</string>
+    <string name="hourly_signal_requires_auto_sync">Requires automatic sync. The watch updates at 0:00, 6:00, 12:00 and 18:00.</string>
+    <string name="hourly_signal_picker_start">start</string>
+    <string name="hourly_signal_picker_end">end</string>
 </resources>

@@ -38,7 +38,6 @@
     <string name="email_item">عنصر البريد الإلكتروني</string>
     <string name="email_example_com">me@example.com</string>
     <string name="watch_alarms">منبهات الساعة</string>
-    <string name="signal_chime">الإشارة (جرس الساعة)</string>
     <string name="google_calendar_events">أحداث تقويم Google</string>
     <string name="local_time">الوقت المحلي</string>
     <string name="send_to_watch">إرسال إلى\nالساعة</string>
@@ -223,4 +222,10 @@
     <string name="watches">Watches</string>
     <string name="no_paired_watches">No paired watches</string>
     <string name="watch_not_connected">Watch not connected</string>
+    <string name="hourly_signal_title">Hourly signal</string>
+    <string name="hourly_signal_window_caption">%1$s:00 – %2$s:00</string>
+    <string name="hourly_signal_chimes_at">Chimes at %1$s (%2$d chimes / day)</string>
+    <string name="hourly_signal_requires_auto_sync">Requires automatic sync. The watch updates at 0:00, 6:00, 12:00 and 18:00.</string>
+    <string name="hourly_signal_picker_start">start</string>
+    <string name="hourly_signal_picker_end">end</string>
 </resources>

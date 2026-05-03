@@ -37,5 +37,11 @@ object AlarmSchedulePlanner {
         }
     }
 
+    fun mirrorChime(alarms: List<Alarm>, chimeEnabled: Boolean): List<Alarm> =
+        if (alarms.isEmpty()) alarms
+        else alarms.mapIndexed { index, alarm ->
+            if (index == 0) alarm.copy(hasHourlyChime = chimeEnabled) else alarm
+        }
+
     private fun Alarm.time(): LocalTime = LocalTime.of(hour, minute)
 }
