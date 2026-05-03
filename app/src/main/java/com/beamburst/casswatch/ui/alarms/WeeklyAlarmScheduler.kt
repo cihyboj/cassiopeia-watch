@@ -67,7 +67,7 @@ class WeeklyAlarmScheduler @Inject constructor(
             val hashes = desiredAlarms.mapIndexed { index, alarm ->
                 val days = alarmDays[index] ?: emptySet()
                 alarmHash(alarm.hour, alarm.minute, days, alarm.enabled)
-            }.toSet()
+            }
 
             val setResult = runCatching { api.setAlarms(ArrayList(newAlarms)) }
             syncLogger.record(

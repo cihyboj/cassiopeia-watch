@@ -82,8 +82,8 @@ fun alarmHash(
     days: Set<DayOfWeek>,
     enabled: Boolean
 ): String {
-    val dayMask = if (days.isEmpty()) "ALL" else days.sorted().joinToString(",") { it.name }
-    return "$hour:$minute:$dayMask:$enabled"
+    val dayMask = if (days.isEmpty()) "ALL" else days.sorted().joinToString(",") { it.name.take(3) }
+    return "%02d:%02d:%s:%s".format(hour, minute, dayMask, enabled)
 }
 
 @HiltViewModel
@@ -404,7 +404,7 @@ class AlarmViewModel @Inject constructor(
         val hashes = desiredAlarms.mapIndexed { index, alarm ->
             val days = _alarmDays.value[index] ?: emptySet()
             alarmHash(alarm.hour, alarm.minute, days, alarm.enabled)
-        }.toSet()
+        }
 
         val result = runCatching {
             api.getAlarms()
@@ -428,13 +428,16 @@ class AlarmViewModel @Inject constructor(
         }
         syncLogger.record(
             trigger = SyncTrigger.MANUAL_SEND_ALARMS,
-            kinds = setOf(SyncKind.ALARMS),
+            kinds = setOf(SyncKind.ALARMS, SyncKind.HOURLY_SIGNAL),
             success = result.isSuccess,
             errorMessage = result.exceptionOrNull()?.message,
             details = SyncDetails(
                 alarmHashes = hashes,
                 eventCount = null,
-                hourlySignalTarget = null,
+                hourlySignalTarget = HourlySignalEvaluator.shouldChimeAt(
+                    LocalDateTime.now(),
+                    HourlySignalSettings.load(appContext)
+                ),
                 timeMs = null,
             ),
         )

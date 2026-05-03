@@ -1,7 +1,6 @@
 package com.beamburst.casswatch.ui.settings
 
 import AppSwitch
-import androidx.compose.ui.graphics.graphicsLayer
 import com.beamburst.casswatch.ui.common.AppTextLink
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -186,7 +185,6 @@ private fun NotifyMeRow(
         AppSwitch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            modifier = Modifier.graphicsLayer(scaleX = 0.82f, scaleY = 0.82f)
         )
     }
 }

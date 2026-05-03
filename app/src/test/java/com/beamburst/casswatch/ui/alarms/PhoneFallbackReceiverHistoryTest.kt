@@ -10,7 +10,7 @@ import org.junit.Test
 
 class PhoneFallbackReceiverHistoryTest {
 
-    private fun syncEntry(alarmHashes: Set<String>?, success: Boolean = true) = SyncEntry(
+    private fun syncEntry(alarmHashes: List<String>?, success: Boolean = true) = SyncEntry(
         timestamp = 1000L,
         deviceAddress = "AA:BB",
         trigger = SyncTrigger.MANUAL_SEND_ALARMS,
@@ -27,24 +27,24 @@ class PhoneFallbackReceiverHistoryTest {
 
     @Test
     fun `trusts watch when expected hash in last successful alarm sync`() {
-        val entries = listOf(syncEntry(setOf("6:30:ALL:true", "9:00:MON:false")))
-        assertTrue(watchTrustsAlarm(entries, "6:30:ALL:true"))
+        val entries = listOf(syncEntry(listOf("06:30:ALL:true", "09:00:MON:false")))
+        assertTrue(watchTrustsAlarm(entries, "06:30:ALL:true"))
     }
 
     @Test
     fun `fires fallback when expected hash not in last successful sync`() {
-        val entries = listOf(syncEntry(setOf("9:00:MON:false")))
-        assertFalse(watchTrustsAlarm(entries, "6:30:ALL:true"))
+        val entries = listOf(syncEntry(listOf("09:00:MON:false")))
+        assertFalse(watchTrustsAlarm(entries, "06:30:ALL:true"))
     }
 
     @Test
     fun `fires fallback when last alarm sync was a failure`() {
-        val entries = listOf(syncEntry(setOf("6:30:ALL:true"), success = false))
-        assertFalse(watchTrustsAlarm(entries, "6:30:ALL:true"))
+        val entries = listOf(syncEntry(listOf("06:30:ALL:true"), success = false))
+        assertFalse(watchTrustsAlarm(entries, "06:30:ALL:true"))
     }
 
     @Test
     fun `fires fallback when history is empty`() {
-        assertFalse(watchTrustsAlarm(emptyList(), "6:30:ALL:true"))
+        assertFalse(watchTrustsAlarm(emptyList(), "06:30:ALL:true"))
     }
 }

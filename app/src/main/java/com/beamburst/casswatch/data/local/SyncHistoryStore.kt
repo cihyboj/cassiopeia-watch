@@ -42,7 +42,7 @@ class SyncHistoryStore @Inject constructor(
     private fun key(address: String) = "SyncHistory_$address"
 
     companion object {
-        private const val CAPACITY = 25
+        private const val CAPACITY = 50
 
         // Non-Hilt factory for use in BroadcastReceiver (no injection available)
         operator fun invoke(context: Context): SyncHistoryStore =
@@ -61,7 +61,7 @@ internal fun serializeSyncHistory(entries: List<SyncEntry>): String {
             put("ok", e.success)
             e.errorMessage?.let { put("err", it.take(200)) }
             put("d", JSONObject().apply {
-                e.details.alarmHashes?.let { put("aH", JSONArray(it.toList())) }
+                e.details.alarmHashes?.let { put("aH", JSONArray(it)) }
                 e.details.eventCount?.let { put("eC", it) }
                 e.details.hourlySignalTarget?.let { put("hT", it) }
                 e.details.timeMs?.let { put("tM", it) }
@@ -94,7 +94,7 @@ private fun parseEntry(obj: JSONObject): SyncEntry {
         errorMessage = obj.optString("err").takeIf { it.isNotEmpty() },
         details = SyncDetails(
             alarmHashes = if (d.has("aH")) {
-                val aH = d.getJSONArray("aH"); (0 until aH.length()).map { aH.getString(it) }.toSet()
+                val aH = d.getJSONArray("aH"); (0 until aH.length()).map { aH.getString(it) }
             } else null,
             eventCount         = if (d.has("eC")) d.getInt("eC") else null,
             hourlySignalTarget = if (d.has("hT")) d.getBoolean("hT") else null,

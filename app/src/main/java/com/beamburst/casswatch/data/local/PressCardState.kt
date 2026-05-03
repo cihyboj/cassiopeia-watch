@@ -13,7 +13,13 @@ data class BroadcastCardState(
     val extras: List<BroadcastExtra> = emptyList(),
 )
 
-data class ToggleCardState(val enabled: Boolean = false)
+enum class FindPhoneMelody { ALARM, RINGTONE, NOTIFICATION }
+
+data class FindPhoneCardState(
+    val enabled: Boolean = false,
+    val volumePercent: Int = 100,
+    val melody: FindPhoneMelody = FindPhoneMelody.ALARM,
+)
 
 data class ShortPressCards(
     val broadcast: BroadcastCardState,
@@ -21,5 +27,5 @@ data class ShortPressCards(
 
 data class LongPressCards(
     val broadcast: BroadcastCardState,
-    val findPhone: ToggleCardState,
+    val findPhone: FindPhoneCardState,
 )

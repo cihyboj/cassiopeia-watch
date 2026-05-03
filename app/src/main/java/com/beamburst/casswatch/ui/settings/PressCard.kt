@@ -14,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import AppSwitch
 import com.beamburst.casswatch.theme.Spacing
 import com.beamburst.casswatch.ui.common.AppCard
@@ -62,7 +61,6 @@ fun PressCard(
             AppSwitch(
                 checked = enabled,
                 onCheckedChange = onEnabledChange,
-                modifier = Modifier.graphicsLayer(scaleX = 0.82f, scaleY = 0.82f),
             )
         }
     }

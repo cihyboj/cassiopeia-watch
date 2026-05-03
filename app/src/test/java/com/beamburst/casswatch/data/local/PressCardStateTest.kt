@@ -10,8 +10,11 @@ class PressCardStateTest {
         assertTrue(s.extras.isEmpty())
     }
 
-    @Test fun toggleCardStateDefaultsToDisabled() {
-        assertFalse(ToggleCardState().enabled)
+    @Test fun findPhoneCardStateDefaults() {
+        val state = FindPhoneCardState()
+        assertFalse(state.enabled)
+        assertEquals(100, state.volumePercent)
+        assertEquals(FindPhoneMelody.ALARM, state.melody)
     }
 
     @Test fun extraTypesHaveThreeValues() {
@@ -35,7 +38,7 @@ class PressCardStateTest {
     @Test fun longPressCardsAggregatesBothCards() {
         val l = LongPressCards(
             broadcast = BroadcastCardState(enabled = false),
-            findPhone = ToggleCardState(enabled = true),
+            findPhone = FindPhoneCardState(enabled = true),
         )
         assertFalse(l.broadcast.enabled)
         assertTrue(l.findPhone.enabled)

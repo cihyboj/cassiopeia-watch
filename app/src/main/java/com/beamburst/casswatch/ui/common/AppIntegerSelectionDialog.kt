@@ -115,6 +115,8 @@ fun NumberPickerView(
     val adjustedMinValue = 0
     val adjustedMaxValue = pickerValues.size - 1
     val safeSelectedIndex = selectedIndex.coerceIn(0, adjustedMaxValue)
+    val selectedTextColor = Color.White.toArgb()
+    val inactiveTextColor = Color(0xFFC7CBD1).toArgb()
 
     Box(
         modifier = modifier
@@ -133,10 +135,8 @@ fun NumberPickerView(
                     descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
                     this.wrapSelectorWheel = wrapSelectorWheel
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        this.textColor = contentColor.toArgb()
-                        this.textSize = textSize.value
-                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) this.textSize = textSize.value
+                    applyWheelTextStyle(selectedTextColor, inactiveTextColor, textSize.value)
 
                     setOnValueChangedListener { _, _, newVal ->
                         onValueChange(newVal)
@@ -148,6 +148,7 @@ fun NumberPickerView(
                 picker.minValue = adjustedMinValue
                 picker.maxValue = adjustedMaxValue
                 picker.displayedValues = pickerValues.map { "$it$unit" }.toTypedArray()
+                picker.applyWheelTextStyle(selectedTextColor, inactiveTextColor, textSize.value)
             }
         )
     }

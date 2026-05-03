@@ -20,6 +20,8 @@ class PressCardRepository @Inject constructor(
         const val KEY_LONG_ENABLED  = "PressCard.Long.enabled"
         const val KEY_LONG_EXTRAS   = "PressCard.Long.extras"
         const val KEY_FIND_PHONE    = "PressCard.FindPhone.enabled"
+        const val KEY_FIND_PHONE_VOLUME = "PressCard.FindPhone.volume"
+        const val KEY_FIND_PHONE_MELODY = "PressCard.FindPhone.melody"
     }
 
     fun shortPress(): ShortPressCards = ShortPressCards(
@@ -34,7 +36,13 @@ class PressCardRepository @Inject constructor(
             enabled = getBool(KEY_LONG_ENABLED),
             extras  = getExtras(KEY_LONG_EXTRAS),
         ),
-        findPhone = ToggleCardState(enabled = getBool(KEY_FIND_PHONE)),
+        findPhone = FindPhoneCardState(
+            enabled = getBool(KEY_FIND_PHONE),
+            volumePercent = getInt(KEY_FIND_PHONE_VOLUME, 100).coerceIn(0, 100),
+            melody = runCatching {
+                FindPhoneMelody.valueOf(LocalDataStorage.get(context, KEY_FIND_PHONE_MELODY, FindPhoneMelody.ALARM.name)!!)
+            }.getOrDefault(FindPhoneMelody.ALARM),
+        ),
     )
 
     fun saveShortBroadcast(state: BroadcastCardState) {
@@ -50,8 +58,17 @@ class PressCardRepository @Inject constructor(
     fun saveFindPhoneEnabled(enabled: Boolean) =
         LocalDataStorage.put(context, KEY_FIND_PHONE, enabled.toString())
 
+    fun saveFindPhoneConfig(state: FindPhoneCardState) {
+        LocalDataStorage.put(context, KEY_FIND_PHONE, state.enabled.toString())
+        LocalDataStorage.put(context, KEY_FIND_PHONE_VOLUME, state.volumePercent.coerceIn(0, 100).toString())
+        LocalDataStorage.put(context, KEY_FIND_PHONE_MELODY, state.melody.name)
+    }
+
     private fun getBool(key: String) =
         LocalDataStorage.get(context, key, "false")?.toBoolean() ?: false
+
+    private fun getInt(key: String, default: Int): Int =
+        LocalDataStorage.get(context, key, default.toString())?.toIntOrNull() ?: default
 
     private fun getExtras(key: String): List<BroadcastExtra> {
         val json = LocalDataStorage.get(context, key, "[]") ?: "[]"

@@ -6,10 +6,14 @@ enum class SyncTrigger {
     MANUAL_SET_TIME,
     MANUAL_SEND_ALARMS,
     MANUAL_SEND_EVENTS,
+    MANUAL_SEND_SETTINGS,
     MANUAL_SETTINGS_SET_TIME,
+    CONNECTION_CONNECTED,
+    CONNECTION_DISCONNECTED,
+    CONNECTION_FAILED,
 }
 
-enum class SyncKind { TIME, ALARMS, EVENTS, HOURLY_SIGNAL }
+enum class SyncKind { TIME, ALARMS, EVENTS, HOURLY_SIGNAL, SETTINGS, CONNECTION }
 
 data class SyncEntry(
     val timestamp: Long,
@@ -22,7 +26,7 @@ data class SyncEntry(
 )
 
 data class SyncDetails(
-    val alarmHashes: Set<String>?,
+    val alarmHashes: List<String>?,
     val eventCount: Int?,
     val hourlySignalTarget: Boolean?,
     val timeMs: Long?,

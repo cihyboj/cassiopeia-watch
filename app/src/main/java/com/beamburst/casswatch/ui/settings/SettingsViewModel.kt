@@ -21,11 +21,12 @@ import com.beamburst.casswatch.BroadcastSpec
 import com.beamburst.casswatch.PressBroadcastEmitter
 import com.beamburst.casswatch.data.local.BroadcastCardState
 import com.beamburst.casswatch.data.local.BroadcastExtra
+import com.beamburst.casswatch.data.local.FindPhoneCardState
+import com.beamburst.casswatch.data.local.FindPhoneMelody
 import com.beamburst.casswatch.data.local.PressCardRepository
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
-import com.beamburst.casswatch.data.local.ToggleCardState
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.utils.LocalDataStorage
@@ -55,13 +56,14 @@ sealed class UiEvent {
 data class PressCardsUiState(
     val shortBroadcast: BroadcastCardState = BroadcastCardState(),
     val longBroadcast:  BroadcastCardState = BroadcastCardState(),
-    val findPhone:      ToggleCardState    = ToggleCardState(),
+    val findPhone:      FindPhoneCardState = FindPhoneCardState(),
 )
 
 sealed class PressCardAction {
     data class ToggleShortBroadcast(val on: Boolean)  : PressCardAction()
     data class ToggleLongBroadcast(val on: Boolean)   : PressCardAction()
     data class ToggleFindPhone(val on: Boolean)       : PressCardAction()
+    data class SaveFindPhoneConfig(val volumePercent: Int, val melody: FindPhoneMelody) : PressCardAction()
     data class SaveShortExtras(val extras: List<BroadcastExtra>) : PressCardAction()
     data class SaveLongExtras(val extras: List<BroadcastExtra>)  : PressCardAction()
 }
@@ -396,8 +398,17 @@ constructor(
                 pressCardRepository.saveLongBroadcast(updated)
             }
             is PressCardAction.ToggleFindPhone -> {
-                _pressCards.value = _pressCards.value.copy(findPhone = ToggleCardState(action.on))
-                pressCardRepository.saveFindPhoneEnabled(action.on)
+                val updated = _pressCards.value.findPhone.copy(enabled = action.on)
+                _pressCards.value = _pressCards.value.copy(findPhone = updated)
+                pressCardRepository.saveFindPhoneConfig(updated)
+            }
+            is PressCardAction.SaveFindPhoneConfig -> {
+                val updated = _pressCards.value.findPhone.copy(
+                    volumePercent = action.volumePercent.coerceIn(0, 100),
+                    melody = action.melody,
+                )
+                _pressCards.value = _pressCards.value.copy(findPhone = updated)
+                pressCardRepository.saveFindPhoneConfig(updated)
             }
             is PressCardAction.SaveShortExtras -> {
                 val updated = _pressCards.value.shortBroadcast.copy(extras = action.extras)
@@ -477,7 +488,7 @@ constructor(
         }
 
         viewModelScope.launch {
-            runCatching {
+            val result = runCatching {
                 if (!api.isConnected()) {
                     AppSnackbar(appContext.getString(R.string.watch_not_connected))
                     return@runCatching
@@ -486,9 +497,13 @@ constructor(
                 api.setSettings(settings)
                 AppSnackbar(appContext.getString(R.string.settings_sent_to_watch))
             }
-                    .onFailure { e ->
-                        AppSnackbar(e.message ?: "Api Error")
-                    }
+            syncLogger.record(
+                trigger = SyncTrigger.MANUAL_SEND_SETTINGS,
+                kinds = setOf(SyncKind.SETTINGS),
+                success = result.isSuccess,
+                errorMessage = result.exceptionOrNull()?.message,
+            )
+            result.onFailure { e -> AppSnackbar(e.message ?: "Api Error") }
         }
     }
 }

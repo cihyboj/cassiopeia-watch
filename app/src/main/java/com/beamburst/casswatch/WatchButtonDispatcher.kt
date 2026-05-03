@@ -59,7 +59,13 @@ class WatchButtonDispatcher @Inject constructor(
     private fun handleLong() {
         val cards = cardRepository.longPress()
         if (cards.broadcast.enabled) PressBroadcastEmitter.send(context, BroadcastSpec.Long, cards.broadcast.extras)
-        if (cards.findPhone.enabled) PhoneFinder.ring(context)
+        if (cards.findPhone.enabled) {
+            PhoneFinder.ring(
+                context = context,
+                volumePercent = cards.findPhone.volumePercent,
+                melody = cards.findPhone.melody
+            )
+        }
     }
 
     private suspend fun handleNormalConnection() {

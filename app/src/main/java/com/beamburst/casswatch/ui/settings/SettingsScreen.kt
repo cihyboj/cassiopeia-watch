@@ -83,8 +83,6 @@ fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
     // ── Actions replacement: top-of-Settings rows ─────────────────────────
     val pressCards by settingsViewModel.pressCards.collectAsState()
 
-    SetTimeRow()
-
     PressCard(
         title = stringResource(R.string.short_button_press),
         subtitle = BroadcastSpec.Short.action,
@@ -140,6 +138,19 @@ fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
         onEnabledChange = { on ->
             settingsViewModel.onPressCardAction(PressCardAction.ToggleFindPhone(on))
         },
+        dialogContent = { onDismiss ->
+            FindPhoneConfigDialog(
+                volumePercent = pressCards.findPhone.volumePercent,
+                melody = pressCards.findPhone.melody,
+                onDismiss = onDismiss,
+                onSave = { volume, melody ->
+                    settingsViewModel.onPressCardAction(
+                        PressCardAction.SaveFindPhoneConfig(volume, melody)
+                    )
+                    onDismiss()
+                }
+            )
+        }
     )
 
     HorizontalDivider()

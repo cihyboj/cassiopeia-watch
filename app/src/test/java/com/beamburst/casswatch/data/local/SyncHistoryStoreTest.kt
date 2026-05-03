@@ -21,7 +21,7 @@ class SyncHistoryStoreTest {
             success = false,
             errorMessage = "watch disconnected",
             details = SyncDetails(
-                alarmHashes = setOf("6:30:ALL:true", "9:00:MON,FRI:false"),
+                alarmHashes = listOf("06:30:ALL:true", "09:00:MON,FRI:false"),
                 eventCount = null,
                 hourlySignalTarget = true,
                 timeMs = null,
@@ -37,7 +37,7 @@ class SyncHistoryStoreTest {
             assertEquals(setOf(SyncKind.ALARMS, SyncKind.HOURLY_SIGNAL), kinds)
             assertFalse(success)
             assertEquals("watch disconnected", errorMessage)
-            assertEquals(setOf("6:30:ALL:true", "9:00:MON,FRI:false"), details.alarmHashes)
+            assertEquals(listOf("06:30:ALL:true", "09:00:MON,FRI:false"), details.alarmHashes)
             assertEquals(true, details.hourlySignalTarget)
             assertNull(details.eventCount)
             assertNull(details.timeMs)
@@ -56,14 +56,14 @@ class SyncHistoryStoreTest {
     }
 
     @Test
-    fun `ring-buffer simulation - 26 inserts keeps newest 25`() {
+    fun `ring-buffer simulation - 51 inserts keeps newest 50`() {
         val buf = mutableListOf<SyncEntry>()
-        for (i in 1..26) {
+        for (i in 1..51) {
             buf.add(0, entry(ts = i.toLong()))
-            while (buf.size > 25) buf.removeAt(buf.lastIndex)
+            while (buf.size > 50) buf.removeAt(buf.lastIndex)
         }
-        assertEquals(25, buf.size)
-        assertEquals(26L, buf.first().timestamp)   // newest at front
-        assertEquals(2L,  buf.last().timestamp)    // entry ts=1 evicted
+        assertEquals(50, buf.size)
+        assertEquals(51L, buf.first().timestamp)
+        assertEquals(2L,  buf.last().timestamp)
     }
 }

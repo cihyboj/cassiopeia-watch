@@ -168,6 +168,8 @@ private fun SyncEntryRow(entry: SyncEntry, expanded: Boolean, onClick: () -> Uni
             SyncKind.ALARMS -> "alarms"
             SyncKind.EVENTS -> "events"
             SyncKind.HOURLY_SIGNAL -> "hourly"
+            SyncKind.SETTINGS -> "settings"
+            SyncKind.CONNECTION -> "conn"
         }
     }
     val glyphColor = if (entry.success) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error

@@ -20,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -93,8 +92,7 @@ fun AlarmItem(
                         onCheckedChange = { checked ->
                             isEnabled = checked
                             onToggleAlarm(checked)
-                        },
-                        modifier = Modifier.graphicsLayer(scaleX = 0.82f, scaleY = 0.82f)
+                        }
                     )
                 }
             }
