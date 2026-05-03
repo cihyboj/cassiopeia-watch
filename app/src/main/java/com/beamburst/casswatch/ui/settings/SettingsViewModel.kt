@@ -20,10 +20,14 @@ import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.BroadcastCardState
 import com.beamburst.casswatch.data.local.BroadcastExtra
 import com.beamburst.casswatch.data.local.PressCardRepository
+import com.beamburst.casswatch.data.local.SyncDetails
+import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.local.ToggleCardState
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.utils.SyncHistoryLogger
 import org.avmedia.gshockapi.Settings
 import org.avmedia.gshockapi.WatchInfo
 import org.json.JSONObject
@@ -69,6 +73,7 @@ constructor(
         private val api: GShockRepository,
         @param:ApplicationContext private val appContext: Context,
         private val pressCardRepository: PressCardRepository,
+        private val syncLogger: SyncHistoryLogger,
 ) : ViewModel() {
 
     fun onSettingUpdated(setting: Setting) {
@@ -413,17 +418,29 @@ constructor(
     }
 
     fun setTimeNow() = viewModelScope.launch {
-        runCatching {
-            if (!api.isConnected()) {
-                AppSnackbar(appContext.getString(R.string.watch_not_connected))
-                return@runCatching
-            }
-            val timeOffset = LocalDataStorage.getFineTimeAdjustment(appContext)
-            val timeMs = System.currentTimeMillis() + timeOffset
-            api.setTime(timeMs = timeMs)
+        if (!api.isConnected()) {
+            AppSnackbar(appContext.getString(R.string.watch_not_connected))
+            return@launch
+        }
+        val timeOffset = LocalDataStorage.getFineTimeAdjustment(appContext)
+        val timeMs = System.currentTimeMillis() + timeOffset
+        val result = runCatching { api.setTime(timeMs = timeMs) }
+        syncLogger.record(
+            trigger = SyncTrigger.MANUAL_SETTINGS_SET_TIME,
+            kinds = setOf(SyncKind.TIME),
+            success = result.isSuccess,
+            errorMessage = result.exceptionOrNull()?.message,
+            details = SyncDetails(
+                alarmHashes = null,
+                eventCount = null,
+                hourlySignalTarget = null,
+                timeMs = timeMs,
+            ),
+        )
+        if (result.isSuccess) {
             AppSnackbar(appContext.getString(R.string.time_sent_to_watch))
-        }.onFailure { e ->
-            AppSnackbar(e.message ?: appContext.getString(R.string.watch_not_connected))
+        } else {
+            AppSnackbar(result.exceptionOrNull()?.message ?: appContext.getString(R.string.watch_not_connected))
         }
     }
 

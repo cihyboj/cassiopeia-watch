@@ -12,7 +12,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.R
+import com.beamburst.casswatch.data.local.SyncDetails
+import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.repository.GShockRepository
+import com.beamburst.casswatch.utils.SyncHistoryLogger
 import com.beamburst.casswatch.utils.Utils
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import org.avmedia.gshockapi.Event
@@ -27,7 +31,8 @@ import javax.inject.Inject
 class EventViewModel @Inject constructor(
     private val api: GShockRepository,
     private val calendarEvents: CalendarEvents,
-    @param:ApplicationContext private val appContext: Context
+    @param:ApplicationContext private val appContext: Context,
+    private val syncLogger: SyncHistoryLogger,
 ) : ViewModel() {
 
     private val _events = MutableStateFlow<List<Event>>(emptyList())
@@ -96,16 +101,28 @@ class EventViewModel @Inject constructor(
 
     fun sendEventsToWatch() {
         viewModelScope.launch {
-            runCatching {
-                // Create a new list with emoji-free titles
-                val sanitizedEvents = _events.value.map { event ->
-                    event.copy(title = event.title.sanitizeEventTitle())
-                }
-
+            val sanitizedEvents = _events.value.map { event ->
+                event.copy(title = event.title.sanitizeEventTitle())
+            }
+            val result = runCatching {
                 api.setEvents(ArrayList(sanitizedEvents))
+            }
+            syncLogger.record(
+                trigger = SyncTrigger.MANUAL_SEND_EVENTS,
+                kinds = setOf(SyncKind.EVENTS),
+                success = result.isSuccess,
+                errorMessage = result.exceptionOrNull()?.message,
+                details = SyncDetails(
+                    alarmHashes = null,
+                    eventCount = sanitizedEvents.size,
+                    hourlySignalTarget = null,
+                    timeMs = null,
+                ),
+            )
+            if (result.isSuccess) {
                 AppSnackbar(appContext.getString(R.string.reminders_sent_to_watch))
-            }.onFailure { e ->
-                AppSnackbar("Error: ${e.message ?: ""}")
+            } else {
+                AppSnackbar("Error: ${result.exceptionOrNull()?.message ?: ""}")
             }
         }
     }

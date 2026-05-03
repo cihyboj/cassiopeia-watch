@@ -11,6 +11,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.HourlySignalSettings
+import com.beamburst.casswatch.data.local.CurrentWatchSelector
+import com.beamburst.casswatch.data.local.SyncDetails
+import com.beamburst.casswatch.data.local.SyncEntry
+import com.beamburst.casswatch.data.local.SyncHistoryStore
+import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.scratchpad.AlarmNameStorage
 import com.beamburst.casswatch.utils.Utils
@@ -28,9 +34,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import com.beamburst.casswatch.utils.SyncHistoryLogger
 import javax.inject.Inject
 
 enum class AlarmViewMode { SIMPLE, WEEKLY }
@@ -80,8 +90,10 @@ fun alarmHash(
 class AlarmViewModel @Inject constructor(
     private val api: GShockRepository,
     private val alarmNameStorage: AlarmNameStorage,
-    private val alarmSyncState: AlarmSyncState,
-    @param:ApplicationContext private val appContext: Context
+    @param:ApplicationContext private val appContext: Context,
+    private val syncLogger: SyncHistoryLogger,
+    private val store: SyncHistoryStore,
+    private val watchSelector: CurrentWatchSelector,
 ) : ViewModel() {
 
     companion object {
@@ -116,7 +128,16 @@ class AlarmViewModel @Inject constructor(
 
     private var exactAlarmPermissionRequested = false
     private val eventSubscriberName = "AlarmViewModel-${System.identityHashCode(this)}"
-    val lastSync: StateFlow<AlarmSyncStorage.SyncRecord?> = alarmSyncState.lastSync
+    val lastAlarmSync: StateFlow<SyncEntry?> = run {
+        val addr = watchSelector.currentAddress()
+        if (addr != null) {
+            store.observe(addr)
+                .map { entries -> entries.firstOrNull { SyncKind.ALARMS in it.kinds && it.success } }
+                .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+        } else {
+            MutableStateFlow(null)
+        }
+    }
 
     init {
         ProgressEvents.runEventActions(
@@ -380,7 +401,12 @@ class AlarmViewModel @Inject constructor(
             firedAts = currentFiredAts
         )
 
-        runCatching {
+        val hashes = desiredAlarms.mapIndexed { index, alarm ->
+            val days = _alarmDays.value[index] ?: emptySet()
+            alarmHash(alarm.hour, alarm.minute, days, alarm.enabled)
+        }.toSet()
+
+        val result = runCatching {
             api.getAlarms()
             val signalSettings = HourlySignalSettings.load(appContext)
             val chimeTarget = HourlySignalEvaluator.shouldChimeAt(LocalDateTime.now(), signalSettings)
@@ -389,17 +415,6 @@ class AlarmViewModel @Inject constructor(
             if (WatchInfo.chimeInSettings) {
                 applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
             }
-
-            val hashes = desiredAlarms.mapIndexed { index, alarm ->
-                val days = _alarmDays.value[index] ?: emptySet()
-                alarmHash(alarm.hour, alarm.minute, days, alarm.enabled)
-            }
-            alarmSyncState.update(
-                AlarmSyncStorage.SyncRecord(
-                    syncedAt = System.currentTimeMillis(),
-                    sentAlarmHashes = hashes
-                )
-            )
 
             val updatedFiredAts = currentFiredAts.toMutableMap()
             desiredAlarms.forEachIndexed { index, _ ->
@@ -410,10 +425,23 @@ class AlarmViewModel @Inject constructor(
             }
             _firedAts.value = updatedFiredAts
             AlarmSyncStorage.saveAlarms(appContext, _alarms.value, dirty = false, firedAts = updatedFiredAts)
-
+        }
+        syncLogger.record(
+            trigger = SyncTrigger.MANUAL_SEND_ALARMS,
+            kinds = setOf(SyncKind.ALARMS),
+            success = result.isSuccess,
+            errorMessage = result.exceptionOrNull()?.message,
+            details = SyncDetails(
+                alarmHashes = hashes,
+                eventCount = null,
+                hourlySignalTarget = null,
+                timeMs = null,
+            ),
+        )
+        if (result.isSuccess) {
             AppSnackbar(appContext.getString(R.string.alarms_set_to_watch))
-        }.onFailure {
-            ProgressEvents.onNext("Error", it.message ?: "")
+        } else {
+            ProgressEvents.onNext("Error", result.exceptionOrNull()?.message ?: "")
         }
     }
 
