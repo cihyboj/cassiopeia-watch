@@ -134,7 +134,10 @@ private fun AlarmsActionRow(alarmViewModel: AlarmViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AlarmsScreen(alarmViewModel: AlarmViewModel = hiltViewModel()) {
+fun AlarmsScreen(
+    alarmViewModel: AlarmViewModel = hiltViewModel(),
+    onNavigateToHistory: () -> Unit = {},
+) {
     val viewMode by alarmViewModel.viewMode.collectAsState()
     val editorTarget by alarmViewModel.editorTarget.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -221,7 +224,8 @@ fun AlarmsScreen(alarmViewModel: AlarmViewModel = hiltViewModel()) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
-                alarmViewModel = alarmViewModel
+                alarmViewModel = alarmViewModel,
+                onLastSyncClick = onNavigateToHistory,
             )
         }
     }

@@ -5,4 +5,5 @@ sealed class Screens(val route: String) {
     data object Alarms : Screens("Alarms")
     data object Events : Screens("Events")
     data object Settings : Screens("Settings")
+    data object SyncHistory : Screens("SyncHistory")
 }

@@ -1,8 +1,6 @@
 package com.beamburst.casswatch.ui.alarms
 
 import android.annotation.SuppressLint
-import android.graphics.Paint
-import android.widget.EditText
 import android.widget.NumberPicker
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,38 +19,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.theme.Spacing
 import com.beamburst.casswatch.ui.common.AppButton
 import com.beamburst.casswatch.ui.common.AppText
+import com.beamburst.casswatch.ui.common.applyWheelTextStyle
 
 private val START_HOURS       = intArrayOf(1, 7, 13, 19)
 private val END_HOURS         = intArrayOf(6, 12, 18, 0)
 private val START_DISPLAYED   = arrayOf("01", "07", "13", "19")
 private val END_DISPLAYED_ALL = arrayOf("06", "12", "18", "00")
-
-@SuppressLint("SoonBlockedPrivateApi")
-private fun NumberPicker.applyTextStyle(colorArgb: Int, textSizePx: Float) {
-    runCatching {
-        val paintField = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint")
-        paintField.isAccessible = true
-        (paintField.get(this) as? Paint)?.apply {
-            color = colorArgb
-            textSize = textSizePx
-        }
-    }
-    runCatching {
-        val inputField = NumberPicker::class.java.getDeclaredField("mInputText")
-        inputField.isAccessible = true
-        (inputField.get(this) as? EditText)?.apply {
-            setTextColor(colorArgb)
-            setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, textSizePx)
-        }
-    }
-    invalidate()
-}
 
 private fun validEndIndicesFor(startIndex: Int): List<Int> {
     val s = START_HOURS[startIndex]
@@ -79,7 +58,8 @@ fun HourlySignalDialog(
     var selectedEndLocalIndex  by remember { mutableIntStateOf(initialEndLocalIndex) }
 
     // Capture theme values here (composable scope) for use inside AndroidView factory
-    val pickerTextColorArgb = MaterialTheme.colorScheme.onSurface.toArgb()
+    val pickerSelectedColorArgb = Color.White.toArgb()
+    val pickerInactiveColorArgb = Color(0xFFC7CBD1).toArgb()
     val pickerTextSizePx    = with(LocalDensity.current) { 18.sp.toPx() }
 
     fun currentStartHourValue() = START_HOURS[selectedStartIndex]
@@ -131,9 +111,25 @@ fun HourlySignalDialog(
                                     setOnValueChangedListener { _, _, newVal ->
                                         selectedStartIndex = newVal
                                         selectedEndLocalIndex = 0
+                                        applyWheelTextStyle(
+                                            pickerSelectedColorArgb,
+                                            pickerInactiveColorArgb,
+                                            pickerTextSizePx
+                                        )
                                     }
-                                    applyTextStyle(pickerTextColorArgb, pickerTextSizePx)
+                                    applyWheelTextStyle(
+                                        pickerSelectedColorArgb,
+                                        pickerInactiveColorArgb,
+                                        pickerTextSizePx
+                                    )
                                 }
+                            },
+                            update = { picker ->
+                                picker.applyWheelTextStyle(
+                                    pickerSelectedColorArgb,
+                                    pickerInactiveColorArgb,
+                                    pickerTextSizePx
+                                )
                             }
                         )
                         AppText(
@@ -163,8 +159,17 @@ fun HourlySignalDialog(
                                     value = initialEndLocalIndex
                                     setOnValueChangedListener { _, _, newVal ->
                                         selectedEndLocalIndex = newVal
+                                        applyWheelTextStyle(
+                                            pickerSelectedColorArgb,
+                                            pickerInactiveColorArgb,
+                                            pickerTextSizePx
+                                        )
                                     }
-                                    applyTextStyle(pickerTextColorArgb, pickerTextSizePx)
+                                    applyWheelTextStyle(
+                                        pickerSelectedColorArgb,
+                                        pickerInactiveColorArgb,
+                                        pickerTextSizePx
+                                    )
                                 }
                             },
                             update = { picker ->
@@ -178,6 +183,11 @@ fun HourlySignalDialog(
                                 picker.maxValue = displayed.size - 1
                                 picker.displayedValues = displayed
                                 picker.value = selectedEndLocalIndex.coerceIn(0, displayed.size - 1)
+                                picker.applyWheelTextStyle(
+                                    pickerSelectedColorArgb,
+                                    pickerInactiveColorArgb,
+                                    pickerTextSizePx
+                                )
                             }
                         )
                         AppText(

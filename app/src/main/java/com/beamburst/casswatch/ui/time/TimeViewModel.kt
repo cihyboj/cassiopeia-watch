@@ -13,9 +13,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.HourlySignalSettings
+import com.beamburst.casswatch.data.local.SyncDetails
+import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
 import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.utils.SyncHistoryLogger
 import com.beamburst.casswatch.utils.Utils
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import org.avmedia.gshockapi.EventAction
@@ -47,8 +51,12 @@ sealed class UiEvent {
 @HiltViewModel
 class TimeViewModel @Inject constructor(
     private val api: GShockRepository,
-    @param:ApplicationContext private val appContext: Context
+    @param:ApplicationContext private val appContext: Context,
+    private val syncLogger: SyncHistoryLogger,
 ) : ViewModel() {
+    companion object {
+        private const val EVENT_SUBSCRIBER_ID = "TimeViewModel"
+    }
 
     private val _state = MutableStateFlow(TimeState())
     val state = _state.asStateFlow()
@@ -58,16 +66,23 @@ class TimeViewModel @Inject constructor(
 
     init {
         ProgressEvents.runEventActions(
-            Utils.AppHashCode(),
+            EVENT_SUBSCRIBER_ID,
             arrayOf(
                 EventAction("WatchInitializationCompleted") { onWatchConnected() },
                 EventAction("ConnectionSetupComplete") { onWatchConnected() },
+                EventAction("DeviceName") { refreshState() },
+                EventAction("DeviceAddress") { refreshState() },
                 EventAction("Disconnect") { refreshState() },
                 EventAction("DeviceDisappeared") { refreshState() },
                 EventAction("ConnectionFailed") { refreshState() },
             )
         )
         refreshState()
+    }
+
+    override fun onCleared() {
+        ProgressEvents.subscriber.stop(EVENT_SUBSCRIBER_ID)
+        super.onCleared()
     }
 
     fun onAction(action: TimeAction) {
@@ -91,24 +106,37 @@ class TimeViewModel @Inject constructor(
 
             TimeAction.SendTimeToWatch -> {
                 viewModelScope.launch {
-                    runCatching {
-                        if (!api.isConnected()) {
-                            AppSnackbar(appContext.getString(R.string.watch_not_connected))
-                            return@runCatching
-                        }
-
-                        val timeOffset = LocalDataStorage.getFineTimeAdjustment(appContext)
-                        val timeMs = System.currentTimeMillis() + timeOffset
-                        AppSnackbar(appContext.getString(R.string.sending_time_to_watch))
+                    if (!api.isConnected()) {
+                        AppSnackbar(appContext.getString(R.string.watch_not_connected))
+                        return@launch
+                    }
+                    val timeOffset = LocalDataStorage.getFineTimeAdjustment(appContext)
+                    val timeMs = System.currentTimeMillis() + timeOffset
+                    AppSnackbar(appContext.getString(R.string.sending_time_to_watch))
+                    val result = runCatching {
                         api.setTime(timeMs = timeMs)
                         if (WatchInfo.chimeInSettings) {
                             val signalSettings = HourlySignalSettings.load(appContext)
                             applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
                         }
+                    }
+                    syncLogger.record(
+                        trigger = SyncTrigger.MANUAL_SET_TIME,
+                        kinds = setOf(SyncKind.TIME),
+                        success = result.isSuccess,
+                        errorMessage = result.exceptionOrNull()?.message,
+                        details = SyncDetails(
+                            alarmHashes = null,
+                            eventCount = null,
+                            hourlySignalTarget = null,
+                            timeMs = timeMs,
+                        ),
+                    )
+                    if (result.isSuccess) {
                         AppSnackbar(appContext.getString(R.string.time_set))
                         refreshState()
-                    }.onFailure { e ->
-                        AppSnackbar(e.message ?: "Api Error")
+                    } else {
+                        AppSnackbar(result.exceptionOrNull()?.message ?: "Api Error")
                     }
                 }
             }
@@ -133,8 +161,15 @@ class TimeViewModel @Inject constructor(
     }
 
     private fun resolveWatchName(): String {
+        val lastAddress = LocalDataStorage.get(appContext, "LastDeviceAddress", "")
+        if (!lastAddress.isNullOrBlank()) {
+            val perDevice = LocalDataStorage.getDeviceName(appContext, lastAddress)
+            if (!perDevice.isNullOrBlank()) return perDevice.removePrefix("CASIO").trim()
+        }
         val stored = LocalDataStorage.get(appContext, "LastDeviceName", "")
         if (!stored.isNullOrBlank()) return stored.removePrefix("CASIO").trim()
+        val connectedName = if (api.isConnected()) WatchInfo.name else ""
+        if (!connectedName.isNullOrBlank()) return connectedName.removePrefix("CASIO").trim()
         return appContext.getString(R.string.no_watch)
     }
 

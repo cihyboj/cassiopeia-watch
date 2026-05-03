@@ -4,7 +4,6 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.utils.LocalDataStorage
-import com.beamburst.casswatch.utils.Utils
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +17,10 @@ class DeviceManager @Inject constructor(
     private val repository: GShockRepository,
     @param:ApplicationContext private val appContext: Context
 ) {
+    companion object {
+        private const val EVENT_SUBSCRIBER_ID = "DeviceManager"
+    }
+
     private data class DeviceInfo(
         val name: String,
         val address: String
@@ -29,7 +32,7 @@ class DeviceManager @Inject constructor(
 
     private fun initializeEventListener() {
         val eventActions = createEventActions()
-        ProgressEvents.runEventActions(Utils.AppHashCode(), eventActions)
+        ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, eventActions)
     }
 
     private fun createEventActions(): Array<EventAction> = arrayOf(

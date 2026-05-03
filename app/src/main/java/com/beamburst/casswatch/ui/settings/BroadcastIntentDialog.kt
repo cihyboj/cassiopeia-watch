@@ -46,6 +46,7 @@ fun BroadcastIntentDialog(
     actionString: String,
     extras: List<BroadcastExtra>,
     onSave: (List<BroadcastExtra>) -> Unit,
+    onSendTest: (List<BroadcastExtra>) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -100,6 +101,10 @@ fun BroadcastIntentDialog(
                     onClick = {
                         draftExtras = draftExtras + BroadcastExtra("", ExtraType.STRING, "")
                     }
+                )
+                AppButton(
+                    text = stringResource(R.string.broadcast_send_test),
+                    onClick = { onSendTest(draftExtras) }
                 )
 
                 AppText(
