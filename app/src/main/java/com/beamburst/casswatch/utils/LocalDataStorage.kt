@@ -65,6 +65,14 @@ object LocalDataStorage {
         }
     }
 
+    suspend fun putAsync(context: Context, key: String, value: String) {
+        mutex.withLock {
+            context.dataStore.edit { preferences ->
+                preferences[stringPreferencesKey(key)] = value
+            }
+        }
+    }
+
     /**
      * Reads all key-value pairs from the DataStore and returns them as a JSONObject.
      * This is useful for backups or exporting settings.
