@@ -41,7 +41,6 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="email_item">E-Mail-Element</string>
     <string name="email_example_com">ich@example.com</string>
     <string name="watch_alarms">Uhr-Wecker</string>
-    <string name="signal_chime">Signal (Piepton)</string>
     <string name="google_calendar_events">Google-Kalender-Ereignisse</string>
     <string name="local_time">Lokale Zeit</string>
     <string name="send_to_watch">An die\nUhr senden</string>

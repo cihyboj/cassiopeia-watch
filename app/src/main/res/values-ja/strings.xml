@@ -38,7 +38,6 @@
     <string name="email_item">メール項目</string>
     <string name="email_example_com">me@example.com</string>
     <string name="watch_alarms">ウォッチアラーム</string>
-    <string name="signal_chime">信号（チャイム）</string>
     <string name="google_calendar_events">Googleカレンダーのイベント</string>
     <string name="local_time">現地時間</string>
     <string name="send_to_watch">ウォッチに\n送信</string>

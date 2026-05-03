@@ -46,7 +46,6 @@ Si aucun événement n\'apparaît, assurez-vous que vous avez des événements �
 
     <string name="email_example_com">moi@example.com</string>
     <string name="watch_alarms">Alarmes de la montre</string>
-    <string name="signal_chime">Signal (carillon)</string>
     <string name="google_calendar_events">Événements Google Agenda</string>
     <string name="local_time">Heure locale</string>
 

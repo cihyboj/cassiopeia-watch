@@ -38,7 +38,6 @@
     <string name="email_item">Email елемент</string>
     <string name="email_example_com">me@example.com</string>
     <string name="watch_alarms">Аларми</string>
-    <string name="signal_chime">Сигнал</string>
     <string name="google_calendar_events">Събития от Google Calendar</string>
     <string name="local_time">Местно време</string>
     <string name="send_to_watch">Изпрати на\nЧасовник</string>

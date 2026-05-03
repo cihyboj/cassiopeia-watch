@@ -295,9 +295,6 @@ class AlarmViewModel @Inject constructor(
         updateAlarm(index) { it.copy(hour = hours, minute = minutes, name = null) }
     }
 
-    fun toggleHourlyChime(enabled: Boolean) =
-        updateAlarm(0) { it.copy(hasHourlyChime = enabled) }
-
     fun onHourlySignalAction(action: HourlySignalAction) {
         when (action) {
             is HourlySignalAction.SetEnabled -> {

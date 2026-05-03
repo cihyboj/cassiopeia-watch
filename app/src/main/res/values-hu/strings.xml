@@ -36,7 +36,6 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="email_item">Email küldése</string>
     <string name="email_example_com">uristen@menny.hu</string>
     <string name="watch_alarms">Ébresztők</string>
-    <string name="signal_chime">Óránkénti csipogás (SIG)</string>
     <string name="google_calendar_events">Google Naptár Események</string>
     <string name="local_time">Helyi idő</string>
     <string name="send_to_watch">Átküldés az\nórára</string>

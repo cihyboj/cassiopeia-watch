@@ -38,7 +38,6 @@
     <string name="email_item">عنصر البريد الإلكتروني</string>
     <string name="email_example_com">me@example.com</string>
     <string name="watch_alarms">منبهات الساعة</string>
-    <string name="signal_chime">الإشارة (جرس الساعة)</string>
     <string name="google_calendar_events">أحداث تقويم Google</string>
     <string name="local_time">الوقت المحلي</string>
     <string name="send_to_watch">إرسال إلى\nالساعة</string>

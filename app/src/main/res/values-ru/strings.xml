@@ -39,7 +39,6 @@
     <string name="email_item">Элемент почты</string>
     <string name="email_example_com">me@example.com</string>
     <string name="watch_alarms">Будильники на часах</string>
-    <string name="signal_chime">Сигнал (звонок)</string>
     <string name="google_calendar_events">События Google Календаря</string>
     <string name="local_time">Местное время</string>
     <string name="send_to_watch">Отправить на\nчасы</string>

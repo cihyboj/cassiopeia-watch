@@ -1,5 +1,6 @@
 package com.beamburst.casswatch
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.provider.Settings
@@ -80,6 +81,7 @@ class MainEventHandler(
         screenManager.showPreConnectionScreen()
     }
 
+    @SuppressLint("MissingPermission") // BLUETOOTH_CONNECT is declared in the manifest
     private fun handleDisconnect() {
         val disconnectedDevice = ProgressEvents.getPayload("Disconnect") as? BluetoothDevice
         disconnectedDevice?.let { device ->

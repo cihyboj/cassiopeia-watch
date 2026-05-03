@@ -49,7 +49,6 @@
     <string name="email_item">Email Item</string>
     <string name="email_example_com">me@example.com</string>
     <string name="watch_alarms">Watch Alarms</string>
-    <string name="signal_chime">Signal (chime)</string>
     <string name="hourly_signal_title">Hourly signal</string>
     <string name="hourly_signal_window_caption">%1$s:00 – %2$s:00</string>
     <string name="hourly_signal_chimes_at">Chimes at %1$s (%2$d chimes / day)</string>

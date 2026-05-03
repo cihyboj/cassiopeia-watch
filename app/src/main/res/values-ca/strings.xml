@@ -46,7 +46,6 @@
     <string name="email_item">Element de correu</string>
     <string name="email_example_com">jo@exemple.com</string>
     <string name="watch_alarms">Alarmes del rellotge</string>
-    <string name="signal_chime">Senyal (xiulet)</string>
     <string name="google_calendar_events">Esdeveniments de Google Calendar</string>
     <string name="local_time">Hora local</string>
     <string name="send_to_watch">Enviar a\nRellotge</string>

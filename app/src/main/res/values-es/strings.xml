@@ -39,7 +39,6 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="email_item">Elemento de correo electrónico</string>
     <string name="email_example_com">me@ejemplo.com</string>
     <string name="watch_alarms">Alarmas del reloj</string>
-    <string name="signal_chime">Señal horaria</string>
     <string name="google_calendar_events">Eventos del Google Calendar</string>
     <string name="local_time">Hora local</string>
     <string name="send_to_watch">Enviar al\nReloj</string>
