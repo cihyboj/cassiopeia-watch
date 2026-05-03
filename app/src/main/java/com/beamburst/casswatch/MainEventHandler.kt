@@ -7,7 +7,6 @@ import android.provider.Settings
 import android.app.AlertDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.services.NotificationMonitorService
@@ -33,7 +32,6 @@ class MainEventHandler(
             EventAction("WaitForConnection") { handleWaitForConnection() },
             EventAction("Disconnect") { handleDisconnect() },
             EventAction("HomeTimeUpdated") {},
-            EventAction("RunActions") { handleRunAction() },
             EventAction("AppNotification") { handleAppNotification() },
             EventAction("LocationServicesDisabled") { handleLocationServicesDisabled() }
         )
@@ -59,15 +57,6 @@ class MainEventHandler(
 
     private fun handleConnectionFailure() {
         Timber.e("Failed to connect to the watch")
-    }
-
-    private fun handleRunAction() {
-        screenManager.showRunActionsScreen()
-
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(3000)
-            screenManager.showContentSelector(repository)
-        }
     }
 
     private fun handleError() {

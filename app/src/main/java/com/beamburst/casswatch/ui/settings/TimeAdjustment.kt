@@ -1,6 +1,7 @@
 package com.beamburst.casswatch.ui.settings
 
 import AppSwitch
+import androidx.compose.ui.graphics.graphicsLayer
 import com.beamburst.casswatch.ui.common.AppTextLink
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -179,12 +180,13 @@ private fun NotifyMeRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         SettingsLabel(
-            text = stringResource(id = R.string.notify_me),
+            text = stringResource(id = R.string.notify_on_auto_sync),
             modifier = Modifier.weight(1f)
         )
         AppSwitch(
             checked = checked,
-            onCheckedChange = onCheckedChange
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.graphicsLayer(scaleX = 0.82f, scaleY = 0.82f)
         )
     }
 }

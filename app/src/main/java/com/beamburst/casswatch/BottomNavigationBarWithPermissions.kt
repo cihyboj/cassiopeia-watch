@@ -1,11 +1,6 @@
 package com.beamburst.casswatch
 
-import android.Manifest.permission.ACCESS_COARSE_LOCATION
-import android.Manifest.permission.CALL_PHONE
-import android.Manifest.permission.CAMERA
 import android.Manifest.permission.READ_CALENDAR
-import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,7 +34,6 @@ import dagger.hilt.android.EntryPointAccessors
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.di.ApplicationContextEntryPoint
 import com.beamburst.casswatch.services.InactivityHandler
-import com.beamburst.casswatch.ui.actions.ActionsScreen
 import com.beamburst.casswatch.ui.alarms.AlarmsScreen
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.events.EventsScreen
@@ -155,26 +149,6 @@ fun BottomNavigationBarWithPermissions(
                     stringResource(
                         R.string.calendar_permission_denied_cannot_access_events,
                     )
-                )
-            }
-            composable(Screens.Actions.route) {
-
-                val permissions = mutableListOf(CAMERA, CALL_PHONE).also {
-                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-                        it += WRITE_EXTERNAL_STORAGE
-                    }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        it += ACCESS_COARSE_LOCATION
-                    }
-                }
-
-                NavigateWithPermissions(
-                    permissions,
-                    navController,
-                    destinationScreen = { ActionsScreen() },
-                    stringResource(
-                        R.string.required_permissions_denied_cannot_access_actions
-                    ),
                 )
             }
             composable(Screens.Settings.route) {

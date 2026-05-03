@@ -21,15 +21,10 @@
     アラームを設定したら、それをウォッチに送信するか、スマートフォンのアラームクロックアプリに送信できます。]]></string>
     <string name="events_screen_info"><![CDATA[この画面には<b>Googleカレンダー</b>のイベントが表示され、ウォッチの
     <b>リマインダー</b>に送信することができます。\n\nイベントが表示されない場合は、将来のイベントまたは期限切れでない繰り返しイベントがGoogleカレンダーにあることを確認してください。]]></string>
-    <string name="actions">アクション</string>
-    <string name="title_actions">アクション</string>
-    <string name="actions_screen_info"><![CDATA[選択したアクションは、ユーザーが初期画面からウォッチの<b>右下ボタン</b>を<b>短く押す</b>と実行されます。これらのアクションを使用すると、ウォッチはスマートフォンのリモコンとして動作します。]]></string>
     <string name="feb_22_mar_24">2月22日 - 3月24日</string>
     <string name="weekly">毎週</string>
     <string name="action_item">アクション項目</string>
     <string name="voice_assistant">音声アシスタント</string>
-    <string name="front_cam">フロントカメラ</string>
-    <string name="back_cam">バックカメラ</string>
     <string name="take_a_photo">写真を撮る</string>
     <string name="info">情報</string>
     <string name="daily">毎日</string>
@@ -99,12 +94,7 @@
     <string name="set_time">時間を設定</string>
     <string name="find_phone">電話を探す</string>
     <string name="set_reminders">Googleカレンダーから\nリマインダーを設定</string>
-    <string name="take_photo">写真を撮る</string>
     <string name="toggle_flashlight">懐中電灯を切り替える</string>
-    <string name="start_voice_assistant">音声アシストを開始</string>
-    <string name="next_track">次のトラックにスキップ</string>
-    <string name="emergency_actions">緊急アクション：</string>
-    <string name="make_phonecall">電話をかける</string>
     <string name="adjustment_time_info">
         <![CDATA[
         <li>自動時間調整は1日に4回、午前0時、午前6時、午後12時、午後6時の後に行われます。</li>
@@ -113,32 +103,6 @@
         ]]>
     </string>
     <string name="adjustment_time_minutes">実行時間\n（分単位）</string>
-    <string name="skip_to_next_track_info">
-        <![CDATA[
-        スポティファイ、YouTube、YTMusicなどのメディアプレーヤーで音楽や動画を再生している場合、このアクションで次の曲や動画にスキップします。
-        Android Autoにも対応しています。
-        ]]>
-    </string>
-    <string name="set_prayer_alarms">礼拝アラームを設定</string>
-    <string name="prayer_times_info">
-        <![CDATA[
-        <li>このアクションでは、時計の5つのアラームを<b>ファジュル</b>、<b>ズフル</b>、<b>アスル</b>、<b>マグリブ</b>、<b>イシャー</b>の礼拝時間に設定します。</li>
-        <li>時間は現在地と日付に応じて異なるため、正確性を高めるにはこのアクションを毎日実行してください。
-        このアクションが有効な場合、アラームは1日4回の自動時間調整中にも自動的に更新されます。</li>
-        <li>計算方法は場所に基づいて次のように変わります：
-            <b>北アメリカ</b>、
-            <b>ディヤネット</b>、
-            <b>エジプト</b>、
-            <b>ドバイ</b>、
-            <b>ウム・アルクラ</b>、
-            <b>カタール</b>、
-            <b>シンガポール</b>、
-            <b>クウェート</b>、および
-            <b>イスラム世界連盟</b>（その他の地域）。
-        </li>
-        <li>提案や訂正については、<a href="mailto:izivkov@gmail.com">izivkov@gmail.com</a>までご連絡ください。</li>
-        ]]>
-    </string>
     <string name="do_not_disturb_dnd">おやすみモード (DnD)</string>
     <string name="mirror_phone_s_dnd">電話のおやすみモードを反映</string>
     <string name="DnD_info_message">
@@ -161,7 +125,6 @@
         ]]>
     </string>
     <string name="required_permissions_denied_cannot_access_screen">必要な権限が拒否されました。画面にアクセスできません！</string>
-    <string name="required_permissions_denied_cannot_access_actions">必要な権限が拒否されました。アクションにアクセスできません。</string>
     <string name="calendar_permission_denied_cannot_access_events">カレンダーの権限が拒否されました。イベントにアクセスできません。</string>
     <string name="clear_app_storage_from_android_setting_and_restart_the_app_to_add_permissions">Androidの設定からアプリのストレージをクリアし、アプリを再起動して権限を追加してください。</string>
     <string name="phone_number">電話番号</string>
@@ -176,13 +139,8 @@
     <string name="bluetooth_is_not_enabled">Bluetoothが有効になっていません。</string>
     <string name="disconnected_due_to_inactivity">非アクティブのため切断されました。</string>
     <string name="when_found_lift_phone_to_stop_ringing">見つかったら、電話を持ち上げて着信音を停止してください。</string>
-    <string name="voice_assistant_not_available_on_this_device">音声アシスタントはこのデバイスでは利用できません！</string>
-    <string name="cannot_go_to_next_track">次のトラックにスキップできません！</string>
-    <string name="image_captured">画像が保存されました：%1$s</string>
     <string name="emaillocationaction_emailaddress">EmailLocationAction: メールアドレス: %1$s</string>
-    <string name="camera_capture_error">カメラキャプチャエラー: %1$s</string>
     <string name="flashlight_not_available">懐中電灯が利用できません</string>
-    <string name="unable_to_get_default_sound_uri">デフォルトのサウンドURIを取得できません</string>
     <string name="alarms_set_to_watch">アラームが時計に設定されました</string>
     <string name="events_set">イベントが設定されました</string>
     <string name="reminders_sent_to_watch">リマインダーを時計に送信しました</string>
@@ -192,7 +150,6 @@
     <string name="permission_required_to_turn_on_bluetooth">Bluetoothをオンにするには権限が必要です。</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">Bluetoothをオンにする権限がありません。手動でオンにしてください。</string>
     <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">権限が永続的に拒否されました。アプリ設定で有効にしてください。</string>
-    <string name="you_have_not_given_permission_to_to_run_action">アクション%1$sを実行する権限がありません。</string>
     <string name="timer_set">タイマー設定済み</string>
     <string name="press_and_hold_for_3_seconds">3秒間\n長押し</string>
     <string name="short_press_to_run_actions">押して\n実行</string>
@@ -205,7 +162,6 @@
     <string name="cover_connected">接続済み</string>
     <!-- "時間" means "hours"; can be abbreviated as "h" if preferred -->
     <string name="find_phone_instruction">アクションを実行するには、時計で「携帯電話を探す」機能を開始してください</string>
-    <string name="actions_saved">アクションが保存されました</string>
     <string name="press_and_hold_connection_button_to_continue">ペアリングするには、時計の接続ボタン（通常は左下）を3秒間押し続けてください。</string>
     <string name="looking_for_a_device">デバイスを探しています。</string>
     <string name="add_watch">時計を追加</string>
@@ -224,7 +180,6 @@
     <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
-    <string name="actions_save_failed">Failed to save actions.</string>
     <string name="manage_watches">Manage watches</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>
@@ -244,4 +199,19 @@
     <string name="hourly_signal_requires_auto_sync">Requires automatic sync. The watch updates at 0:00, 6:00, 12:00 and 18:00.</string>
     <string name="hourly_signal_picker_start">start</string>
     <string name="hourly_signal_picker_end">end</string>
+    <string name="set_time_on_watch">Set time on watch</string>
+    <string name="set_time_on_watch_caption">Sends current local time + fine adjustment</string>
+    <string name="time_sent_to_watch">Time sent to watch</string>
+    <string name="short_button_press">Short button press</string>
+    <string name="long_button_press">Long button press</string>
+    <string name="find_my_phone">Find my phone</string>
+    <string name="find_phone_card_subtitle">Rings the phone on long press while connected.</string>
+    <string name="flashlight_card_subtitle">Toggles the device flashlight on short press while connected.</string>
+    <string name="broadcast_action_label">Action string</string>
+    <string name="broadcast_extras_label">Extras</string>
+    <string name="broadcast_add_extra">+ Add extra</string>
+    <string name="broadcast_copy_action">Copy to clipboard</string>
+    <string name="broadcast_how_to_receive">How to receive</string>
+    <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
+    <string name="notify_on_auto_sync">Notify on auto-sync</string>
 </resources>

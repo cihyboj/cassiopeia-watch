@@ -29,8 +29,9 @@ class HourlySignalEvaluatorTest {
     @Test fun window7_18_manual_0930_on() {
         assertTrue(HourlySignalEvaluator.shouldChimeAt(dt(9, 30), settings(true, 7, 18)))
     }
-    @Test fun window7_18_manual_1730_off() {
-        assertFalse(HourlySignalEvaluator.shouldChimeAt(dt(17, 30), settings(true, 7, 18)))
+    @Test fun window7_18_manual_1730_on() {
+        // next boundary = 18, in [7,18] inclusive → ON (18:00 chime included)
+        assertTrue(HourlySignalEvaluator.shouldChimeAt(dt(17, 30), settings(true, 7, 18)))
     }
     @Test fun window7_18_autoSync_18_off() {
         assertFalse(HourlySignalEvaluator.shouldChimeAt(dt(18), settings(true, 7, 18)))
@@ -49,9 +50,9 @@ class HourlySignalEvaluatorTest {
     @Test fun window19_0_manual_2230_on() {
         assertTrue(HourlySignalEvaluator.shouldChimeAt(dt(22, 30), settings(true, 19, 0)))
     }
-    @Test fun window19_0_manual_2330_off() {
-        // next boundary = 24, NOT in [19,24) → OFF
-        assertFalse(HourlySignalEvaluator.shouldChimeAt(dt(23, 30), settings(true, 19, 0)))
+    @Test fun window19_0_manual_2330_on() {
+        // next boundary = 24, in [19,24] inclusive → ON (00:00 chime included)
+        assertTrue(HourlySignalEvaluator.shouldChimeAt(dt(23, 30), settings(true, 19, 0)))
     }
 
     // ── window 1–6 (chime hours 1..5) ────────────────────────────────────────

@@ -9,15 +9,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.beamburst.casswatch.BroadcastSpec
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.theme.CassiopeiaWatchTheme
 import com.beamburst.casswatch.theme.Spacing
@@ -75,6 +79,74 @@ fun SettingsList() {
             }
         }
     }
+
+    // ── Actions replacement: top-of-Settings rows ─────────────────────────
+    val pressCards by settingsViewModel.pressCards.collectAsState()
+
+    SetTimeRow()
+
+    PressCard(
+        title = stringResource(R.string.short_button_press),
+        subtitle = BroadcastSpec.Short.action,
+        enabled = pressCards.shortBroadcast.enabled,
+        onEnabledChange = { on ->
+            settingsViewModel.onPressCardAction(PressCardAction.ToggleShortBroadcast(on))
+        },
+        dialogContent = { onDismiss ->
+            BroadcastIntentDialog(
+                title = stringResource(R.string.short_button_press),
+                actionString = BroadcastSpec.Short.action,
+                extras = pressCards.shortBroadcast.extras,
+                onSave = { extras ->
+                    settingsViewModel.onPressCardAction(PressCardAction.SaveShortExtras(extras))
+                    onDismiss()
+                },
+                onDismiss = onDismiss,
+            )
+        }
+    )
+
+    PressCard(
+        title = stringResource(R.string.long_button_press),
+        subtitle = BroadcastSpec.Long.action,
+        enabled = pressCards.longBroadcast.enabled,
+        onEnabledChange = { on ->
+            settingsViewModel.onPressCardAction(PressCardAction.ToggleLongBroadcast(on))
+        },
+        dialogContent = { onDismiss ->
+            BroadcastIntentDialog(
+                title = stringResource(R.string.long_button_press),
+                actionString = BroadcastSpec.Long.action,
+                extras = pressCards.longBroadcast.extras,
+                onSave = { extras ->
+                    settingsViewModel.onPressCardAction(PressCardAction.SaveLongExtras(extras))
+                    onDismiss()
+                },
+                onDismiss = onDismiss,
+            )
+        }
+    )
+
+    PressCard(
+        title = stringResource(R.string.find_my_phone),
+        subtitle = stringResource(R.string.find_phone_card_subtitle),
+        enabled = pressCards.findPhone.enabled,
+        onEnabledChange = { on ->
+            settingsViewModel.onPressCardAction(PressCardAction.ToggleFindPhone(on))
+        },
+    )
+
+    PressCard(
+        title = stringResource(R.string.toggle_flashlight),
+        subtitle = stringResource(R.string.flashlight_card_subtitle),
+        enabled = pressCards.flashlight.enabled,
+        onEnabledChange = { on ->
+            settingsViewModel.onPressCardAction(PressCardAction.ToggleFlashlight(on))
+        },
+    )
+
+    HorizontalDivider()
+    // ── Existing settings rows ─────────────────────────────────────────────
 
     SettingsSectionTitle(stringResource(R.string.settings_section_locale))
     Locale(settingsViewModel::onSettingUpdated)
