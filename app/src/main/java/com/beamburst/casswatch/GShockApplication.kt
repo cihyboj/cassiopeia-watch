@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.pairing.CompanionDevicePresenceMonitor
 import com.beamburst.casswatch.pairing.DeviceAssociationManager
+import com.beamburst.casswatch.session.WatchSessionUiBridge
 import com.beamburst.casswatch.services.DeviceManager
 import com.beamburst.casswatch.ui.alarms.WeeklyAlarmScheduler
 import com.beamburst.casswatch.ui.common.AppSnackbar
@@ -65,6 +66,9 @@ class GShockApplication : Application(), IScreenManager {
     @Inject
     lateinit var autoSyncCoordinator: AutoSyncCoordinator
 
+    @Inject
+    lateinit var watchSessionUiBridge: WatchSessionUiBridge
+
     fun init() {
         Timber.i("Initializing GShockApplication")
         weeklyAlarmScheduler.ensureInitialized()
@@ -79,7 +83,12 @@ class GShockApplication : Application(), IScreenManager {
         super.onCreate()
         ActivityProvider.initialize(this)
         eventHandler =
-            MainEventHandler(context = this, repository = repository, screenManager = this)
+            MainEventHandler(
+                context = this,
+                repository = repository,
+                screenManager = this,
+                sessionUiBridge = watchSessionUiBridge,
+            )
         eventHandler.setupEventSubscription()
 
         if (BuildConfig.DEBUG) {

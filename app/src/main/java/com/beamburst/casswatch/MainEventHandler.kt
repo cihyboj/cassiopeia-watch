@@ -9,9 +9,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.repository.GShockRepository
+import com.beamburst.casswatch.session.WatchSessionUiBridge
 import com.beamburst.casswatch.services.NotificationMonitorService
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.utils.ActivityProvider
+import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.Utils
 import org.avmedia.gshockapi.AppNotification
 import org.avmedia.gshockapi.EventAction
@@ -21,7 +23,8 @@ import timber.log.Timber
 class MainEventHandler(
     private val context: GShockApplication,
     private val repository: GShockRepository,
-    private val screenManager: IScreenManager
+    private val screenManager: IScreenManager,
+    private val sessionUiBridge: WatchSessionUiBridge,
 ) {
     fun setupEventSubscription() {
         val eventActions = arrayOf(
@@ -44,6 +47,27 @@ class MainEventHandler(
             NotificationMonitorService.startService(context)
         }
         screenManager.showContentSelector(repository)
+        showWatchConnectedSnackbar()
+        sessionUiBridge.emitConnected()
+    }
+
+    private fun showWatchConnectedSnackbar() {
+        val displayName = resolveWatchDisplayNameForSnackbar()
+        val message =
+            if (displayName.isNotBlank()) {
+                context.getString(R.string.watch_snackbar_connected, displayName)
+            } else {
+                context.getString(R.string.watch_snackbar_connected_no_name)
+            }
+        AppSnackbar(message)
+    }
+
+    private fun resolveWatchDisplayNameForSnackbar(): String {
+        val stored = LocalDataStorage.get(context, "LastDeviceName", "")
+        if (!stored.isNullOrBlank()) return stored.removePrefix("CASIO").trim()
+        val addr = LocalDataStorage.get(context, "LastDeviceAddress", "") ?: return ""
+        if (addr.isBlank()) return ""
+        return LocalDataStorage.getDeviceName(context, addr)?.removePrefix("CASIO")?.trim().orEmpty()
     }
 
     private fun handleAppNotification() {
@@ -72,6 +96,7 @@ class MainEventHandler(
 
     @SuppressLint("MissingPermission") // BLUETOOTH_CONNECT is declared in the manifest
     private fun handleDisconnect() {
+        sessionUiBridge.emitDisconnected()
         val disconnectedDevice = ProgressEvents.getPayload("Disconnect") as? BluetoothDevice
         disconnectedDevice?.let { device ->
             repository.teardownConnection(device)

@@ -5,23 +5,27 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
+import com.beamburst.casswatch.session.SessionLinkEvent
+import com.beamburst.casswatch.session.WatchSessionUiBridge
 import com.beamburst.casswatch.utils.LocalDataStorage
-import com.beamburst.casswatch.utils.Utils
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
 import org.avmedia.gshockapi.WatchInfo
 import java.time.LocalDateTime
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 data class TimeState(
@@ -47,6 +51,7 @@ sealed class UiEvent {
 @HiltViewModel
 class TimeViewModel @Inject constructor(
     private val api: GShockRepository,
+    private val watchSessionUiBridge: WatchSessionUiBridge,
     @param:ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -56,17 +61,51 @@ class TimeViewModel @Inject constructor(
     private val _uiEvents = MutableSharedFlow<UiEvent>()
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
 
+    /**
+     * Blocks [refreshState] from showing a connected snapshot while the API still reports
+     * connected after a drop. Cleared by [WatchSessionUiBridge] (same path as snackbars),
+     * [onWatchConnected], or a successful full read in [refreshState].
+     */
+    private val linkLossUiHoldActive = AtomicBoolean(false)
+
+    /**
+     * [Utils.AppHashCode] from an `init` block often resolves to the same key as other subscribers
+     * (e.g. `"<init>"`.hashCode()), so ProgressEvents can overwrite this subscription — then
+     * [Disconnect] never reaches the Time tab. Match [AlarmViewModel]'s unique subscriber id.
+     */
+    private val progressEventsSubscriberId = "TimeViewModel-${System.identityHashCode(this)}"
+
     init {
         ProgressEvents.runEventActions(
-            Utils.AppHashCode(),
+            progressEventsSubscriberId,
             arrayOf(
                 EventAction("WatchInitializationCompleted") { onWatchConnected() },
                 EventAction("ConnectionSetupComplete") { onWatchConnected() },
-                EventAction("Disconnect") { refreshState() },
-                EventAction("DeviceDisappeared") { refreshState() },
-                EventAction("ConnectionFailed") { refreshState() },
+                EventAction("Disconnect") { onLinkLostEvent() },
+                EventAction("DeviceDisappeared") { onLinkLostEvent() },
+                EventAction("ConnectionFailed") { onLinkLostEvent() },
             )
         )
+        viewModelScope.launch {
+            watchSessionUiBridge.linkEvents.collect { event ->
+                when (event) {
+                    SessionLinkEvent.Disconnected -> {
+                        linkLossUiHoldActive.set(true)
+                        withContext(Dispatchers.IO) {
+                            _state.value = TimeState(
+                                watchName = resolveWatchName(),
+                                isConnected = false,
+                            )
+                        }
+                        refreshState()
+                    }
+                    SessionLinkEvent.Connected -> {
+                        linkLossUiHoldActive.set(false)
+                        refreshState()
+                    }
+                }
+            }
+        }
         refreshState()
     }
 
@@ -117,35 +156,17 @@ class TimeViewModel @Inject constructor(
         }
     }
 
+    private fun onLinkLostEvent() {
+        watchSessionUiBridge.emitDisconnected()
+    }
+
     private fun onWatchConnected() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (!api.isConnected()) return@launch
+            // End disconnect UI hold as soon as the API agrees we have a session, so refreshState
+            // cannot keep forcing "disconnected" on every tick (second reconnect).
+            linkLossUiHoldActive.set(false)
             runCatching {
-                _state.value = TimeState(
-                    timer = api.getTimer(),
-                    homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else "",
-                    batteryLevel = api.getBatteryLevel(),
-                    temperature = api.getWatchTemperature(),
-                    watchName = resolveWatchName(),
-                    isConnected = true
-                )
-            }.onFailure { AppSnackbar("Api Error") }
-        }
-    }
-
-    private fun resolveWatchName(): String {
-        val stored = LocalDataStorage.get(appContext, "LastDeviceName", "")
-        if (!stored.isNullOrBlank()) return stored.removePrefix("CASIO").trim()
-        return appContext.getString(R.string.no_watch)
-    }
-
-    private fun refreshState() {
-        viewModelScope.launch {
-            runCatching {
-                if (!api.isConnected()) {
-                    _state.value = TimeState(watchName = resolveWatchName())
-                    return@runCatching
-                }
-
                 _state.value = TimeState(
                     timer = api.getTimer(),
                     homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else "",
@@ -156,6 +177,66 @@ class TimeViewModel @Inject constructor(
                 )
             }.onFailure {
                 AppSnackbar("Api Error")
+                val connected = runCatching { api.isConnected() }.getOrDefault(false)
+                _state.value = _state.value.copy(
+                    watchName = resolveWatchName(),
+                    isConnected = connected,
+                )
+            }
+        }
+    }
+
+    private fun resolveWatchName(): String {
+        val stored = LocalDataStorage.get(appContext, "LastDeviceName", "")
+        if (!stored.isNullOrBlank()) return stored.removePrefix("CASIO").trim()
+        val addr = LocalDataStorage.get(appContext, "LastDeviceAddress", "")
+        if (!addr.isNullOrBlank()) {
+            val byAddr = LocalDataStorage.getDeviceName(appContext, addr)
+            if (!byAddr.isNullOrBlank()) return byAddr.removePrefix("CASIO").trim()
+        }
+        return appContext.getString(R.string.no_watch)
+    }
+
+    private fun refreshState() {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                if (!api.isConnected()) {
+                    val wn = resolveWatchName()
+                    if (!api.isConnected()) {
+                        _state.value = TimeState(watchName = wn)
+                        return@runCatching
+                    }
+                }
+
+                if (!api.isConnected()) {
+                    val wn = resolveWatchName()
+                    _state.value = TimeState(watchName = wn)
+                    return@runCatching
+                }
+
+                val primedWatchName = resolveWatchName()
+                _state.value = _state.value.copy(
+                    watchName = primedWatchName,
+                    isConnected = true,
+                )
+
+                _state.value = TimeState(
+                    timer = api.getTimer(),
+                    homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else "",
+                    batteryLevel = api.getBatteryLevel(),
+                    temperature = api.getWatchTemperature(),
+                    watchName = primedWatchName,
+                    isConnected = true
+                )
+                linkLossUiHoldActive.set(false)
+            }.onFailure {
+                AppSnackbar("Api Error")
+                val safeName = resolveWatchName()
+                val connected = runCatching { api.isConnected() }.getOrDefault(false)
+                _state.value = _state.value.copy(
+                    watchName = safeName,
+                    isConnected = connected,
+                )
             }
         }
     }

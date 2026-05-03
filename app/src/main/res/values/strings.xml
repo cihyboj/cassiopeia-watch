@@ -209,7 +209,9 @@
 
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>
-    <string name="status_live">Live</string>
+    <string name="status_online">Online</string>
+    <string name="watch_snackbar_connected">%1$s connected</string>
+    <string name="watch_snackbar_connected_no_name">Watch connected</string>
     <string name="status_offline">Offline</string>
     <string name="metric_battery">Battery</string>
     <string name="metric_temperature">Temp</string>
