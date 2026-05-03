@@ -33,7 +33,7 @@ import org.avmedia.gshockapi.WatchInfo
 
 @SuppressLint("MutableCollectionMutableState")
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(onNavigateToHistory: () -> Unit = {}) {
     CassiopeiaWatchTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -53,7 +53,7 @@ fun SettingsScreen() {
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(Spacing.sm)
                 ) {
-                    SettingsList()
+                    SettingsList(onNavigateToHistory)
                 }
 
                 BottomRow(
@@ -67,7 +67,7 @@ fun SettingsScreen() {
 }
 
 @Composable
-fun SettingsList() {
+fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
 
     LaunchedEffect(Unit) {
@@ -163,6 +163,7 @@ fun SettingsList() {
 
     SettingsSectionTitle(stringResource(R.string.settings_section_sync))
     TimeAdjustment(settingsViewModel::onSettingUpdated)
+    SyncHistoryRow(onNavigate = onNavigateToHistory)
 }
 
 @Composable

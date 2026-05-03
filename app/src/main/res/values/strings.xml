@@ -216,6 +216,11 @@
     <string name="settings_section_locale">Locale</string>
     <string name="settings_section_watch_behavior">Watch behavior</string>
     <string name="settings_section_sync">Sync</string>
+    <string name="sync_history_title" translatable="false">Sync history</string>
+    <string name="sync_history_no_entries" translatable="false">No sync events yet</string>
+    <string name="sync_history_clear" translatable="false">Clear history</string>
+    <string name="sync_history_clear_confirm_title" translatable="false">Clear sync history?</string>
+    <string name="sync_history_clear_confirm_body" translatable="false">Removes all 25 entries for %1$s. Other watches’ history is unaffected.</string>
     <string name="watches">Watches</string>
     <string name="no_paired_watches">No paired watches.</string>
     <string name="watch_not_connected">Watch is not connected.</string>

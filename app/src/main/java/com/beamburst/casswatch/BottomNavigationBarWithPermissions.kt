@@ -37,6 +37,7 @@ import com.beamburst.casswatch.services.InactivityHandler
 import com.beamburst.casswatch.ui.alarms.AlarmsScreen
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.events.EventsScreen
+import com.beamburst.casswatch.ui.history.SyncHistoryScreen
 import com.beamburst.casswatch.ui.settings.SettingsScreen
 import com.beamburst.casswatch.ui.time.TimeScreen
 import kotlin.time.Duration.Companion.seconds
@@ -139,7 +140,9 @@ fun BottomNavigationBarWithPermissions(
                 TimeScreen()
             }
             composable(Screens.Alarms.route) {
-                AlarmsScreen()
+                AlarmsScreen(
+                    onNavigateToHistory = { navController.navigate(Screens.SyncHistory.route) }
+                )
             }
             composable(Screens.Events.route) {
                 NavigateWithPermissions(
@@ -152,7 +155,12 @@ fun BottomNavigationBarWithPermissions(
                 )
             }
             composable(Screens.Settings.route) {
-                SettingsScreen()
+                SettingsScreen(
+                    onNavigateToHistory = { navController.navigate(Screens.SyncHistory.route) }
+                )
+            }
+            composable(Screens.SyncHistory.route) {
+                SyncHistoryScreen(onBack = { navController.popBackStack() })
             }
         }
     }
