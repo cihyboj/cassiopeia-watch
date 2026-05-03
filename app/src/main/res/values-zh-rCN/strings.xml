@@ -225,4 +225,19 @@
     <string name="hourly_signal_requires_auto_sync">Requires automatic sync. The watch updates at 0:00, 6:00, 12:00 and 18:00.</string>
     <string name="hourly_signal_picker_start">start</string>
     <string name="hourly_signal_picker_end">end</string>
+    <string name="set_time_on_watch">Set time on watch</string>
+    <string name="set_time_on_watch_caption">Sends current local time + fine adjustment</string>
+    <string name="time_sent_to_watch">Time sent to watch</string>
+    <string name="short_button_press">Short button press</string>
+    <string name="long_button_press">Long button press</string>
+    <string name="find_my_phone">Find my phone</string>
+    <string name="find_phone_card_subtitle">Rings the phone on long press while connected.</string>
+    <string name="flashlight_card_subtitle">Toggles the device flashlight on short press while connected.</string>
+    <string name="broadcast_action_label">Action string</string>
+    <string name="broadcast_extras_label">Extras</string>
+    <string name="broadcast_add_extra">+ Add extra</string>
+    <string name="broadcast_copy_action">Copy to clipboard</string>
+    <string name="broadcast_how_to_receive">How to receive</string>
+    <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
+    <string name="notify_on_auto_sync">Notify on auto-sync</string>
 </resources>

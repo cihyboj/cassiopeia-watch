@@ -17,6 +17,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.R
+import com.beamburst.casswatch.data.local.BroadcastCardState
+import com.beamburst.casswatch.data.local.BroadcastExtra
+import com.beamburst.casswatch.data.local.PressCardRepository
+import com.beamburst.casswatch.data.local.ToggleCardState
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.utils.LocalDataStorage
@@ -42,12 +46,29 @@ sealed class UiEvent {
     data class ShowSnackbar(val message: String) : UiEvent()
 }
 
+data class PressCardsUiState(
+    val shortBroadcast: BroadcastCardState = BroadcastCardState(),
+    val longBroadcast:  BroadcastCardState = BroadcastCardState(),
+    val flashlight:     ToggleCardState    = ToggleCardState(),
+    val findPhone:      ToggleCardState    = ToggleCardState(),
+)
+
+sealed class PressCardAction {
+    data class ToggleShortBroadcast(val on: Boolean)  : PressCardAction()
+    data class ToggleLongBroadcast(val on: Boolean)   : PressCardAction()
+    data class ToggleFlashlight(val on: Boolean)      : PressCardAction()
+    data class ToggleFindPhone(val on: Boolean)       : PressCardAction()
+    data class SaveShortExtras(val extras: List<BroadcastExtra>) : PressCardAction()
+    data class SaveLongExtras(val extras: List<BroadcastExtra>)  : PressCardAction()
+}
+
 @HiltViewModel
 class SettingsViewModel
 @Inject
 constructor(
         private val api: GShockRepository,
-        @param:ApplicationContext private val appContext: Context
+        @param:ApplicationContext private val appContext: Context,
+        private val pressCardRepository: PressCardRepository,
 ) : ViewModel() {
 
     fun onSettingUpdated(setting: Setting) {
@@ -60,8 +81,12 @@ constructor(
     private val _uiEvents = MutableSharedFlow<UiEvent>()
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
 
+    private val _pressCards = MutableStateFlow(PressCardsUiState())
+    val pressCards: StateFlow<PressCardsUiState> = _pressCards.asStateFlow()
+
     init {
         initializeSettings()
+        loadPressCards()
     }
 
     private fun initializeSettings() {
@@ -338,6 +363,67 @@ constructor(
                         Font.FontType.STANDARD
                     }
             updatedObjects.add(setting)
+        }
+    }
+
+    private fun loadPressCards() {
+        viewModelScope.launch(Dispatchers.Default) {
+            val short = pressCardRepository.shortPress()
+            val long  = pressCardRepository.longPress()
+            _pressCards.value = PressCardsUiState(
+                shortBroadcast = short.broadcast,
+                longBroadcast  = long.broadcast,
+                flashlight     = short.flashlight,
+                findPhone      = long.findPhone,
+            )
+        }
+    }
+
+    fun onPressCardAction(action: PressCardAction) {
+        when (action) {
+            is PressCardAction.ToggleShortBroadcast -> {
+                val updated = _pressCards.value.shortBroadcast.copy(enabled = action.on)
+                _pressCards.value = _pressCards.value.copy(shortBroadcast = updated)
+                pressCardRepository.saveShortBroadcast(updated)
+            }
+            is PressCardAction.ToggleLongBroadcast -> {
+                val updated = _pressCards.value.longBroadcast.copy(enabled = action.on)
+                _pressCards.value = _pressCards.value.copy(longBroadcast = updated)
+                pressCardRepository.saveLongBroadcast(updated)
+            }
+            is PressCardAction.ToggleFlashlight -> {
+                _pressCards.value = _pressCards.value.copy(flashlight = ToggleCardState(action.on))
+                pressCardRepository.saveFlashlightEnabled(action.on)
+            }
+            is PressCardAction.ToggleFindPhone -> {
+                _pressCards.value = _pressCards.value.copy(findPhone = ToggleCardState(action.on))
+                pressCardRepository.saveFindPhoneEnabled(action.on)
+            }
+            is PressCardAction.SaveShortExtras -> {
+                val updated = _pressCards.value.shortBroadcast.copy(extras = action.extras)
+                _pressCards.value = _pressCards.value.copy(shortBroadcast = updated)
+                pressCardRepository.saveShortBroadcast(updated)
+            }
+            is PressCardAction.SaveLongExtras -> {
+                val updated = _pressCards.value.longBroadcast.copy(extras = action.extras)
+                _pressCards.value = _pressCards.value.copy(longBroadcast = updated)
+                pressCardRepository.saveLongBroadcast(updated)
+            }
+        }
+    }
+
+    fun setTimeNow() = viewModelScope.launch {
+        runCatching {
+            if (!api.isConnected()) {
+                AppSnackbar(appContext.getString(R.string.watch_not_connected))
+                return@runCatching
+            }
+            val timeOffset = LocalDataStorage.getFineTimeAdjustment(appContext)
+            val timeMs = System.currentTimeMillis() + timeOffset
+            api.setTime(timeMs = timeMs)
+            AppSnackbar(appContext.getString(R.string.time_sent_to_watch))
+        }.onFailure { e ->
+            AppSnackbar(e.message ?: appContext.getString(R.string.watch_not_connected))
         }
     }
 
