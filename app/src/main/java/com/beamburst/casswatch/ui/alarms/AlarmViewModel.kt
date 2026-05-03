@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.R
+import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.scratchpad.AlarmNameStorage
 import com.beamburst.casswatch.utils.Utils
@@ -310,10 +311,12 @@ class AlarmViewModel @Inject constructor(
 
         runCatching {
             api.getAlarms()
-            api.setAlarms(ArrayList(alarmsToSend))
+            val signalSettings = HourlySignalSettings.load(appContext)
+            val chimeTarget = HourlySignalEvaluator.shouldChimeAt(LocalDateTime.now(), signalSettings)
+            val alarmsWithChime = AlarmSchedulePlanner.mirrorChime(alarmsToSend, chimeTarget)
+            api.setAlarms(ArrayList(alarmsWithChime))
             if (WatchInfo.chimeInSettings) {
-                val chimeSetting = alarmsToSend.getOrNull(0)?.hasHourlyChime ?: false
-                api.setSettings(api.getSettings().copy(hourlyChime = chimeSetting))
+                applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
             }
 
             val hashes = desiredAlarms.mapIndexed { index, alarm ->

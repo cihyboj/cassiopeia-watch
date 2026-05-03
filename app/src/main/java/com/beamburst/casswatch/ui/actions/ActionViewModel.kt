@@ -14,6 +14,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.DateFormat
 import java.time.Clock
+import java.time.LocalDateTime
 import java.util.Date
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +27,9 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.R
+import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.repository.GShockRepository
+import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
 import com.beamburst.casswatch.scratchpad.ActionsStorage
 import com.beamburst.casswatch.services.NotificationProvider
 import com.beamburst.casswatch.ui.common.AppSnackbar
@@ -638,6 +641,15 @@ constructor(
                     context,
                     _actions.value.filter { it.shouldRun(RunEnvironment.AUTO_TIME_ADJUSTMENT) }
             )
+
+            if (WatchInfo.chimeInSettings) {
+                val signalSettings = HourlySignalSettings.load(context)
+                launch(Dispatchers.IO) {
+                    runCatching {
+                        applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
+                    }
+                }
+            }
 
             // show notification if configured
             if (LocalDataStorage.getTimeAdjustmentNotification(context) &&
