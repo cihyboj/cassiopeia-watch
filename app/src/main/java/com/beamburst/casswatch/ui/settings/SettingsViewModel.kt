@@ -96,49 +96,50 @@ constructor(
 
     init {
         initializeSettings()
+        observeSelectedWatchSettings()
         loadPressCards()
     }
 
     private fun initializeSettings() {
-        val newSettings =
-                arrayListOf(
-                        Locale(),
-                        OperationSound(),
-                        Light(),
-                        PowerSavingMode(),
-                        Font(),
-                        TimeAdjustment(appContext),
-                )
-        updateSettingsAndMap(filter(newSettings))
+        updateSettingsAndMap(defaultSettings())
+    }
 
-        /**
-         * Launches a coroutine in the ViewModel's scope using the provided dispatcher. The
-         * coroutine is automatically cancelled when the ViewModel is cleared.
-         *
-         * @param dispatcher The dispatcher to run the coroutine on (Dispatchers.Default for
-         * CPU-intensive work)
-         * @param block The coroutine code to execute
-         *
-         * Note: viewModelScope is an extension property provided by the lifecycle-viewmodel-ktx
-         * library that creates a CoroutineScope tied to the ViewModel's lifecycle.
-         */
+    private fun defaultSettings(): ArrayList<Setting> =
+            filter(
+                    arrayListOf(
+                            Locale(),
+                            OperationSound(),
+                            Light(),
+                            PowerSavingMode(),
+                            Font(),
+                            TimeAdjustment(appContext),
+                    )
+            )
+
+    private fun observeSelectedWatchSettings() {
         viewModelScope.launch(Dispatchers.Default) {
-            val addr = watchSelector.currentAddress()
-            val cached = if (addr != null) WatchSettingsCache.load(appContext, addr) else null
-            if (cached != null) {
-                updateSettingsAndMap(fromJson(Gson().toJson(cached)))
-                return@launch
+            watchSelector.selected.collect { addr ->
+                loadSettingsForAddress(addr)
             }
-
-            if (!api.isConnected()) return@launch
-
-            val settings = api.getSettings()
-            if (addr != null) {
-                WatchSettingsCache.saveClean(appContext, addr, settings)
-            }
-            val settingStr = Gson().toJson(settings)
-            updateSettingsAndMap(fromJson(settingStr))
         }
+    }
+
+    private suspend fun loadSettingsForAddress(addr: String?) {
+        updateSettingsAndMap(defaultSettings())
+        val cached = if (addr != null) WatchSettingsCache.load(appContext, addr) else null
+        if (cached != null) {
+            updateSettingsAndMap(fromJson(Gson().toJson(cached)))
+            return
+        }
+
+        if (!api.isConnected()) return
+
+        val settings = api.getSettings()
+        if (addr != null) {
+            WatchSettingsCache.saveClean(appContext, addr, settings)
+        }
+        val settingStr = Gson().toJson(settings)
+        updateSettingsAndMap(fromJson(settingStr))
     }
 
     private fun updateSettingsAndMap(newSettings: ArrayList<Setting>) {

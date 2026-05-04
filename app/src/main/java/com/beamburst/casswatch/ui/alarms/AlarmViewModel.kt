@@ -170,7 +170,15 @@ class AlarmViewModel @Inject constructor(
         )
 
         viewModelScope.launch(Dispatchers.IO) {
-            val addr = watchSelector.currentAddress()
+            watchSelector.selected.collect { addr ->
+                loadLocalStateForAddress(addr)
+                loadAlarms()
+            }
+        }
+        startFireTimeTick()
+    }
+
+    private fun loadLocalStateForAddress(addr: String?) {
             _viewMode.value = if (addr != null) AlarmSyncStorage.loadViewMode(appContext, addr) else AlarmViewMode.SIMPLE
             _alarmDays.value = if (addr != null) AlarmSyncStorage.loadDaySelections(appContext, addr) else emptyMap()
             _firedAts.value = if (addr != null) AlarmSyncStorage.loadFiredAts(appContext, addr) else emptyMap()
@@ -201,9 +209,6 @@ class AlarmViewModel @Inject constructor(
                 startHour = signalSettings.startHour,
                 endHour   = signalSettings.endHour,
             )
-        }
-        loadAlarms()
-        startFireTimeTick()
     }
 
     override fun onCleared() {
