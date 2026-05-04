@@ -182,19 +182,19 @@ class AlarmViewModel @Inject constructor(
                 }
             }
 
-            val signalSettings = if (!HourlySignalSettings.isMigrated(appContext)) {
-                val legacyChime = if (addr != null) AlarmSyncStorage.loadAlarms(appContext, addr)
-                    ?.getOrNull(0)?.hasHourlyChime ?: false else false
+            val signalSettings = if (addr != null && !HourlySignalSettings.isMigrated(appContext, addr)) {
+                val legacyChime = AlarmSyncStorage.loadAlarms(appContext, addr)
+                    ?.getOrNull(0)?.hasHourlyChime ?: false
                 val initial = if (legacyChime) {
                     HourlySignalSettings(enabled = true, startHour = 1, endHour = 0)
                 } else {
                     HourlySignalSettings.Default
                 }
-                HourlySignalSettings.save(appContext, initial)
-                HourlySignalSettings.markMigrated(appContext)
+                HourlySignalSettings.save(appContext, addr, initial)
+                HourlySignalSettings.markMigrated(appContext, addr)
                 initial
             } else {
-                HourlySignalSettings.load(appContext)
+                if (addr != null) HourlySignalSettings.load(appContext, addr) else HourlySignalSettings.Default
             }
             _hourlySignal.value = HourlySignalUiState(
                 enabled   = signalSettings.enabled,
@@ -330,8 +330,10 @@ class AlarmViewModel @Inject constructor(
             is HourlySignalAction.SetEnabled -> {
                 val updated = _hourlySignal.value.copy(enabled = action.on)
                 _hourlySignal.value = updated
+                val addr = watchSelector.currentAddress() ?: return
                 HourlySignalSettings.save(
                     appContext,
+                    addr,
                     HourlySignalSettings(
                         enabled   = updated.enabled,
                         startHour = updated.startHour,
@@ -348,8 +350,10 @@ class AlarmViewModel @Inject constructor(
                     showDialog = false,
                 )
                 _hourlySignal.value = updated
+                val addr = watchSelector.currentAddress() ?: return
                 HourlySignalSettings.save(
                     appContext,
+                    addr,
                     HourlySignalSettings(
                         enabled   = updated.enabled,
                         startHour = updated.startHour,
@@ -416,7 +420,11 @@ class AlarmViewModel @Inject constructor(
 
         val result = runCatching {
             api.getAlarms()
-            val signalSettings = HourlySignalSettings.load(appContext)
+            val signalSettings = if (addr != null) {
+                HourlySignalSettings.load(appContext, addr)
+            } else {
+                HourlySignalSettings.Default
+            }
             val chimeTarget = HourlySignalEvaluator.shouldChimeAt(LocalDateTime.now(), signalSettings)
             val alarmsWithChime = AlarmSchedulePlanner.mirrorChime(alarmsToSend, chimeTarget)
             api.setAlarms(ArrayList(alarmsWithChime))
@@ -444,7 +452,7 @@ class AlarmViewModel @Inject constructor(
                 eventCount = null,
                 hourlySignalTarget = HourlySignalEvaluator.shouldChimeAt(
                     LocalDateTime.now(),
-                    HourlySignalSettings.load(appContext)
+                    if (addr != null) HourlySignalSettings.load(appContext, addr) else HourlySignalSettings.Default
                 ),
                 timeMs = null,
             ),

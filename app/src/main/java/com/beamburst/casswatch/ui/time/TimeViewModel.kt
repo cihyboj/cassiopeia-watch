@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.R
+import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
@@ -59,6 +60,7 @@ class TimeViewModel @Inject constructor(
     private val watchSessionUiBridge: WatchSessionUiBridge,
     @param:ApplicationContext private val appContext: Context,
     private val syncLogger: SyncHistoryLogger,
+    private val watchSelector: CurrentWatchSelector,
 ) : ViewModel() {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "TimeViewModel"
@@ -156,7 +158,12 @@ class TimeViewModel @Inject constructor(
                     val result = runCatching {
                         api.setTime(timeMs = timeMs)
                         if (WatchInfo.chimeInSettings) {
-                            val signalSettings = HourlySignalSettings.load(appContext)
+                            val addr = watchSelector.currentAddress()
+                            val signalSettings = if (addr != null) {
+                                HourlySignalSettings.load(appContext, addr)
+                            } else {
+                                HourlySignalSettings.Default
+                            }
                             applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
                         }
                     }

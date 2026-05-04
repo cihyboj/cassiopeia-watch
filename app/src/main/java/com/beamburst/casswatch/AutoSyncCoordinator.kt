@@ -5,6 +5,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
@@ -34,6 +35,7 @@ class AutoSyncCoordinator @Inject constructor(
     private val calendarEvents: CalendarEvents,
     private val notificationProvider: NotificationProvider,
     private val syncLogger: SyncHistoryLogger,
+    private val watchSelector: CurrentWatchSelector,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "AutoSyncCoordinator"
@@ -72,7 +74,12 @@ class AutoSyncCoordinator @Inject constructor(
             }
 
             if (WatchInfo.chimeInSettings) {
-                val signalSettings = HourlySignalSettings.load(context)
+                val addr = watchSelector.currentAddress()
+                val signalSettings = if (addr != null) {
+                    HourlySignalSettings.load(context, addr)
+                } else {
+                    HourlySignalSettings.Default
+                }
                 val target = HourlySignalEvaluator.shouldChimeAt(LocalDateTime.now(), signalSettings)
                 applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
                 kinds += SyncKind.HOURLY_SIGNAL
