@@ -21,12 +21,14 @@ import com.beamburst.casswatch.BroadcastSpec
 import com.beamburst.casswatch.PressBroadcastEmitter
 import com.beamburst.casswatch.data.local.BroadcastCardState
 import com.beamburst.casswatch.data.local.BroadcastExtra
+import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.FindPhoneCardState
 import com.beamburst.casswatch.data.local.FindPhoneMelody
 import com.beamburst.casswatch.data.local.PressCardRepository
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
+import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.utils.LocalDataStorage
@@ -76,6 +78,7 @@ constructor(
         @param:ApplicationContext private val appContext: Context,
         private val pressCardRepository: PressCardRepository,
         private val syncLogger: SyncHistoryLogger,
+        private val watchSelector: CurrentWatchSelector,
 ) : ViewModel() {
 
     fun onSettingUpdated(setting: Setting) {
@@ -120,13 +123,20 @@ constructor(
          * library that creates a CoroutineScope tied to the ViewModel's lifecycle.
          */
         viewModelScope.launch(Dispatchers.Default) {
+            val addr = watchSelector.currentAddress()
+            val cached = if (addr != null) WatchSettingsCache.load(appContext, addr) else null
+            if (cached != null) {
+                updateSettingsAndMap(fromJson(Gson().toJson(cached)))
+                return@launch
+            }
+
             if (!api.isConnected()) return@launch
 
-            // Convert API settings to JSON object
-            val settingsJson = Gson().toJsonTree(api.getSettings()).asJsonObject
-
-            // Convert merged settings to string and update state
-            val settingStr = Gson().toJson(settingsJson)
+            val settings = api.getSettings()
+            if (addr != null) {
+                WatchSettingsCache.saveClean(appContext, addr, settings)
+            }
+            val settingStr = Gson().toJson(settings)
             updateSettingsAndMap(fromJson(settingStr))
         }
     }
@@ -164,8 +174,16 @@ constructor(
             val newMap = state.value.settingsMap.toMutableMap()
             newMap[updatedSetting::class.java] = updatedSetting
             _state.update { it.copy(settings = currentList, settingsMap = newMap) }
-            viewModelScope.launch { updatedSetting.save() }
+            viewModelScope.launch {
+                updatedSetting.save()
+                markCurrentSettingsDirty()
+            }
         }
+    }
+
+    private fun markCurrentSettingsDirty() {
+        val addr = watchSelector.currentAddress() ?: return
+        WatchSettingsCache.save(appContext, addr, buildApiSettings())
     }
 
     data class Locale(
@@ -455,6 +473,32 @@ constructor(
     }
 
     fun sendToWatch() {
+        val settings = buildApiSettings()
+
+        viewModelScope.launch {
+            val result = runCatching {
+                if (!api.isConnected()) {
+                    AppSnackbar(appContext.getString(R.string.watch_not_connected))
+                    return@runCatching
+                }
+
+                api.setSettings(settings)
+                watchSelector.currentAddress()?.let { addr ->
+                    WatchSettingsCache.saveClean(appContext, addr, settings)
+                }
+                AppSnackbar(appContext.getString(R.string.settings_sent_to_watch))
+            }
+            syncLogger.record(
+                trigger = SyncTrigger.MANUAL_SEND_SETTINGS,
+                kinds = setOf(SyncKind.SETTINGS),
+                success = result.isSuccess,
+                errorMessage = result.exceptionOrNull()?.message,
+            )
+            result.onFailure { e -> AppSnackbar(e.message ?: "Api Error") }
+        }
+    }
+
+    private fun buildApiSettings(): Settings {
         val settings = Settings()
 
         val localeSetting: Locale = state.value.settingsMap[Locale::class.java] as Locale
@@ -466,10 +510,8 @@ constructor(
         settings.autoLight = lightSetting.autoLight
         settings.lightDuration = lightSetting.duration.value
 
-        if (WatchInfo.hasPowerSavingMode) {
-            val powerSavingMode: PowerSavingMode =
-                    state.value.settingsMap[PowerSavingMode::class.java] as PowerSavingMode
-            settings.powerSavingMode = powerSavingMode.powerSavingMode
+        (state.value.settingsMap[PowerSavingMode::class.java] as? PowerSavingMode)?.let {
+            settings.powerSavingMode = it.powerSavingMode
         }
 
         val buttonTone: OperationSound =
@@ -482,28 +524,10 @@ constructor(
         settings.timeAdjustment = timeAdjustment.timeAdjustment
         settings.adjustmentTimeMinutes = timeAdjustment.adjustmentTimeMinutes
 
-        if (WatchInfo.hasMultipleFonts) {
-            val fontSetting: Font = state.value.settingsMap[Font::class.java] as Font
-            settings.font = fontSetting.font.value
+        (state.value.settingsMap[Font::class.java] as? Font)?.let {
+            settings.font = it.font.value
         }
 
-        viewModelScope.launch {
-            val result = runCatching {
-                if (!api.isConnected()) {
-                    AppSnackbar(appContext.getString(R.string.watch_not_connected))
-                    return@runCatching
-                }
-
-                api.setSettings(settings)
-                AppSnackbar(appContext.getString(R.string.settings_sent_to_watch))
-            }
-            syncLogger.record(
-                trigger = SyncTrigger.MANUAL_SEND_SETTINGS,
-                kinds = setOf(SyncKind.SETTINGS),
-                success = result.isSuccess,
-                errorMessage = result.exceptionOrNull()?.message,
-            )
-            result.onFailure { e -> AppSnackbar(e.message ?: "Api Error") }
-        }
+        return settings
     }
 }

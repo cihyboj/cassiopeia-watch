@@ -10,6 +10,7 @@ import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
+import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.services.NotificationProvider
 import com.beamburst.casswatch.ui.alarms.HourlySignalEvaluator
 import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
@@ -66,6 +67,11 @@ class AutoSyncCoordinator @Inject constructor(
             kinds += SyncKind.TIME
             recordedTimeMs = timeMs
 
+            val addr = watchSelector.currentAddress()
+            if (addr != null) {
+                WatchSettingsCache.reconcileOnConnect(context, addr, api)
+            }
+
             if (WatchInfo.hasReminders) {
                 EventsModel.refresh(calendarEvents.getEventsFromCalendar())
                 api.setEvents(EventsModel.events)
@@ -74,7 +80,6 @@ class AutoSyncCoordinator @Inject constructor(
             }
 
             if (WatchInfo.chimeInSettings) {
-                val addr = watchSelector.currentAddress()
                 val signalSettings = if (addr != null) {
                     HourlySignalSettings.load(context, addr)
                 } else {
