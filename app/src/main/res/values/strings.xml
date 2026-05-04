@@ -207,7 +207,15 @@
     <string name="press_and_hold_connection_button_to_continue">Press and hold the CONNECTION button (usually BOTTOM-LEFT) on your watch for 3 seconds to pair.</string>
     <string name="looking_for_a_device">Looking for a device.</string>
     <string name="add_watch">Add Watch</string>
-    <string name="manage_watches">Manage Watches</string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="connecting">Connecting…</string>
+    <string name="connection_error">Connection error</string>
+    <string name="cached_prefix">cached: %1$s</string>
+    <string name="not_yet_synced">Not yet synced</string>
+    <string name="paired_watches_empty">No watches paired yet.</string>
+    <string name="forget_watch_confirm_title">Forget %1$s?</string>
+    <string name="forget_watch_confirm_body">This removes the watch from your paired list and deletes all its alarms, settings, and sync history on this phone. The watch itself is unaffected.</string>
 
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>

@@ -16,6 +16,7 @@ import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.beamburst.casswatch.data.local.MultiWatchMigrator
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.pairing.CompanionDevicePresenceMonitor
 import com.beamburst.casswatch.pairing.DeviceAssociationManager
@@ -85,6 +86,7 @@ class GShockApplication : Application(), IScreenManager {
     @SuppressLint("NewApi")
     override fun onCreate() {
         super.onCreate()
+        MultiWatchMigrator.migrateIfNeeded(this)
         ActivityProvider.initialize(this)
         eventHandler =
             MainEventHandler(

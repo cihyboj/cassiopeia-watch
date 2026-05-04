@@ -19,7 +19,6 @@ import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.scratchpad.AlarmNameStorage
-import com.beamburst.casswatch.utils.Utils
 import org.avmedia.gshockapi.Alarm
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
@@ -37,6 +36,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -97,8 +99,6 @@ class AlarmViewModel @Inject constructor(
 ) : ViewModel() {
 
     companion object {
-        const val ALARM_VIEW_MODE_KEY = "AlarmViewMode"
-        const val ALARM_DAYS_KEY = "AlarmDaySelections"
         private const val DEFAULT_LOCAL_ALARM_COUNT = 5
     }
 
@@ -128,16 +128,18 @@ class AlarmViewModel @Inject constructor(
 
     private var exactAlarmPermissionRequested = false
     private val eventSubscriberName = "AlarmViewModel-${System.identityHashCode(this)}"
-    val lastAlarmSync: StateFlow<SyncEntry?> = run {
-        val addr = watchSelector.currentAddress()
-        if (addr != null) {
-            store.observe(addr)
-                .map { entries -> entries.firstOrNull { SyncKind.ALARMS in it.kinds && it.success } }
-                .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-        } else {
-            MutableStateFlow(null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val lastAlarmSync: StateFlow<SyncEntry?> = watchSelector.selected
+        .flatMapLatest { addr ->
+            if (addr != null) {
+                store.observe(addr)
+                    .map { entries -> entries.firstOrNull { SyncKind.ALARMS in it.kinds && it.success } }
+            } else {
+                flowOf(null)
+            }
         }
-    }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     init {
         ProgressEvents.runEventActions(
@@ -168,37 +170,45 @@ class AlarmViewModel @Inject constructor(
         )
 
         viewModelScope.launch(Dispatchers.IO) {
-            _viewMode.value = AlarmSyncStorage.loadViewMode(appContext)
-            _alarmDays.value = AlarmSyncStorage.loadDaySelections(appContext)
-            _firedAts.value = AlarmSyncStorage.loadFiredAts(appContext)
+            watchSelector.selected.collect { addr ->
+                loadLocalStateForAddress(addr)
+                loadAlarms()
+            }
+        }
+        startFireTimeTick()
+    }
+
+    private fun loadLocalStateForAddress(addr: String?) {
+            _viewMode.value = if (addr != null) AlarmSyncStorage.loadViewMode(appContext, addr) else AlarmViewMode.SIMPLE
+            _alarmDays.value = if (addr != null) AlarmSyncStorage.loadDaySelections(appContext, addr) else emptyMap()
+            _firedAts.value = if (addr != null) AlarmSyncStorage.loadFiredAts(appContext, addr) else emptyMap()
             _isConnected.value = api.isConnected()
 
-            AlarmSyncStorage.loadAlarms(appContext)?.let {
-                _alarms.value = it
+            if (addr != null) {
+                AlarmSyncStorage.loadAlarms(appContext, addr)?.let {
+                    _alarms.value = it
+                }
             }
 
-            val signalSettings = if (!HourlySignalSettings.isMigrated(appContext)) {
-                val legacyChime = AlarmSyncStorage.loadAlarms(appContext)
+            val signalSettings = if (addr != null && !HourlySignalSettings.isMigrated(appContext, addr)) {
+                val legacyChime = AlarmSyncStorage.loadAlarms(appContext, addr)
                     ?.getOrNull(0)?.hasHourlyChime ?: false
                 val initial = if (legacyChime) {
                     HourlySignalSettings(enabled = true, startHour = 1, endHour = 0)
                 } else {
                     HourlySignalSettings.Default
                 }
-                HourlySignalSettings.save(appContext, initial)
-                HourlySignalSettings.markMigrated(appContext)
+                HourlySignalSettings.save(appContext, addr, initial)
+                HourlySignalSettings.markMigrated(appContext, addr)
                 initial
             } else {
-                HourlySignalSettings.load(appContext)
+                if (addr != null) HourlySignalSettings.load(appContext, addr) else HourlySignalSettings.Default
             }
             _hourlySignal.value = HourlySignalUiState(
                 enabled   = signalSettings.enabled,
                 startHour = signalSettings.startHour,
                 endHour   = signalSettings.endHour,
             )
-        }
-        loadAlarms()
-        startFireTimeTick()
     }
 
     override fun onCleared() {
@@ -215,6 +225,7 @@ class AlarmViewModel @Inject constructor(
 
     private fun tickFireOnceAlarms() {
         if (_viewMode.value != AlarmViewMode.WEEKLY) return
+        val addr = watchSelector.currentAddress() ?: return
         val now = System.currentTimeMillis()
         val nowTime = LocalTime.now()
         var anyFired = false
@@ -232,34 +243,35 @@ class AlarmViewModel @Inject constructor(
 
         if (anyFired) {
             _firedAts.value = updatedFiredAts
-            AlarmSyncStorage.saveAlarms(appContext, _alarms.value, dirty = true, firedAts = updatedFiredAts)
+            AlarmSyncStorage.saveAlarms(appContext, addr, _alarms.value, dirty = true, firedAts = updatedFiredAts)
         }
     }
 
-    private suspend fun hasLocalAppAlarms(localDraft: List<Alarm>?): Boolean {
+    private suspend fun hasLocalAppAlarms(localDraft: List<Alarm>?, addr: String?): Boolean {
         if (localDraft.isNullOrEmpty()) return false
         if (localDraft.any { it.enabled || it.hour != 0 || it.minute != 0 || !it.name.isNullOrBlank() || it.hasHourlyChime }) {
             return true
         }
-        val days = AlarmSyncStorage.loadDaySelections(appContext)
+        val days = if (addr != null) AlarmSyncStorage.loadDaySelections(appContext, addr) else emptyMap()
         return days.values.any { it.isNotEmpty() }
     }
 
     private fun loadAlarms() = viewModelScope.launch {
         runCatching {
-            val localDraft = AlarmSyncStorage.loadAlarms(appContext)
+            val addr = watchSelector.currentAddress()
+            val localDraft = if (addr != null) AlarmSyncStorage.loadAlarms(appContext, addr) else null
             val connected = api.isConnected()
             if (!connected) {
                 _alarms.value = localDraft ?: createDefaultLocalAlarms()
                 return@runCatching
             }
 
-            if (hasLocalAppAlarms(localDraft)) {
+            if (hasLocalAppAlarms(localDraft, addr)) {
                 _alarms.value = localDraft ?: createDefaultLocalAlarms()
                 return@runCatching
             }
 
-            if (AlarmSyncStorage.isDirty(appContext) && !localDraft.isNullOrEmpty()) {
+            if (addr != null && AlarmSyncStorage.isDirty(appContext, addr) && !localDraft.isNullOrEmpty()) {
                 _alarms.value = localDraft
                 return@runCatching
             }
@@ -283,11 +295,12 @@ class AlarmViewModel @Inject constructor(
                 alarmsFromWatch
             }
             _alarms.value = newAlarms
-            AlarmSyncStorage.saveAlarms(appContext, newAlarms, dirty = false)
+            if (addr != null) AlarmSyncStorage.saveAlarms(appContext, addr, newAlarms, dirty = false)
             ProgressEvents.onNext("Alarms Loaded")
         }.onFailure {
-            _alarms.value = AlarmSyncStorage.loadAlarms(appContext)
-                ?: createDefaultLocalAlarms()
+            val addr = watchSelector.currentAddress()
+            _alarms.value = if (addr != null) AlarmSyncStorage.loadAlarms(appContext, addr) ?: createDefaultLocalAlarms()
+                            else createDefaultLocalAlarms()
             ProgressEvents.onNext("Error")
         }
     }
@@ -306,7 +319,8 @@ class AlarmViewModel @Inject constructor(
             if (i == index) transform(alarm) else alarm
         }
         _alarms.value = updated
-        AlarmSyncStorage.saveAlarms(appContext, updated, dirty = true, firedAts = _firedAts.value)
+        val addr = watchSelector.currentAddress() ?: return
+        AlarmSyncStorage.saveAlarms(appContext, addr, updated, dirty = true, firedAts = _firedAts.value)
     }
 
     fun toggleAlarm(index: Int, isEnabled: Boolean) =
@@ -321,8 +335,10 @@ class AlarmViewModel @Inject constructor(
             is HourlySignalAction.SetEnabled -> {
                 val updated = _hourlySignal.value.copy(enabled = action.on)
                 _hourlySignal.value = updated
+                val addr = watchSelector.currentAddress() ?: return
                 HourlySignalSettings.save(
                     appContext,
+                    addr,
                     HourlySignalSettings(
                         enabled   = updated.enabled,
                         startHour = updated.startHour,
@@ -339,8 +355,10 @@ class AlarmViewModel @Inject constructor(
                     showDialog = false,
                 )
                 _hourlySignal.value = updated
+                val addr = watchSelector.currentAddress() ?: return
                 HourlySignalSettings.save(
                     appContext,
+                    addr,
                     HourlySignalSettings(
                         enabled   = updated.enabled,
                         startHour = updated.startHour,
@@ -355,8 +373,9 @@ class AlarmViewModel @Inject constructor(
 
     fun setViewMode(mode: AlarmViewMode) {
         _viewMode.value = mode
-        AlarmSyncStorage.saveViewMode(appContext, mode)
-        AlarmSyncStorage.saveAlarms(appContext, _alarms.value, dirty = true, firedAts = _firedAts.value)
+        val addr = watchSelector.currentAddress() ?: return
+        AlarmSyncStorage.saveViewMode(appContext, addr, mode)
+        AlarmSyncStorage.saveAlarms(appContext, addr, _alarms.value, dirty = true, firedAts = _firedAts.value)
     }
 
     fun toggleDay(alarmIndex: Int, day: DayOfWeek) {
@@ -365,15 +384,13 @@ class AlarmViewModel @Inject constructor(
             val updated = if (day in days) days - day else days + day
             current + (alarmIndex to updated)
         }
-        saveDays()
-        AlarmSyncStorage.saveAlarms(appContext, _alarms.value, dirty = true, firedAts = _firedAts.value)
-    }
-
-    private fun saveDays() {
-        AlarmSyncStorage.saveDaySelections(appContext, _alarmDays.value)
+        val addr = watchSelector.currentAddress() ?: return
+        AlarmSyncStorage.saveDaySelections(appContext, addr, _alarmDays.value)
+        AlarmSyncStorage.saveAlarms(appContext, addr, _alarms.value, dirty = true, firedAts = _firedAts.value)
     }
 
     fun sendAlarmsToWatch() = viewModelScope.launch {
+        val addr = watchSelector.currentAddress()
         if (!api.isConnected()) {
             AppSnackbar(appContext.getString(R.string.watch_not_connected))
             return@launch
@@ -391,7 +408,7 @@ class AlarmViewModel @Inject constructor(
         }
 
         alarmNameStorage.save()
-        AlarmSyncStorage.saveAlarms(appContext, desiredAlarms, dirty = true, firedAts = currentFiredAts)
+        if (addr != null) AlarmSyncStorage.saveAlarms(appContext, addr, desiredAlarms, dirty = true, firedAts = currentFiredAts)
 
         val alarmsToSend = AlarmSchedulePlanner.applyWeeklySchedule(
             alarms = desiredAlarms,
@@ -408,7 +425,11 @@ class AlarmViewModel @Inject constructor(
 
         val result = runCatching {
             api.getAlarms()
-            val signalSettings = HourlySignalSettings.load(appContext)
+            val signalSettings = if (addr != null) {
+                HourlySignalSettings.load(appContext, addr)
+            } else {
+                HourlySignalSettings.Default
+            }
             val chimeTarget = HourlySignalEvaluator.shouldChimeAt(LocalDateTime.now(), signalSettings)
             val alarmsWithChime = AlarmSchedulePlanner.mirrorChime(alarmsToSend, chimeTarget)
             api.setAlarms(ArrayList(alarmsWithChime))
@@ -424,7 +445,7 @@ class AlarmViewModel @Inject constructor(
                 }
             }
             _firedAts.value = updatedFiredAts
-            AlarmSyncStorage.saveAlarms(appContext, _alarms.value, dirty = false, firedAts = updatedFiredAts)
+            if (addr != null) AlarmSyncStorage.saveAlarms(appContext, addr, _alarms.value, dirty = false, firedAts = updatedFiredAts)
         }
         syncLogger.record(
             trigger = SyncTrigger.MANUAL_SEND_ALARMS,
@@ -436,7 +457,7 @@ class AlarmViewModel @Inject constructor(
                 eventCount = null,
                 hourlySignalTarget = HourlySignalEvaluator.shouldChimeAt(
                     LocalDateTime.now(),
-                    HourlySignalSettings.load(appContext)
+                    if (addr != null) HourlySignalSettings.load(appContext, addr) else HourlySignalSettings.Default
                 ),
                 timeMs = null,
             ),
@@ -480,7 +501,8 @@ class AlarmViewModel @Inject constructor(
 
         updateAlarm(index) { it.copy(hour = hour, minute = minute, name = name.ifBlank { null }, enabled = true) }
         _alarmDays.update { it + (index to days) }
-        AlarmSyncStorage.saveDaySelections(appContext, _alarmDays.value)
+        val addr = watchSelector.currentAddress() ?: return
+        AlarmSyncStorage.saveDaySelections(appContext, addr, _alarmDays.value)
         _editorTarget.value = null
     }
 

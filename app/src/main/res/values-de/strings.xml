@@ -175,7 +175,15 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
-    <string name="manage_watches">Manage watches</string>
+    <string name="paired_watches_empty">Noch keine Uhren gekoppelt.</string>
+    <string name="forget_watch_confirm_title">%1$s vergessen?</string>
+    <string name="forget_watch_confirm_body">Dies entfernt die Uhr aus Ihrer gekoppelten Liste und löscht alle ihre Alarme, Einstellungen und den Synchronisierungsverlauf auf diesem Telefon. Die Uhr selbst wird nicht beeinflusst.</string>
+    <string name="connect">Verbinden</string>
+    <string name="disconnect">Trennen</string>
+    <string name="cached_prefix">zwischengespeichert: %1$s</string>
+    <string name="connecting">verbinde…</string>
+    <string name="connection_error">Verbindungsfehler</string>
+    <string name="not_yet_synced">noch nicht synchronisiert</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>
     <string name="status_online">Online</string>

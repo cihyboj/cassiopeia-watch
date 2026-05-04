@@ -5,10 +5,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
+import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.services.NotificationProvider
 import com.beamburst.casswatch.ui.alarms.HourlySignalEvaluator
 import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
@@ -34,6 +36,7 @@ class AutoSyncCoordinator @Inject constructor(
     private val calendarEvents: CalendarEvents,
     private val notificationProvider: NotificationProvider,
     private val syncLogger: SyncHistoryLogger,
+    private val watchSelector: CurrentWatchSelector,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "AutoSyncCoordinator"
@@ -64,6 +67,11 @@ class AutoSyncCoordinator @Inject constructor(
             kinds += SyncKind.TIME
             recordedTimeMs = timeMs
 
+            val addr = watchSelector.currentAddress()
+            if (addr != null) {
+                WatchSettingsCache.reconcileOnConnect(context, addr, api)
+            }
+
             if (WatchInfo.hasReminders) {
                 EventsModel.refresh(calendarEvents.getEventsFromCalendar())
                 api.setEvents(EventsModel.events)
@@ -72,7 +80,11 @@ class AutoSyncCoordinator @Inject constructor(
             }
 
             if (WatchInfo.chimeInSettings) {
-                val signalSettings = HourlySignalSettings.load(context)
+                val signalSettings = if (addr != null) {
+                    HourlySignalSettings.load(context, addr)
+                } else {
+                    HourlySignalSettings.Default
+                }
                 val target = HourlySignalEvaluator.shouldChimeAt(LocalDateTime.now(), signalSettings)
                 applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
                 kinds += SyncKind.HOURLY_SIGNAL
