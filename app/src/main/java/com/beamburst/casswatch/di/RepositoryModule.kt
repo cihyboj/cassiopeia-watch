@@ -4,8 +4,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import com.beamburst.casswatch.data.local.CurrentWatchSelector
-import com.beamburst.casswatch.data.local.LocalDataCurrentWatchSelector
 import com.beamburst.casswatch.data.repository.GShockRepository
 import org.avmedia.gshockapi.GShockAPI
 import org.avmedia.gshockapi.IGShockAPI
@@ -28,8 +26,4 @@ object RepositoryModule {
     fun provideIGShockAPI(repository: GShockRepository): IGShockAPI {
         return repository
     }
-
-    @Provides
-    @Singleton
-    fun provideCurrentWatchSelector(impl: LocalDataCurrentWatchSelector): CurrentWatchSelector = impl
 }
