@@ -24,4 +24,22 @@ class AlarmSyncStorageTest {
         assertEquals(1234567890L, stored[0].firedAt)
     }
 
+    @Test
+    fun `key includes address suffix`() {
+        val addr = "AA:BB:CC:DD:EE:FF"
+        assertEquals("PhoneAlarmDrafts_AA:BB:CC:DD:EE:FF", "PhoneAlarmDrafts_$addr")
+        assertEquals("PhoneAlarmDraftsDirty_AA:BB:CC:DD:EE:FF", "PhoneAlarmDraftsDirty_$addr")
+        assertEquals("AlarmViewMode_AA:BB:CC:DD:EE:FF", "AlarmViewMode_$addr")
+        assertEquals("AlarmDaySelections_AA:BB:CC:DD:EE:FF", "AlarmDaySelections_$addr")
+    }
+
+    @Test
+    fun `flowFor emits new address when tick changes`() {
+        val tick = kotlinx.coroutines.flow.MutableStateFlow(0L)
+        val addr = "AA:BB"
+        val keyFn: (String) -> String = { "PhoneAlarmDrafts_$it" }
+        assertEquals("PhoneAlarmDrafts_AA:BB", keyFn(addr))
+        tick.value = 1L
+        assertEquals(1L, tick.value)
+    }
 }

@@ -5,6 +5,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
@@ -21,6 +22,7 @@ import javax.inject.Singleton
 class WeeklyAlarmScheduler @Inject constructor(
     private val api: GShockRepository,
     private val syncLogger: SyncHistoryLogger,
+    private val watchSelector: CurrentWatchSelector,
     @param:ApplicationContext private val context: Context
 ) {
     companion object {
@@ -41,11 +43,13 @@ class WeeklyAlarmScheduler @Inject constructor(
     fun ensureInitialized() = Unit
 
     suspend fun applyTodaySchedule() {
-        val viewMode = AlarmSyncStorage.loadViewMode(context)
-        val alarmDays = AlarmSyncStorage.loadDaySelections(context)
-        val storedAlarms = AlarmSyncStorage.loadAlarms(context)
-        val firedAts = AlarmSyncStorage.loadFiredAts(context)
-        val shouldWrite = AlarmSyncStorage.isDirty(context) || viewMode == AlarmViewMode.WEEKLY
+        val addr = watchSelector.currentAddress() ?: return
+
+        val viewMode = AlarmSyncStorage.loadViewMode(context, addr)
+        val alarmDays = AlarmSyncStorage.loadDaySelections(context, addr)
+        val storedAlarms = AlarmSyncStorage.loadAlarms(context, addr)
+        val firedAts = AlarmSyncStorage.loadFiredAts(context, addr)
+        val shouldWrite = AlarmSyncStorage.isDirty(context, addr) || viewMode == AlarmViewMode.WEEKLY
 
         if (!shouldWrite) return
 
@@ -86,10 +90,10 @@ class WeeklyAlarmScheduler @Inject constructor(
             setResult.onFailure {
                 Timber.e(it, "Failed to apply per-alarm day schedule")
             }.onSuccess {
-                AlarmSyncStorage.saveAlarms(context, desiredAlarms, dirty = false, firedAts = firedAts)
+                AlarmSyncStorage.saveAlarms(context, addr, desiredAlarms, dirty = false, firedAts = firedAts)
             }
-        } else if (AlarmSyncStorage.isDirty(context)) {
-            AlarmSyncStorage.saveAlarms(context, desiredAlarms, dirty = false, firedAts = firedAts)
+        } else if (AlarmSyncStorage.isDirty(context, addr)) {
+            AlarmSyncStorage.saveAlarms(context, addr, desiredAlarms, dirty = false, firedAts = firedAts)
         }
     }
 }
