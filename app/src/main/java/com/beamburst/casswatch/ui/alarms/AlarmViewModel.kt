@@ -86,9 +86,25 @@ fun alarmHash(
     days: Set<DayOfWeek>,
     enabled: Boolean
 ): String {
-    val dayMask = if (days.isEmpty()) "ALL" else days.sorted().joinToString(",") { it.name.take(3) }
-    return "%02d:%02d:%s:%s".format(hour, minute, dayMask, enabled)
+    return "%02d:%02d:%s".format(hour, minute, enabled)
 }
+
+internal fun alarmHashesForWatchPayload(alarms: List<Alarm>): List<String> =
+    alarms.map { alarm -> alarmHash(alarm.hour, alarm.minute, emptySet(), alarm.enabled) }
+
+internal val alarmSyncHistoryKinds = setOf(SyncKind.ALARMS, SyncKind.HOURLY_SIGNAL)
+
+internal fun alarmSyncDetailsForWatchPayload(
+    alarms: List<Alarm>,
+    hourlySignalTarget: Boolean,
+    actions: List<String>? = null,
+): SyncDetails = SyncDetails(
+    alarmHashes = alarmHashesForWatchPayload(alarms),
+    eventCount = null,
+    hourlySignalTarget = hourlySignalTarget,
+    timeMs = null,
+    actions = actions,
+)
 
 @HiltViewModel
 class AlarmViewModel @Inject constructor(
@@ -421,23 +437,20 @@ class AlarmViewModel @Inject constructor(
             firedAts = currentFiredAts
         )
 
-        val hashes = desiredAlarms.mapIndexed { index, alarm ->
-            val days = _alarmDays.value[index] ?: emptySet()
-            alarmHash(alarm.hour, alarm.minute, days, alarm.enabled)
+        val signalSettings = if (addr != null) {
+            HourlySignalSettings.load(appContext, addr)
+        } else {
+            HourlySignalSettings.Default
         }
+        val syncTime = LocalDateTime.now()
+        val hourlySignalTarget = HourlySignalEvaluator.shouldChimeAt(syncTime, signalSettings)
 
         val result = runCatching {
             api.getAlarms()
-            val signalSettings = if (addr != null) {
-                HourlySignalSettings.load(appContext, addr)
-            } else {
-                HourlySignalSettings.Default
-            }
-            val chimeTarget = HourlySignalEvaluator.shouldChimeAt(LocalDateTime.now(), signalSettings)
-            val alarmsWithChime = AlarmSchedulePlanner.mirrorChime(alarmsToSend, chimeTarget)
+            val alarmsWithChime = AlarmSchedulePlanner.mirrorChime(alarmsToSend, hourlySignalTarget)
             api.setAlarms(ArrayList(alarmsWithChime))
             if (WatchInfo.chimeInSettings) {
-                applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
+                applyHourlySignalToWatch(api, signalSettings, syncTime)
             }
 
             val updatedFiredAts = currentFiredAts.toMutableMap()
@@ -452,17 +465,12 @@ class AlarmViewModel @Inject constructor(
         }
         syncLogger.record(
             trigger = SyncTrigger.MANUAL_SEND_ALARMS,
-            kinds = setOf(SyncKind.ALARMS, SyncKind.HOURLY_SIGNAL),
+            kinds = alarmSyncHistoryKinds,
             success = result.isSuccess,
             errorMessage = result.exceptionOrNull()?.message,
-            details = SyncDetails(
-                alarmHashes = hashes,
-                eventCount = null,
-                hourlySignalTarget = HourlySignalEvaluator.shouldChimeAt(
-                    LocalDateTime.now(),
-                    if (addr != null) HourlySignalSettings.load(appContext, addr) else HourlySignalSettings.Default
-                ),
-                timeMs = null,
+            details = alarmSyncDetailsForWatchPayload(
+                alarms = alarmsToSend,
+                hourlySignalTarget = hourlySignalTarget,
                 actions = listOf("Alarms sent from Alarms screen"),
             ),
         )

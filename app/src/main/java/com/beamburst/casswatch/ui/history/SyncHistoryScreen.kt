@@ -207,15 +207,16 @@ private fun SyncEntryRow(entry: SyncEntry, expanded: Boolean, onClick: () -> Uni
                     Text("set time = $humanTs", style = mono)
                 }
                 if (SyncKind.ALARMS in entry.kinds) {
-                    entry.details.alarmHashes?.forEach { h -> Text("  $h", style = mono) }
+                    entry.details.alarmHashes?.let { alarmStates ->
+                        Text("Alarms: ${formatAlarmSyncStates(alarmStates)}", style = mono)
+                    }
                         ?: Text("alarms = (none)", style = mono)
                 }
                 if (SyncKind.EVENTS in entry.kinds) {
                     Text("event count = ${entry.details.eventCount ?: 0}", style = mono)
                 }
                 if (SyncKind.HOURLY_SIGNAL in entry.kinds) {
-                    val t = if (entry.details.hourlySignalTarget == true) "ON" else "OFF"
-                    Text("hourly signal target = $t", style = mono)
+                    Text("Hourly signal: ${formatHourlySignalTarget(entry.details.hourlySignalTarget)}", style = mono)
                 }
                 if (!entry.success && !entry.errorMessage.isNullOrEmpty()) {
                     Text(entry.errorMessage, style = mono, color = MaterialTheme.colorScheme.error)

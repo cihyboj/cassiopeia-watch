@@ -37,17 +37,13 @@ class AlarmFireOnceStateTest {
 
     @Test
     fun `alarm hash generation is deterministic`() {
-        val hash = alarmHash(hour = 6, minute = 30, dayMask = "ALL", enabled = true)
-        assertEquals("6:30:ALL:true", hash)
+        val hash = alarmHash(hour = 6, minute = 30, days = emptySet(), enabled = true)
+        assertEquals("06:30:true", hash)
     }
 
     @Test
-    fun `alarm hash generation for specific days`() {
-        val hash = alarmHash(hour = 9, minute = 0, dayMask = "MONDAY,FRIDAY", enabled = false)
-        assertEquals("9:0:MONDAY,FRIDAY:false", hash)
+    fun `alarm hash generation omits days`() {
+        val hash = alarmHash(hour = 9, minute = 0, days = emptySet(), enabled = false)
+        assertEquals("09:00:false", hash)
     }
-
-    // Helper that mirrors the alarmHash() function that will be added to AlarmViewModel in Task 4
-    private fun alarmHash(hour: Int, minute: Int, dayMask: String, enabled: Boolean) =
-        "$hour:$minute:$dayMask:$enabled"
 }

@@ -6,13 +6,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
-import com.beamburst.casswatch.data.local.SyncDetails
-import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
+import org.avmedia.gshockapi.WatchInfo
 import timber.log.Timber
 import java.time.LocalDateTime
 import javax.inject.Inject
@@ -59,31 +59,37 @@ class WeeklyAlarmScheduler @Inject constructor(
         }
 
         val desiredAlarms = storedAlarms?.takeIf { it.isNotEmpty() } ?: currentAlarms
-        val newAlarms = AlarmSchedulePlanner.applyWeeklySchedule(
+        val now = LocalDateTime.now()
+        val signalSettings = HourlySignalSettings.load(context, addr)
+        val hourlySignalTarget = HourlySignalEvaluator.shouldChimeAt(now, signalSettings)
+        val scheduledAlarms = AlarmSchedulePlanner.applyWeeklySchedule(
             alarms = desiredAlarms,
             alarmDays = alarmDays,
-            now = LocalDateTime.now(),
+            now = now,
             viewMode = viewMode,
             firedAts = firedAts
         )
+        val alarmsToSend = if (WatchInfo.chimeInSettings) {
+            scheduledAlarms
+        } else {
+            AlarmSchedulePlanner.mirrorChime(scheduledAlarms, hourlySignalTarget)
+        }
 
-        if (newAlarms != currentAlarms) {
-            val hashes = desiredAlarms.mapIndexed { index, alarm ->
-                val days = alarmDays[index] ?: emptySet()
-                alarmHash(alarm.hour, alarm.minute, days, alarm.enabled)
+        if (alarmsToSend != currentAlarms) {
+            val setResult = runCatching {
+                api.setAlarms(ArrayList(alarmsToSend))
+                if (WatchInfo.chimeInSettings) {
+                    applyHourlySignalToWatch(api, signalSettings, now)
+                }
             }
-
-            val setResult = runCatching { api.setAlarms(ArrayList(newAlarms)) }
             syncLogger.record(
                 trigger = SyncTrigger.AUTO_ON_RECONNECT,
-                kinds = setOf(SyncKind.ALARMS),
+                kinds = alarmSyncHistoryKinds,
                 success = setResult.isSuccess,
                 errorMessage = setResult.exceptionOrNull()?.message,
-                details = SyncDetails(
-                    alarmHashes = hashes,
-                    eventCount = null,
-                    hourlySignalTarget = null,
-                    timeMs = null,
+                details = alarmSyncDetailsForWatchPayload(
+                    alarms = alarmsToSend,
+                    hourlySignalTarget = hourlySignalTarget,
                     actions = listOf("Weekly alarm schedule applied on reconnect"),
                 ),
             )

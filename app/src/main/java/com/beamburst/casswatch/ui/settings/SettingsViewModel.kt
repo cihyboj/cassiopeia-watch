@@ -24,6 +24,7 @@ import com.beamburst.casswatch.data.local.BroadcastExtra
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.FindPhoneCardState
 import com.beamburst.casswatch.data.local.FindPhoneMelody
+import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.PressCardRepository
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
@@ -32,6 +33,8 @@ import com.beamburst.casswatch.data.local.WatchConnectionTracker
 import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
 import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.data.repository.GShockRepository
+import com.beamburst.casswatch.ui.alarms.HourlySignalEvaluator
+import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.PhoneFinder
@@ -39,6 +42,7 @@ import com.beamburst.casswatch.utils.SyncHistoryLogger
 import org.avmedia.gshockapi.Settings
 import org.avmedia.gshockapi.WatchInfo
 import org.json.JSONObject
+import java.time.LocalDateTime
 
 abstract class Setting(val name: String) {
     open suspend fun save() {} // Default empty implementation
@@ -465,16 +469,27 @@ constructor(
         }
         val timeOffset = LocalDataStorage.getFineTimeAdjustment(appContext)
         val timeMs = System.currentTimeMillis() + timeOffset
-        val result = runCatching { api.setTime(timeMs = timeMs) }
+        val addr = watchSelector.currentAddress()
+        val signalSettings = if (addr != null) {
+            HourlySignalSettings.load(appContext, addr)
+        } else {
+            HourlySignalSettings.Default
+        }
+        val now = LocalDateTime.now()
+        val hourlyTarget = HourlySignalEvaluator.shouldChimeAt(now, signalSettings)
+        val result = runCatching {
+            api.setTime(timeMs = timeMs)
+            applyHourlySignalToWatch(api, signalSettings, now)
+        }
         syncLogger.record(
             trigger = SyncTrigger.MANUAL_SETTINGS_SET_TIME,
-            kinds = setOf(SyncKind.TIME),
+            kinds = setOf(SyncKind.TIME, SyncKind.HOURLY_SIGNAL),
             success = result.isSuccess,
             errorMessage = result.exceptionOrNull()?.message,
             details = SyncDetails(
                 alarmHashes = null,
                 eventCount = null,
-                hourlySignalTarget = null,
+                hourlySignalTarget = hourlyTarget,
                 timeMs = timeMs,
                 actions = listOf("Settings screen set-time button"),
             ),

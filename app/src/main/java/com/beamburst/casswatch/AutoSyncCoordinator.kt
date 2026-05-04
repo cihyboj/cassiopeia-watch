@@ -87,17 +87,16 @@ class AutoSyncCoordinator @Inject constructor(
                 recordedEventCount = EventsModel.events.size
             }
 
-            if (WatchInfo.chimeInSettings) {
-                val signalSettings = if (addr != null) {
-                    HourlySignalSettings.load(context, addr)
-                } else {
-                    HourlySignalSettings.Default
-                }
-                val target = HourlySignalEvaluator.shouldChimeAt(LocalDateTime.now(), signalSettings)
-                applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
-                kinds += SyncKind.HOURLY_SIGNAL
-                recordedHourlyTarget = target
+            val signalSettings = if (addr != null) {
+                HourlySignalSettings.load(context, addr)
+            } else {
+                HourlySignalSettings.Default
             }
+            val now = LocalDateTime.now()
+            val target = HourlySignalEvaluator.shouldChimeAt(now, signalSettings)
+            applyHourlySignalToWatch(api, signalSettings, now)
+            kinds += SyncKind.HOURLY_SIGNAL
+            recordedHourlyTarget = target
         }.onFailure {
             success = false
             error = it.message

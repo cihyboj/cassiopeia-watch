@@ -177,15 +177,13 @@ class TimeViewModel @Inject constructor(
                     AppSnackbar(appContext.getString(R.string.sending_time_to_watch))
                     val result = runCatching {
                         api.setTime(timeMs = timeMs)
-                        if (WatchInfo.chimeInSettings) {
-                            val addr = watchSelector.currentAddress()
-                            val signalSettings = if (addr != null) {
-                                HourlySignalSettings.load(appContext, addr)
-                            } else {
-                                HourlySignalSettings.Default
-                            }
-                            applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
+                        val addr = watchSelector.currentAddress()
+                        val signalSettings = if (addr != null) {
+                            HourlySignalSettings.load(appContext, addr)
+                        } else {
+                            HourlySignalSettings.Default
                         }
+                        applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
                     }
                     syncLogger.record(
                         trigger = SyncTrigger.MANUAL_SET_TIME,

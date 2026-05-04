@@ -106,4 +106,17 @@ class AlarmSchedulePlannerTest {
         )
         assertFalse("disabled fire-once alarm must stay disabled", result[0].enabled)
     }
+
+    @Test
+    fun mirrorChimeUpdatesOnlyFirstAlarm() {
+        val alarms = listOf(
+            Alarm(hour = 9, minute = 0, enabled = true, hasHourlyChime = false, name = "First"),
+            Alarm(hour = 10, minute = 0, enabled = true, hasHourlyChime = false, name = "Second")
+        )
+
+        val result = AlarmSchedulePlanner.mirrorChime(alarms, chimeEnabled = true)
+
+        assertTrue(result[0].hasHourlyChime)
+        assertFalse(result[1].hasHourlyChime)
+    }
 }
