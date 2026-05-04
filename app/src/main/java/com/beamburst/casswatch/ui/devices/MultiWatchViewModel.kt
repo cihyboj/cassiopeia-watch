@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
+import com.beamburst.casswatch.data.local.PerWatchCacheCleaner
 import com.beamburst.casswatch.data.local.WatchConnectionTracker
 import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
 import com.beamburst.casswatch.data.local.WatchSnapshot
@@ -111,6 +112,7 @@ class MultiWatchViewModel @Inject constructor(
                 repository.disassociate(appContext, address)
                 LocalDataStorage.removeDeviceAddress(appContext, address)
                 deviceAssociationManager.syncAssociations()
+                PerWatchCacheCleaner.wipe(appContext, address)
             }.onFailure {
                 Timber.e(it, "Failed to forget watch $address")
             }
