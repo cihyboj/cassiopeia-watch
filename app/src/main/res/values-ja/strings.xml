@@ -180,7 +180,15 @@
     <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
-    <string name="manage_watches">Manage watches</string>
+    <string name="paired_watches_empty" translatable="false">No watches paired yet.</string>
+    <string name="forget_watch_confirm_title" translatable="false">Forget %1$s?</string>
+    <string name="forget_watch_confirm_body" translatable="false">This removes the watch from your paired list and deletes all its alarms, settings, and sync history on this phone. The watch itself is unaffected.</string>
+    <string name="connect" translatable="false">Connect</string>
+    <string name="disconnect" translatable="false">Disconnect</string>
+    <string name="cached_prefix" translatable="false">cached: %1$s</string>
+    <string name="connecting" translatable="false">connecting…</string>
+    <string name="connection_error" translatable="false">connection error</string>
+    <string name="not_yet_synced" translatable="false">not yet synced</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>
     <string name="status_online">オンライン</string>
