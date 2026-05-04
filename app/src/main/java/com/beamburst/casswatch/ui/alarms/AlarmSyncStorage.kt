@@ -102,6 +102,6 @@ object AlarmSyncStorage {
             ?.toMap()
             ?: emptyMap()
 
-    fun flowFor(addr: String, context: Context): Flow<List<Alarm>?> =
+    fun flowFor(context: Context, addr: String): Flow<List<Alarm>?> =
         _changes.map { loadAlarms(context, addr) }.distinctUntilChanged()
 }

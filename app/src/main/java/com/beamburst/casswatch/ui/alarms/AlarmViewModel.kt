@@ -99,8 +99,6 @@ class AlarmViewModel @Inject constructor(
 ) : ViewModel() {
 
     companion object {
-        const val ALARM_VIEW_MODE_KEY = "AlarmViewMode"
-        const val ALARM_DAYS_KEY = "AlarmDaySelections"
         private const val DEFAULT_LOCAL_ALARM_COUNT = 5
     }
 
