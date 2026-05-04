@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.PerWatchCacheCleaner
+import com.beamburst.casswatch.data.local.SyncHistoryStore
 import com.beamburst.casswatch.data.local.WatchConnectionTracker
 import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
 import com.beamburst.casswatch.data.local.WatchSnapshot
@@ -29,6 +30,7 @@ data class PairedWatch(
     val name: String,
     val state: ConnectionState,
     val snapshot: WatchSnapshot?,
+    val hasSeenWatch: Boolean,
     val isSelected: Boolean,
 )
 
@@ -37,6 +39,7 @@ class MultiWatchViewModel @Inject constructor(
     private val repository: GShockRepository,
     private val selector: CurrentWatchSelector,
     private val tracker: WatchConnectionTracker,
+    private val syncHistoryStore: SyncHistoryStore,
     private val deviceAssociationManager: DeviceAssociationManager,
     @param:ApplicationContext private val appContext: Context,
 ) : ViewModel() {
@@ -142,12 +145,14 @@ class MultiWatchViewModel @Inject constructor(
             val isSelected = selected?.equals(address, ignoreCase = true) == true
             val state = states[address]
                 ?: if (isSelected && repository.isConnected()) ConnectionState.CONNECTED else ConnectionState.DISCONNECTED
+            val snapshot = WatchSnapshot.load(appContext, address)
 
             PairedWatch(
                 address = address,
                 name = name,
                 state = state,
-                snapshot = WatchSnapshot.load(appContext, address),
+                snapshot = snapshot,
+                hasSeenWatch = snapshot != null || syncHistoryStore.load(address).any { it.success },
                 isSelected = isSelected,
             )
         }

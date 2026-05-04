@@ -184,8 +184,10 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="connecting">verbinde…</string>
     <string name="connection_error">Verbindungsfehler</string>
     <string name="not_yet_synced">noch nicht synchronisiert</string>
+    <string name="connect_to_read_watch">Verbinden, um Uhr auszulesen</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>
+    <string name="status_disconnected">Getrennt</string>
     <string name="status_online">Online</string>
     <string name="watch_snackbar_connected">%1$s verbunden</string>
     <string name="watch_snackbar_connected_no_name">Uhr verbunden</string>

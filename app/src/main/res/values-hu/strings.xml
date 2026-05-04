@@ -173,8 +173,10 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="connecting" translatable="false">connecting…</string>
     <string name="connection_error" translatable="false">connection error</string>
     <string name="not_yet_synced" translatable="false">not yet synced</string>
+    <string name="connect_to_read_watch" translatable="false">Connect to read watch</string>
     <string name="status_connected">Connected</string>
     <string name="status_not_connected">Not connected</string>
+    <string name="status_disconnected" translatable="false">Disconnected</string>
     <string name="status_online">Online</string>
     <string name="watch_snackbar_connected">%1$s csatlakozott</string>
     <string name="watch_snackbar_connected_no_name">Óra csatlakozott</string>

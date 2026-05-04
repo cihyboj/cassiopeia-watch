@@ -1,14 +1,13 @@
 package com.beamburst.casswatch.ui.devices
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -25,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
@@ -60,8 +60,6 @@ fun WatchRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
-            ConnectionDot(state = watch.state)
-
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(Spacing.xxs)
@@ -76,6 +74,10 @@ fun WatchRow(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+
+            if (watch.state == ConnectionState.CONNECTED) {
+                OnlinePill()
             }
 
             Box {
@@ -105,39 +107,41 @@ fun WatchRow(
 }
 
 @Composable
-private fun PairedWatch.subtitle(): String =
-    when (state) {
-        ConnectionState.CONNECTED -> listOfNotNull(
-            snapshot?.battery?.let { "$it%" },
-            snapshot?.temperature?.let { "$it°C" },
-            snapshot?.homeTime?.let { "${stringResource(R.string.home_time)} $it" },
-        ).takeIf { it.isNotEmpty() }?.joinToString(" • ")
-            ?: stringResource(R.string.status_connected)
-        ConnectionState.CONNECTING -> stringResource(R.string.connecting)
-        ConnectionState.ERROR -> stringResource(R.string.connection_error)
-        ConnectionState.DISCONNECTED -> {
-            val cached = listOfNotNull(
-                snapshot?.battery?.let { "$it%" },
-                snapshot?.temperature?.let { "$it°C" },
-            )
-            if (cached.isNotEmpty()) {
-                stringResource(R.string.cached_prefix, cached.joinToString(" • "))
-            } else {
-                stringResource(R.string.not_yet_synced)
-            }
-        }
-    }
+private fun PairedWatch.subtitle(): String {
+    val context = LocalContext.current
+    return formatWatchRowSubtitle(
+        state = state,
+        snapshot = snapshot,
+        hasSeenWatch = hasSeenWatch,
+        homeTimeLabel = stringResource(R.string.home_time),
+        connectedLabel = stringResource(R.string.status_connected),
+        connectingLabel = stringResource(R.string.connecting),
+        connectionErrorLabel = stringResource(R.string.connection_error),
+        disconnectedLabel = stringResource(R.string.status_disconnected),
+        connectToReadWatchLabel = stringResource(R.string.connect_to_read_watch),
+        cachedPrefix = { context.getString(R.string.cached_prefix, it) },
+    )
+}
 
 @Composable
-private fun ConnectionDot(state: ConnectionState) {
-    val color = when (state) {
-        ConnectionState.CONNECTED -> MaterialTheme.colorScheme.primary
-        ConnectionState.CONNECTING -> MaterialTheme.colorScheme.tertiary
-        ConnectionState.ERROR -> MaterialTheme.colorScheme.error
-        ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.outline
-    }
-    Canvas(modifier = Modifier.size(Spacing.md)) {
-        drawCircle(color = color)
+private fun OnlinePill() {
+    val (containerColor, contentColor) =
+        if (isSystemInDarkTheme()) {
+            Color(0xFF1B5E20) to Color(0xFFC8E6C9)
+        } else {
+            Color(0xFFE8F5E9) to Color(0xFF1B5E20)
+        }
+
+    Surface(
+        color = containerColor,
+        contentColor = contentColor,
+        shape = MaterialTheme.shapes.small,
+    ) {
+        AppText(
+            text = stringResource(R.string.status_online),
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)
+        )
     }
 }
 
