@@ -20,6 +20,7 @@ import com.beamburst.casswatch.theme.CassiopeiaWatchTheme
 import com.beamburst.casswatch.theme.Spacing
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.common.ScreenTitle
+import com.beamburst.casswatch.ui.devices.PairedWatchList
 
 @Composable
 fun TimeScreen(timeViewModel: TimeViewModel = hiltViewModel()) {
@@ -59,7 +60,7 @@ fun TimeScreen(timeViewModel: TimeViewModel = hiltViewModel()) {
                         .padding(horizontal = Spacing.lg)
                 )
 
-                WatchSummaryCard(
+                PairedWatchList(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = Spacing.lg)
