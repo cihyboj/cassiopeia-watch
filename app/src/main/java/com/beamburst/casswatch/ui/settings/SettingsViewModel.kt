@@ -28,10 +28,13 @@ import com.beamburst.casswatch.data.local.PressCardRepository
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
+import com.beamburst.casswatch.data.local.WatchConnectionTracker
+import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
 import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.utils.PhoneFinder
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import org.avmedia.gshockapi.Settings
 import org.avmedia.gshockapi.WatchInfo
@@ -79,6 +82,7 @@ constructor(
         private val pressCardRepository: PressCardRepository,
         private val syncLogger: SyncHistoryLogger,
         private val watchSelector: CurrentWatchSelector,
+        private val connectionTracker: WatchConnectionTracker,
 ) : ViewModel() {
 
     fun onSettingUpdated(setting: Setting) {
@@ -132,7 +136,7 @@ constructor(
             return
         }
 
-        if (!api.isConnected()) return
+        if (!isSelectedWatchConnected(addr)) return
 
         val settings = api.getSettings()
         if (addr != null) {
@@ -446,6 +450,14 @@ constructor(
         PressBroadcastEmitter.send(appContext, spec, extras)
     }
 
+    fun testFindPhoneConfig(volumePercent: Int, melody: FindPhoneMelody) {
+        PhoneFinder.ring(appContext, volumePercent, melody)
+    }
+
+    fun stopFindPhoneTest() {
+        PhoneFinder.stop()
+    }
+
     fun setTimeNow() = viewModelScope.launch {
         if (!api.isConnected()) {
             AppSnackbar(appContext.getString(R.string.watch_not_connected))
@@ -464,6 +476,7 @@ constructor(
                 eventCount = null,
                 hourlySignalTarget = null,
                 timeMs = timeMs,
+                actions = listOf("Settings screen set-time button"),
             ),
         )
         if (result.isSuccess) {
@@ -494,6 +507,7 @@ constructor(
                 kinds = setOf(SyncKind.SETTINGS),
                 success = result.isSuccess,
                 errorMessage = result.exceptionOrNull()?.message,
+                details = SyncDetails.Empty.copy(actions = listOf("Watch settings sent")),
             )
             result.onFailure { e -> AppSnackbar(e.message ?: "Api Error") }
         }
@@ -530,5 +544,11 @@ constructor(
         }
 
         return settings
+    }
+
+    private fun isSelectedWatchConnected(addr: String?): Boolean {
+        if (addr == null || !api.isConnected()) return false
+        val tracked = connectionTracker.states.value[addr]
+        return tracked == ConnectionState.CONNECTED || tracked == null
     }
 }

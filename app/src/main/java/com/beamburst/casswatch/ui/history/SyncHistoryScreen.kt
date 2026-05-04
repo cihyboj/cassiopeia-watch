@@ -56,6 +56,7 @@ fun SyncHistoryScreen(
 ) {
     val entries by viewModel.entries.collectAsState()
     val expandedTs by viewModel.expandedTimestamp.collectAsState()
+    val watchName by viewModel.watchName.collectAsState()
     var showMenu by remember { mutableStateOf(false) }
     var showConfirm by remember { mutableStateOf(false) }
 
@@ -67,7 +68,7 @@ fun SyncHistoryScreen(
                 Text(
                     stringResource(
                         R.string.sync_history_clear_confirm_body,
-                        viewModel.watchName.ifBlank { "this watch" }
+                        watchName.ifBlank { "this watch" }
                     )
                 )
             },
@@ -90,9 +91,9 @@ fun SyncHistoryScreen(
                 title = {
                     Column {
                         Text(stringResource(R.string.sync_history_title))
-                        if (viewModel.watchName.isNotBlank()) {
+                        if (watchName.isNotBlank()) {
                             Text(
-                                text = viewModel.watchName,
+                                text = watchName,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -157,11 +158,7 @@ fun SyncHistoryScreen(
 private fun SyncEntryRow(entry: SyncEntry, expanded: Boolean, onClick: () -> Unit) {
     val mono = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
     val ts = TS_FMT.format(Instant.ofEpochMilli(entry.timestamp))
-    val tag = when (entry.trigger) {
-        SyncTrigger.AUTO -> "AUTO  "
-        SyncTrigger.AUTO_ON_RECONNECT -> "RECON "
-        else -> "MANUAL"
-    }
+    val tag = entry.trigger.logTag()
     val kindsStr = entry.kinds.joinToString(" ") { k ->
         when (k) {
             SyncKind.TIME -> "time"
@@ -170,6 +167,7 @@ private fun SyncEntryRow(entry: SyncEntry, expanded: Boolean, onClick: () -> Uni
             SyncKind.HOURLY_SIGNAL -> "hourly"
             SyncKind.SETTINGS -> "settings"
             SyncKind.CONNECTION -> "conn"
+            SyncKind.ACTION -> "action"
         }
     }
     val glyphColor = if (entry.success) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
@@ -197,6 +195,13 @@ private fun SyncEntryRow(entry: SyncEntry, expanded: Boolean, onClick: () -> Uni
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
                     .padding(start = 16.dp, top = 4.dp, bottom = 4.dp),
             ) {
+                Text("trigger = ${entry.trigger.description()}", style = mono)
+                if (SyncKind.CONNECTION in entry.kinds) {
+                    Text("connection = ${entry.details.connection ?: entry.trigger.description()}", style = mono)
+                }
+                entry.details.actions?.forEach { action ->
+                    Text("action = $action", style = mono)
+                }
                 if (SyncKind.TIME in entry.kinds) {
                     val humanTs = entry.details.timeMs?.let { TS_FMT.format(Instant.ofEpochMilli(it)) } ?: "-"
                     Text("set time = $humanTs", style = mono)
@@ -219,3 +224,35 @@ private fun SyncEntryRow(entry: SyncEntry, expanded: Boolean, onClick: () -> Uni
         }
     }
 }
+
+private fun SyncTrigger.logTag(): String =
+    when (this) {
+        SyncTrigger.AUTO -> "AUTO  "
+        SyncTrigger.AUTO_ON_RECONNECT -> "RECON "
+        SyncTrigger.WATCH_SHORT_PRESS -> "SHORT "
+        SyncTrigger.WATCH_LONG_PRESS -> "LONG  "
+        SyncTrigger.WATCH_NORMAL_CONNECTION -> "NCONN "
+        SyncTrigger.WATCH_ALWAYS_CONNECTED -> "ACONN "
+        SyncTrigger.CONNECTION_CONNECTED -> "CONN  "
+        SyncTrigger.CONNECTION_DISCONNECTED -> "DISC  "
+        SyncTrigger.CONNECTION_FAILED -> "FAIL  "
+        else -> "MANUAL"
+    }
+
+private fun SyncTrigger.description(): String =
+    when (this) {
+        SyncTrigger.AUTO -> "Automatic sync"
+        SyncTrigger.AUTO_ON_RECONNECT -> "Automatic sync on reconnect"
+        SyncTrigger.WATCH_SHORT_PRESS -> "Short button press"
+        SyncTrigger.WATCH_LONG_PRESS -> "Long button press / Find Phone"
+        SyncTrigger.WATCH_NORMAL_CONNECTION -> "Normal connection button"
+        SyncTrigger.WATCH_ALWAYS_CONNECTED -> "Always-connected button"
+        SyncTrigger.MANUAL_SET_TIME -> "Manual time sync"
+        SyncTrigger.MANUAL_SEND_ALARMS -> "Manual alarm sync"
+        SyncTrigger.MANUAL_SEND_EVENTS -> "Manual event sync"
+        SyncTrigger.MANUAL_SEND_SETTINGS -> "Manual settings sync"
+        SyncTrigger.MANUAL_SETTINGS_SET_TIME -> "Settings set-time action"
+        SyncTrigger.CONNECTION_CONNECTED -> "Connection setup complete"
+        SyncTrigger.CONNECTION_DISCONNECTED -> "Disconnected"
+        SyncTrigger.CONNECTION_FAILED -> "Connection failed"
+    }

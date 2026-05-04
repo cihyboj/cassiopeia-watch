@@ -25,6 +25,8 @@ class SyncHistoryStoreTest {
                 eventCount = null,
                 hourlySignalTarget = true,
                 timeMs = null,
+                connection = "Connection setup complete",
+                actions = listOf("Broadcast sent", "Find my phone started"),
             )
         )
         val json = serializeSyncHistory(listOf(entry))
@@ -41,6 +43,8 @@ class SyncHistoryStoreTest {
             assertEquals(true, details.hourlySignalTarget)
             assertNull(details.eventCount)
             assertNull(details.timeMs)
+            assertEquals("Connection setup complete", details.connection)
+            assertEquals(listOf("Broadcast sent", "Find my phone started"), details.actions)
         }
     }
 

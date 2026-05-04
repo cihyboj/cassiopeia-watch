@@ -12,6 +12,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,22 +23,27 @@ class SyncHistoryViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
-    private val currentAddr: String? = watchSelector.currentAddress()
-
     private val _entries = MutableStateFlow<List<SyncEntry>>(emptyList())
     val entries: StateFlow<List<SyncEntry>> = _entries.asStateFlow()
 
     private val _expandedTimestamp = MutableStateFlow<Long?>(null)
     val expandedTimestamp: StateFlow<Long?> = _expandedTimestamp.asStateFlow()
 
-    val watchName: String = currentAddr
-        ?.let { LocalDataStorage.getDeviceName(context, it)?.removePrefix("CASIO")?.trim() }
-        ?: ""
+    private val _watchName = MutableStateFlow("")
+    val watchName: StateFlow<String> = _watchName.asStateFlow()
 
     init {
         viewModelScope.launch {
-            currentAddr?.let { addr ->
-                store.observe(addr).collect { _entries.value = it }
+            watchSelector.selected.collectLatest { addr ->
+                _expandedTimestamp.value = null
+                _watchName.value = addr
+                    ?.let { LocalDataStorage.getDeviceName(context, it)?.removePrefix("CASIO")?.trim() }
+                    ?: ""
+                if (addr == null) {
+                    _entries.value = emptyList()
+                } else {
+                    store.observe(addr).collect { _entries.value = it }
+                }
             }
         }
     }
@@ -48,7 +54,7 @@ class SyncHistoryViewModel @Inject constructor(
 
     fun clear() {
         viewModelScope.launch {
-            currentAddr?.let { store.clear(it) }
+            watchSelector.currentAddress()?.let { store.clear(it) }
         }
     }
 }

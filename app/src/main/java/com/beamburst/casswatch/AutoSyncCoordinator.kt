@@ -47,12 +47,20 @@ class AutoSyncCoordinator @Inject constructor(
     init {
         ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, arrayOf(
             EventAction("ButtonPressedInfoReceived") {
-                if (api.isAutoTimeStarted()) scope.launch { runChain() }
+                if (api.isAutoTimeStarted()) scope.launch {
+                    runChain(
+                        trigger = SyncTrigger.AUTO,
+                        actions = listOf("Auto time adjustment requested by watch"),
+                    )
+                }
             },
         ))
     }
 
-    suspend fun runChain() {
+    suspend fun runChain(
+        trigger: SyncTrigger = SyncTrigger.AUTO,
+        actions: List<String>? = null,
+    ) {
         val kinds = mutableSetOf<SyncKind>()
         var success = true
         var error: String? = null
@@ -96,7 +104,7 @@ class AutoSyncCoordinator @Inject constructor(
         }
 
         syncLogger.record(
-            trigger = SyncTrigger.AUTO,
+            trigger = trigger,
             kinds = kinds,
             success = success,
             errorMessage = error,
@@ -105,6 +113,7 @@ class AutoSyncCoordinator @Inject constructor(
                 eventCount = recordedEventCount,
                 hourlySignalTarget = recordedHourlyTarget,
                 timeMs = recordedTimeMs,
+                actions = actions,
             ),
         )
 

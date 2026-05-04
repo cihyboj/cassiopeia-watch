@@ -7,12 +7,16 @@ import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.PerWatchCacheCleaner
 import com.beamburst.casswatch.data.local.SyncHistoryStore
+import com.beamburst.casswatch.data.local.SyncDetails
+import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.local.WatchConnectionTracker
 import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
 import com.beamburst.casswatch.data.local.WatchSnapshot
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.pairing.DeviceAssociationManager
 import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.utils.SyncHistoryLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +44,7 @@ class MultiWatchViewModel @Inject constructor(
     private val selector: CurrentWatchSelector,
     private val tracker: WatchConnectionTracker,
     private val syncHistoryStore: SyncHistoryStore,
+    private val syncHistoryLogger: SyncHistoryLogger,
     private val deviceAssociationManager: DeviceAssociationManager,
     @param:ApplicationContext private val appContext: Context,
 ) : ViewModel() {
@@ -59,6 +64,10 @@ class MultiWatchViewModel @Inject constructor(
 
     fun select(address: String) {
         viewModelScope.launch(Dispatchers.IO) {
+            val selectedWatch = paired.value.firstOrNull { it.address.equals(address, ignoreCase = true) }
+            if (selectedWatch?.state != ConnectionState.CONNECTED && tracker.states.value[address] == null) {
+                tracker.mark(address, ConnectionState.DISCONNECTED)
+            }
             selector.select(address)
             refresh()
         }
@@ -77,9 +86,22 @@ class MultiWatchViewModel @Inject constructor(
                 tracker.mark(address, ConnectionState.CONNECTING)
                 repository.waitForConnection(address)
                 tracker.mark(address, ConnectionState.CONNECTED)
+                syncHistoryLogger.record(
+                    trigger = SyncTrigger.CONNECTION_CONNECTED,
+                    kinds = setOf(SyncKind.CONNECTION),
+                    success = true,
+                    details = SyncDetails.Empty.copy(connection = "Started from watch row Connect menu"),
+                )
             }.onFailure {
                 Timber.e(it, "Failed to connect watch $address")
                 tracker.mark(address, ConnectionState.ERROR)
+                syncHistoryLogger.record(
+                    trigger = SyncTrigger.CONNECTION_FAILED,
+                    kinds = setOf(SyncKind.CONNECTION),
+                    success = false,
+                    errorMessage = it.message,
+                    details = SyncDetails.Empty.copy(connection = "Started from watch row Connect menu"),
+                )
             }
             refresh()
         }
@@ -90,9 +112,22 @@ class MultiWatchViewModel @Inject constructor(
             runCatching {
                 repository.disconnect()
                 tracker.mark(address, ConnectionState.DISCONNECTED)
+                syncHistoryLogger.record(
+                    trigger = SyncTrigger.CONNECTION_DISCONNECTED,
+                    kinds = setOf(SyncKind.CONNECTION),
+                    success = true,
+                    details = SyncDetails.Empty.copy(connection = "Started from watch row Disconnect menu"),
+                )
             }.onFailure {
                 Timber.e(it, "Failed to disconnect watch $address")
                 tracker.mark(address, ConnectionState.ERROR)
+                syncHistoryLogger.record(
+                    trigger = SyncTrigger.CONNECTION_FAILED,
+                    kinds = setOf(SyncKind.CONNECTION),
+                    success = false,
+                    errorMessage = it.message,
+                    details = SyncDetails.Empty.copy(connection = "Started from watch row Disconnect menu"),
+                )
             }
             refresh()
         }

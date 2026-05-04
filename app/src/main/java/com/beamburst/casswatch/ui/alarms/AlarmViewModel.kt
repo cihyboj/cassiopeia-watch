@@ -17,6 +17,8 @@ import com.beamburst.casswatch.data.local.SyncEntry
 import com.beamburst.casswatch.data.local.SyncHistoryStore
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
+import com.beamburst.casswatch.data.local.WatchConnectionTracker
+import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.scratchpad.AlarmNameStorage
 import org.avmedia.gshockapi.Alarm
@@ -96,6 +98,7 @@ class AlarmViewModel @Inject constructor(
     private val syncLogger: SyncHistoryLogger,
     private val store: SyncHistoryStore,
     private val watchSelector: CurrentWatchSelector,
+    private val connectionTracker: WatchConnectionTracker,
 ) : ViewModel() {
 
     companion object {
@@ -182,7 +185,7 @@ class AlarmViewModel @Inject constructor(
             _viewMode.value = if (addr != null) AlarmSyncStorage.loadViewMode(appContext, addr) else AlarmViewMode.SIMPLE
             _alarmDays.value = if (addr != null) AlarmSyncStorage.loadDaySelections(appContext, addr) else emptyMap()
             _firedAts.value = if (addr != null) AlarmSyncStorage.loadFiredAts(appContext, addr) else emptyMap()
-            _isConnected.value = api.isConnected()
+            _isConnected.value = isSelectedWatchConnected(addr)
 
             if (addr != null) {
                 AlarmSyncStorage.loadAlarms(appContext, addr)?.let {
@@ -260,7 +263,7 @@ class AlarmViewModel @Inject constructor(
         runCatching {
             val addr = watchSelector.currentAddress()
             val localDraft = if (addr != null) AlarmSyncStorage.loadAlarms(appContext, addr) else null
-            val connected = api.isConnected()
+            val connected = isSelectedWatchConnected(addr)
             if (!connected) {
                 _alarms.value = localDraft ?: createDefaultLocalAlarms()
                 return@runCatching
@@ -306,7 +309,7 @@ class AlarmViewModel @Inject constructor(
     }
 
     private suspend fun refreshConnectionState() {
-        _isConnected.value = api.isConnected()
+        _isConnected.value = isSelectedWatchConnected(watchSelector.currentAddress())
     }
 
     private fun createDefaultLocalAlarms(): List<Alarm> {
@@ -460,6 +463,7 @@ class AlarmViewModel @Inject constructor(
                     if (addr != null) HourlySignalSettings.load(appContext, addr) else HourlySignalSettings.Default
                 ),
                 timeMs = null,
+                actions = listOf("Alarms sent from Alarms screen"),
             ),
         )
         if (result.isSuccess) {
@@ -546,5 +550,11 @@ class AlarmViewModel @Inject constructor(
         DayOfWeek.FRIDAY -> Calendar.FRIDAY
         DayOfWeek.SATURDAY -> Calendar.SATURDAY
         DayOfWeek.SUNDAY -> Calendar.SUNDAY
+    }
+
+    private fun isSelectedWatchConnected(addr: String?): Boolean {
+        if (addr == null || !api.isConnected()) return false
+        val tracked = connectionTracker.states.value[addr]
+        return tracked == ConnectionState.CONNECTED || tracked == null
     }
 }

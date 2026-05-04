@@ -5,6 +5,7 @@ import com.beamburst.casswatch.utils.LocalDataStorage
 import com.google.gson.Gson
 
 data class WatchSnapshot(
+    val timer: Int? = null,
     val battery: Int?,
     val temperature: Int?,
     val homeTime: String?,

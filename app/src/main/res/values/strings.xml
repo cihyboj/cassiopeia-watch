@@ -228,6 +228,7 @@
     <string name="metric_battery">Battery</string>
     <string name="metric_temperature">Temp</string>
     <string name="settings_section_locale">Locale</string>
+    <string name="settings_section_actions">Actions</string>
     <string name="settings_section_watch_behavior">Watch behavior</string>
     <string name="settings_section_sync">Sync</string>
     <string name="sync_history_title" translatable="false">Sync history</string>
@@ -241,6 +242,7 @@
     <string name="find_phone_melody_alarm" translatable="false">Alarm</string>
     <string name="find_phone_melody_ringtone" translatable="false">Ringtone</string>
     <string name="find_phone_melody_notification" translatable="false">Notification</string>
+    <string name="find_phone_test_tone" translatable="false">Test tone</string>
     <string name="find_phone_notification_title" translatable="false">Finding phone</string>
     <string name="find_phone_notification_text" translatable="false">Phone is ringing. Tap Stop to silence.</string>
     <string name="stop" translatable="false">Stop</string>

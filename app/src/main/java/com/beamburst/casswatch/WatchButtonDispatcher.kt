@@ -2,9 +2,13 @@ package com.beamburst.casswatch
 
 import android.content.Context
 import com.beamburst.casswatch.data.local.PressCardRepository
+import com.beamburst.casswatch.data.local.SyncDetails
+import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.ui.events.CalendarEvents
 import com.beamburst.casswatch.ui.events.EventsModel
 import com.beamburst.casswatch.utils.PhoneFinder
+import com.beamburst.casswatch.utils.SyncHistoryLogger
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +32,7 @@ class WatchButtonDispatcher @Inject constructor(
     private val cardRepository: PressCardRepository,
     private val calendarEvents: CalendarEvents,
     private val autoSyncCoordinator: AutoSyncCoordinator,
+    private val syncLogger: SyncHistoryLogger,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "WatchButtonDispatcher"
@@ -47,32 +52,89 @@ class WatchButtonDispatcher @Inject constructor(
             api.isFindPhoneButtonPressed()           -> handleLong()
             api.isAutoTimeStarted()                  -> { /* AutoSyncCoordinator handles this */ }
             api.isNormalButtonPressed()              -> handleNormalConnection()
-            api.isAlwaysConnectedConnectionPressed() -> autoSyncCoordinator.runChain()
+            api.isAlwaysConnectedConnectionPressed() -> autoSyncCoordinator.runChain(
+                trigger = SyncTrigger.WATCH_ALWAYS_CONNECTED,
+                actions = listOf("Always-connected button press"),
+            )
         }
     }
 
-    private fun handleShort() {
+    private suspend fun handleShort() {
         val cards = cardRepository.shortPress()
-        if (cards.broadcast.enabled) PressBroadcastEmitter.send(context, BroadcastSpec.Short, cards.broadcast.extras)
+        val actions = mutableListOf("Short button press")
+        if (cards.broadcast.enabled) {
+            PressBroadcastEmitter.send(context, BroadcastSpec.Short, cards.broadcast.extras)
+            actions += "Broadcast sent: ${BroadcastSpec.Short.action}"
+            if (cards.broadcast.extras.isNotEmpty()) actions += "Broadcast extras: ${cards.broadcast.extras.size}"
+        } else {
+            actions += "Broadcast disabled"
+        }
+        recordWatchAction(SyncTrigger.WATCH_SHORT_PRESS, actions)
     }
 
-    private fun handleLong() {
+    private suspend fun handleLong() {
         val cards = cardRepository.longPress()
-        if (cards.broadcast.enabled) PressBroadcastEmitter.send(context, BroadcastSpec.Long, cards.broadcast.extras)
+        val actions = mutableListOf("Long button press / Find Phone function")
+        if (cards.broadcast.enabled) {
+            PressBroadcastEmitter.send(context, BroadcastSpec.Long, cards.broadcast.extras)
+            actions += "Broadcast sent: ${BroadcastSpec.Long.action}"
+            if (cards.broadcast.extras.isNotEmpty()) actions += "Broadcast extras: ${cards.broadcast.extras.size}"
+        } else {
+            actions += "Broadcast disabled"
+        }
         if (cards.findPhone.enabled) {
             PhoneFinder.ring(
                 context = context,
                 volumePercent = cards.findPhone.volumePercent,
                 melody = cards.findPhone.melody
             )
+            actions += "Find my phone started: ${cards.findPhone.melody.name.lowercase()} at ${cards.findPhone.volumePercent}%"
+        } else {
+            actions += "Find my phone disabled"
         }
+        recordWatchAction(SyncTrigger.WATCH_LONG_PRESS, actions)
     }
 
     private suspend fun handleNormalConnection() {
+        val kinds = mutableSetOf(SyncKind.CONNECTION)
+        val actions = mutableListOf("Normal connection button press")
+        var success = true
+        var error: String? = null
         if (WatchInfo.hasReminders) {
-            EventsModel.refresh(calendarEvents.getEventsFromCalendar())
-            api.setEvents(EventsModel.events)
+            runCatching {
+                EventsModel.refresh(calendarEvents.getEventsFromCalendar())
+                api.setEvents(EventsModel.events)
+                kinds += SyncKind.EVENTS
+                actions += "Events synchronized: ${EventsModel.events.size}"
+            }.onFailure {
+                success = false
+                error = it.message
+            }
+        } else {
+            actions += "No reminder support for this watch"
         }
+        syncLogger.record(
+            trigger = SyncTrigger.WATCH_NORMAL_CONNECTION,
+            kinds = kinds,
+            success = success,
+            errorMessage = error,
+            details = SyncDetails(
+                alarmHashes = null,
+                eventCount = if (SyncKind.EVENTS in kinds) EventsModel.events.size else null,
+                hourlySignalTarget = null,
+                timeMs = null,
+                connection = "Normal connection button press",
+                actions = actions,
+            ),
+        )
     }
 
+    private suspend fun recordWatchAction(trigger: SyncTrigger, actions: List<String>) {
+        syncLogger.record(
+            trigger = trigger,
+            kinds = setOf(SyncKind.ACTION),
+            success = true,
+            details = SyncDetails.Empty.copy(actions = actions),
+        )
+    }
 }

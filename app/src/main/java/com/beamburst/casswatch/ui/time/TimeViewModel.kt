@@ -19,6 +19,8 @@ import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
+import com.beamburst.casswatch.data.local.WatchConnectionTracker
+import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
 import com.beamburst.casswatch.data.local.WatchSnapshot
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
@@ -62,6 +64,7 @@ class TimeViewModel @Inject constructor(
     @param:ApplicationContext private val appContext: Context,
     private val syncLogger: SyncHistoryLogger,
     private val watchSelector: CurrentWatchSelector,
+    private val connectionTracker: WatchConnectionTracker,
 ) : ViewModel() {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "TimeViewModel"
@@ -120,7 +123,12 @@ class TimeViewModel @Inject constructor(
                 }
             }
         }
-        refreshState()
+        viewModelScope.launch(Dispatchers.IO) {
+            watchSelector.selected.collect { addr ->
+                loadCachedState(addr)
+                if (isSelectedWatchConnected(addr)) refreshState()
+            }
+        }
     }
 
     override fun onCleared() {
@@ -131,8 +139,13 @@ class TimeViewModel @Inject constructor(
     fun onAction(action: TimeAction) {
         when (action) {
             is TimeAction.SetTimer -> {
-                _state.value = _state.value.copy(
-                    timer = action.hours * 3600 + action.minutes * 60 + action.seconds
+                val timer = action.hours * 3600 + action.minutes * 60 + action.seconds
+                _state.value = _state.value.copy(timer = timer)
+                saveWatchSnapshot(
+                    timer = timer,
+                    battery = _state.value.batteryLevel,
+                    temperature = _state.value.temperature,
+                    homeTime = _state.value.homeTime,
                 )
             }
 
@@ -142,6 +155,12 @@ class TimeViewModel @Inject constructor(
                         AppSnackbar(appContext.getString(R.string.watch_not_connected))
                     } else {
                         api.setTimer(action.timeMs)
+                        saveWatchSnapshot(
+                            timer = action.timeMs,
+                            battery = _state.value.batteryLevel,
+                            temperature = _state.value.temperature,
+                            homeTime = _state.value.homeTime,
+                        )
                         AppSnackbar(appContext.getString(R.string.timer_set))
                     }
                 }
@@ -174,12 +193,13 @@ class TimeViewModel @Inject constructor(
                         success = result.isSuccess,
                         errorMessage = result.exceptionOrNull()?.message,
                         details = SyncDetails(
-                            alarmHashes = null,
-                            eventCount = null,
-                            hourlySignalTarget = null,
-                            timeMs = timeMs,
-                        ),
-                    )
+                        alarmHashes = null,
+                        eventCount = null,
+                        hourlySignalTarget = null,
+                        timeMs = timeMs,
+                        actions = listOf("Time screen send-time button"),
+                    ),
+                )
                     if (result.isSuccess) {
                         AppSnackbar(appContext.getString(R.string.time_set))
                         refreshState()
@@ -208,7 +228,7 @@ class TimeViewModel @Inject constructor(
                 val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
                 val battery = api.getBatteryLevel()
                 val temperature = api.getWatchTemperature()
-                saveWatchSnapshot(battery, temperature, homeTime)
+                saveWatchSnapshot(timer, battery, temperature, homeTime)
                 _state.value = TimeState(
                     timer = timer,
                     homeTime = homeTime,
@@ -229,13 +249,16 @@ class TimeViewModel @Inject constructor(
     }
 
     private fun resolveWatchName(): String {
-        if (api.isConnected()) {
+        return resolveWatchName(watchSelector.currentAddress())
+    }
+
+    private fun resolveWatchName(address: String?): String {
+        if (api.isConnected() && isSelectedWatchConnected(address)) {
             val connectedName = WatchInfo.name
             if (!connectedName.isNullOrBlank()) return connectedName.removePrefix("CASIO").trim()
         }
-        val lastAddress = LocalDataStorage.get(appContext, "LastDeviceAddress", "")
-        if (!lastAddress.isNullOrBlank()) {
-            val perDevice = LocalDataStorage.getDeviceName(appContext, lastAddress)
+        if (!address.isNullOrBlank()) {
+            val perDevice = LocalDataStorage.getDeviceName(appContext, address)
             if (!perDevice.isNullOrBlank()) return perDevice.removePrefix("CASIO").trim()
         }
         val stored = LocalDataStorage.get(appContext, "LastDeviceName", "")
@@ -246,17 +269,9 @@ class TimeViewModel @Inject constructor(
     private fun refreshState() {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
-                if (!api.isConnected()) {
-                    val wn = resolveWatchName()
-                    if (!api.isConnected()) {
-                        _state.value = TimeState(watchName = wn)
-                        return@runCatching
-                    }
-                }
-
-                if (!api.isConnected()) {
-                    val wn = resolveWatchName()
-                    _state.value = TimeState(watchName = wn)
+                val selected = watchSelector.currentAddress()
+                if (!isSelectedWatchConnected(selected)) {
+                    loadCachedState(selected)
                     return@runCatching
                 }
 
@@ -270,7 +285,7 @@ class TimeViewModel @Inject constructor(
                 val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
                 val battery = api.getBatteryLevel()
                 val temperature = api.getWatchTemperature()
-                saveWatchSnapshot(battery, temperature, homeTime)
+                saveWatchSnapshot(timer, battery, temperature, homeTime)
                 _state.value = TimeState(
                     timer = timer,
                     homeTime = homeTime,
@@ -292,12 +307,31 @@ class TimeViewModel @Inject constructor(
         }
     }
 
-    private fun saveWatchSnapshot(battery: Int, temperature: Int, homeTime: String) {
+    private fun loadCachedState(address: String?) {
+        val snapshot = address?.let { WatchSnapshot.load(appContext, it) }
+        _state.value = TimeState(
+            timer = snapshot?.timer ?: 0,
+            homeTime = snapshot?.homeTime.orEmpty(),
+            batteryLevel = snapshot?.battery ?: 0,
+            temperature = snapshot?.temperature ?: 0,
+            watchName = resolveWatchName(address),
+            isConnected = false,
+        )
+    }
+
+    private fun isSelectedWatchConnected(address: String?): Boolean {
+        if (address == null || !api.isConnected()) return false
+        val tracked = connectionTracker.states.value[address]
+        return tracked == ConnectionState.CONNECTED || tracked == null
+    }
+
+    private fun saveWatchSnapshot(timer: Int, battery: Int, temperature: Int, homeTime: String) {
         val addr = watchSelector.currentAddress() ?: return
         WatchSnapshot.save(
             appContext,
             addr,
             WatchSnapshot(
+                timer = timer,
                 battery = battery,
                 temperature = temperature,
                 homeTime = homeTime.takeIf { it.isNotBlank() },

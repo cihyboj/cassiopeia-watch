@@ -124,6 +124,7 @@ class EventViewModel @Inject constructor(
                     eventCount = sanitizedEvents.size,
                     hourlySignalTarget = null,
                     timeMs = null,
+                    actions = listOf("Events sent from Events screen"),
                 ),
             )
             if (result.isSuccess) {

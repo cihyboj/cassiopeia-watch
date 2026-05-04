@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.session.WatchSessionUiBridge
@@ -123,9 +124,18 @@ class MainEventHandler(
                 kinds = setOf(SyncKind.CONNECTION),
                 success = success,
                 errorMessage = error,
+                details = SyncDetails.Empty.copy(connection = connectionDescription(trigger)),
             )
         }
     }
+
+    private fun connectionDescription(trigger: SyncTrigger): String =
+        when (trigger) {
+            SyncTrigger.CONNECTION_CONNECTED -> "Connection setup complete"
+            SyncTrigger.CONNECTION_DISCONNECTED -> "Watch disconnected"
+            SyncTrigger.CONNECTION_FAILED -> "Connection failed"
+            else -> trigger.name
+        }
 
     private fun handleWaitForConnection() {
         CoroutineScope(Dispatchers.Default).launch {

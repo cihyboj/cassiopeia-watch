@@ -84,6 +84,7 @@ class WeeklyAlarmScheduler @Inject constructor(
                     eventCount = null,
                     hourlySignalTarget = null,
                     timeMs = null,
+                    actions = listOf("Weekly alarm schedule applied on reconnect"),
                 ),
             )
 

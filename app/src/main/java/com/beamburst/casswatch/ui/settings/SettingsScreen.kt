@@ -83,6 +83,8 @@ fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
     // ── Actions replacement: top-of-Settings rows ─────────────────────────
     val pressCards by settingsViewModel.pressCards.collectAsState()
 
+    SettingsSectionTitle(stringResource(R.string.settings_section_actions))
+
     PressCard(
         title = stringResource(R.string.short_button_press),
         subtitle = BroadcastSpec.Short.action,
@@ -143,6 +145,8 @@ fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
                 volumePercent = pressCards.findPhone.volumePercent,
                 melody = pressCards.findPhone.melody,
                 onDismiss = onDismiss,
+                onTest = settingsViewModel::testFindPhoneConfig,
+                onStopTest = settingsViewModel::stopFindPhoneTest,
                 onSave = { volume, melody ->
                     settingsViewModel.onPressCardAction(
                         PressCardAction.SaveFindPhoneConfig(volume, melody)

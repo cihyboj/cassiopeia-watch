@@ -65,6 +65,8 @@ internal fun serializeSyncHistory(entries: List<SyncEntry>): String {
                 e.details.eventCount?.let { put("eC", it) }
                 e.details.hourlySignalTarget?.let { put("hT", it) }
                 e.details.timeMs?.let { put("tM", it) }
+                e.details.connection?.let { put("c", it.take(120)) }
+                e.details.actions?.let { put("ac", JSONArray(it.map { action -> action.take(120) })) }
             })
         })
     }
@@ -99,6 +101,10 @@ private fun parseEntry(obj: JSONObject): SyncEntry {
             eventCount         = if (d.has("eC")) d.getInt("eC") else null,
             hourlySignalTarget = if (d.has("hT")) d.getBoolean("hT") else null,
             timeMs             = if (d.has("tM")) d.getLong("tM") else null,
+            connection         = d.optString("c").takeIf { it.isNotEmpty() },
+            actions            = if (d.has("ac")) {
+                val ac = d.getJSONArray("ac"); (0 until ac.length()).map { ac.getString(it) }
+            } else null,
         )
     )
 }
