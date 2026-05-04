@@ -19,6 +19,7 @@ import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
+import com.beamburst.casswatch.data.local.WatchSnapshot
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
 import com.beamburst.casswatch.session.SessionLinkEvent
@@ -203,11 +204,16 @@ class TimeViewModel @Inject constructor(
             // cannot keep forcing "disconnected" on every tick (second reconnect).
             linkLossUiHoldActive.set(false)
             runCatching {
+                val timer = api.getTimer()
+                val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
+                val battery = api.getBatteryLevel()
+                val temperature = api.getWatchTemperature()
+                saveWatchSnapshot(battery, temperature, homeTime)
                 _state.value = TimeState(
-                    timer = api.getTimer(),
-                    homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else "",
-                    batteryLevel = api.getBatteryLevel(),
-                    temperature = api.getWatchTemperature(),
+                    timer = timer,
+                    homeTime = homeTime,
+                    batteryLevel = battery,
+                    temperature = temperature,
                     watchName = resolveWatchName(),
                     isConnected = true
                 )
@@ -260,11 +266,16 @@ class TimeViewModel @Inject constructor(
                     isConnected = true,
                 )
 
+                val timer = api.getTimer()
+                val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
+                val battery = api.getBatteryLevel()
+                val temperature = api.getWatchTemperature()
+                saveWatchSnapshot(battery, temperature, homeTime)
                 _state.value = TimeState(
-                    timer = api.getTimer(),
-                    homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else "",
-                    batteryLevel = api.getBatteryLevel(),
-                    temperature = api.getWatchTemperature(),
+                    timer = timer,
+                    homeTime = homeTime,
+                    batteryLevel = battery,
+                    temperature = temperature,
                     watchName = primedWatchName,
                     isConnected = true
                 )
@@ -279,5 +290,19 @@ class TimeViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun saveWatchSnapshot(battery: Int, temperature: Int, homeTime: String) {
+        val addr = watchSelector.currentAddress() ?: return
+        WatchSnapshot.save(
+            appContext,
+            addr,
+            WatchSnapshot(
+                battery = battery,
+                temperature = temperature,
+                homeTime = homeTime.takeIf { it.isNotBlank() },
+                cachedAt = System.currentTimeMillis(),
+            )
+        )
     }
 }
