@@ -22,7 +22,7 @@ définies dans l\’écran <b>Actions</b>, appuyez brièvement sur le bouton <b>
 <b>Prendre une photo</b>. Avec les actions, la montre agit comme une télécommande pour votre téléphone.</p> <p>Vous pouvez télécharger cette application depuis
 <a href="https://f-droid.org/en/packages/com.beamburst.casswatch">F-DROID</a></p>]]>
 </string>
-    <string name="alarms_screen_info"><![CDATA[Les montres <b>B5600/B5000/B2100</b> ont 5 alarmes et un réglage "signal" (carillon horaire) indiqués ici.
+    <string name="alarms_screen_info"><![CDATA[Les montres <b>B5600/B5000/B2100/ABL-100</b> ont 5 alarmes et un réglage "signal" (carillon horaire) indiqués ici.
 Les alarmes peuvent être mises à jour en appuyant sur la valeur de l\'heure de chaque alarme. Une nouvelle boîte de dialogue apparaîtra, vous permettant de définir l\'heure de l\'alarme.
 Une fois les alarmes définies, vous pouvez les envoyer à la montre ou à l\'application Réveil sur le téléphone.]]></string>
     <string name="events_screen_info"><![CDATA[Cet écran affiche les Événements de votre <b>Google Agenda</b> et vous permet de les envoyer aux <b>rappels</b> de la montre.\n\n

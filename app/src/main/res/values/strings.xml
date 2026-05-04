@@ -28,7 +28,7 @@
 
     ]]></string>
 
-    <string name="alarms_screen_info"><![CDATA[The <b>B5600/B5000/B2100</b> watches have 5 alarms shown here.
+    <string name="alarms_screen_info"><![CDATA[The <b>B5600/B5000/B2100/ABL-100</b> watches have 5 alarms shown here.
     The alarms can be updated by pressing on the time value of each alarm. A new dialog will appear, which allows you to set the alarm\'s time.
     Once the alarms have been set, you can send them to the watch, or send them to the Alarm Clock app on the phone.]]></string>
     <string name="events_screen_info"><![CDATA[This screen displays Events from your <b>Google Calendar</b> and allows you to send them to the watch\'s

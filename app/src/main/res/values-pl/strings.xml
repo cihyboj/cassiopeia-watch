@@ -1,0 +1,284 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name" translatable="false">Cassiopeia Watch</string>
+    <string name="title_time">Czas</string>
+    <string name="title_alarms">Alarmy</string>
+    <string name="title_events">Wydarzenia</string>
+    <string name="title_settings">Ustawienia</string>
+    <string name="events">Wydarzenia</string>
+    <string name="alarms">Alarmy</string>
+    <string name="time">Czas</string>
+    <string name="home" translatable="false">Home</string>
+    <string name="alarm_view_simple">Codzienne</string>
+    <string name="alarm_view_weekly">Tygodniowe</string>
+    <string name="send_alarms_to_watch">Wyślij do zegarka</string>
+    <string name="enabled">Włączone</string>
+    <string name="disabled">Wyłączone</string>
+    <string name="send_alarms_to_phone">Wyślij do telefonu</string>
+    <string name="send_events_to_watch">Wyślij do\nprzypomnień zegarka</string>
+
+    <string name="connection_screen_info"><![CDATA[
+    Aby przejść dalej, naciśnij i przytrzymaj przycisk <b>LEWY-DOLNY</b> na zegarku przez 3 sekundy.
+    Po drugim podwójnym sygnale aplikacja wyświetli ekran ustawiania czasu.
+    <p><b>Upewnij się, że oficjalna aplikacja Casio nie jest uruchomiona, ponieważ będzie zakłócać działanie tej aplikacji.</b></p>
+    <p>Niektóre zegarki, np. DW-H5600, wymagają parowania przed pierwszym połączeniem.
+    W takim przypadku włącz tryb parowania w zegarku. Na telefonie pojawi się okno do sparowania urządzenia.</p>
+    <p>Aby uruchomić akcje z ekranu <b>Actions</b>, naciśnij krótko przycisk <b>PRAWY-DOLNY</b>.
+    Akcje to aplikacje w telefonie, np. <b>Zrób zdjęcie</b>. Zegarek działa wtedy jak pilot.</p>
+    <p>Możesz pobrać aplikację z <a href="https://f-droid.org/en/packages/com.beamburst.casswatch">F-DROID</a></p>
+    ]]></string>
+
+    <string name="alarms_screen_info"><![CDATA[Zegarki <b>B5600/B5000/B2100/ABL-100</b> mają 5 alarmów.
+    Możesz je edytować, klikając godzinę. Pojawi się okno ustawień.
+    Po ustawieniu możesz wysłać alarmy do zegarka lub aplikacji budzika w telefonie.]]></string>
+
+    <string name="events_screen_info"><![CDATA[Ekran pokazuje wydarzenia z <b>Google Calendar</b> i pozwala wysłać je do
+    <b>przypomnień</b> zegarka.\n\nJeśli brak wydarzeń, sprawdź czy masz przyszłe lub powtarzające się wpisy.]]></string>
+
+    <string name="feb_22_mar_24">Lut-22 - Mar-24</string>
+    <string name="weekly">TYGODNIOWO</string>
+    <string name="action_item">Akcja</string>
+    <string name="voice_assistant">Asystent głosowy</string>
+    <string name="take_a_photo">Zrób zdjęcie</string>
+    <string name="info">Informacje</string>
+    <string name="daily">Codziennie</string>
+    <string name="_12_00">12:00</string>
+    <string name="email_item">Email</string>
+    <string name="email_example_com">me@example.com</string>
+    <string name="watch_alarms">Alarmy zegarka</string>
+
+    <string name="hourly_signal_title">Sygnał godzinowy</string>
+    <string name="hourly_signal_window_caption">%1$s:00 - %2$s:00</string>
+    <string name="hourly_signal_chimes_at">Dźwięk o %1$s (%2$d razy dziennie)</string>
+    <string name="hourly_signal_requires_auto_sync">Wymaga auto-synchronizacji. Aktualizacja po 0:00, 6:00, 12:00 i 18:00.</string>
+    <string name="hourly_signal_picker_start">start</string>
+    <string name="hourly_signal_picker_end">koniec</string>
+
+    <string name="set_time_on_watch">Ustaw czas w zegarku</string>
+    <string name="set_time_on_watch_caption">Wysyła aktualny czas lokalny + korektę</string>
+    <string name="time_sent_to_watch">Czas wysłany</string>
+
+    <string name="short_button_press">Krótkie naciśnięcie</string>
+    <string name="long_button_press">Długie przytrzymanie</string>
+    <string name="find_my_phone">Znajdź telefon</string>
+    <string name="find_phone_card_subtitle">Dzwoni telefon po długim przytrzymaniu, gdy połączony.</string>
+    <string name="flashlight_card_subtitle">Włącza/wyłącza latarkę po krótkim naciśnięciu, gdy połączony.</string>
+
+    <string name="broadcast_action_label">Akcja (string)</string>
+    <string name="broadcast_extras_label">Dodatkowe dane</string>
+    <string name="broadcast_add_extra">+ Dodaj</string>
+    <string name="broadcast_send_test" translatable="false">Send test broadcast</string>
+    <string name="broadcast_copy_action">Kopiuj do schowka</string>
+    <string name="broadcast_how_to_receive">Jak odebrać</string>
+    <string name="broadcast_help_text">Tasker → Profil → Zdarzenie → System → Odebrano Intent → Akcja: (wklej powyżej).\nMacroDroid: Wyzwalacz → Odebrano Intent → Akcja: (wklej powyżej).\nAutomate: Start → Czekaj na broadcast → Akcja: (wklej powyżej).</string>
+
+    <string name="notify_on_auto_sync">Powiadom przy automatycznej synchronizacji</string>
+    <string name="google_calendar_events">Wydarzenia Google Calendar</string>
+    <string name="local_time">Czas lokalny</string>
+    <string name="send_to_watch">Wyślij do\nzegarka</string>
+
+    <string name="phonecall_item">Połączenie telefoniczne</string>
+    <string name="home_time">Czas domowy</string>
+    <string name="running_actions">Uruchomione akcje</string>
+    <string name="title_placeholder">Tytuł</string>
+
+    <string name="settings">Ustawienia</string>
+    <string name="send_to_watch_settings">Wyślij do\nzegarka</string>
+
+    <string name="font" translatable="false">Font</string>
+    <string name="time_format">Format czasu</string>
+    <string name="_12h">12h</string>
+    <string name="_24h">24h</string>
+    <string name="date_format">Format daty</string>
+    <string name="language">Język</string>
+    <string name="operational_sound">Dźwięk przycisków</string>
+    <string name="power_saving_mode">Tryb oszczędzania energii</string>
+    <string name="select_language">Wybierz język</string>
+    <string name="cancel">Anuluj</string>
+    <string name="ok">OK</string>
+
+    <string name="timerDialogTitle">Timer</string>
+
+    <string name="info_home_time"><![CDATA[<b>Czas domowy</b> pokazuje strefę czasową zegarka.
+    Gdy aplikacja ustawia czas zegarka, ustawia także <b>Czas domowy, offset</b> i <b>DST</b>.
+    Nie ma potrzeby zamiany <b>World Time</b> i <b>Home Time</b> podczas podróży.]]></string>
+
+    <string name="time_adjustment_info"><![CDATA[
+    <li><b>Korekta czasu</b> pozwala aplikacji automatycznie aktualizować czas 4 razy dziennie.</li>
+    <li>Jednocześnie aplikacja zaktualizuje <b>przypomnienia</b> z <b>Google Calendar</b>, jeśli opcja jest włączona.</li>
+    ]]></string>
+
+    <string name="image_of_casio_watch">Zegarek Casio</string>
+
+    <string name="connection_screen_device"><![CDATA[
+        <li>Domyślnie aplikacja łączy się z ostatnim zegarkiem. Aby połączyć inny, naciśnij <b>FORGET</b>.</li>
+        <li>Aplikacja automatycznie wykrywa model zegarka.</li>
+    ]]></string>
+
+    <string name="forget">Zapomnij</string>
+
+    <string name="hand_adjustment">Regulacja wskazówek</string>
+    <string name="move_hand_to_the_left">Przesuń w lewo</string>
+    <string name="reset_hand_at_12_position">Reset do 12</string>
+    <string name="move_hand_to_the_right">Przesuń w prawo</string>
+
+    <string name="auto_light">Automatyczne podświetlenie</string>
+    <string name="off">Wyłączone</string>
+    <string name="on">Włączone</string>
+
+    <string name="illumination_period">Czas podświetlenia</string>
+    <string name="mm_dd">MM:DD</string>
+    <string name="dd_mm">DD:MM</string>
+
+    <string name="time_adjustment">Korekta czasu</string>
+    <string name="notify_me">Powiadom mnie</string>
+
+    <string name="timer">Timer</string>
+    <string name="_00_00_00">00:00:00</string>
+    <string name="_00">00</string>
+    <string name="semi_column">:</string>
+
+    <string name="no_watch">Brak zegarka</string>
+    <string name="set_time">Ustaw czas</string>
+    <string name="find_phone">Znajdź telefon</string>
+    <string name="set_reminders">Ustaw przypomnienia z\nGoogle Calendar</string>
+
+    <string name="toggle_flashlight">Przełącz latarkę</string>
+
+    <string name="adjustment_time_info"><![CDATA[
+        <li>Automatyczna korekta czasu odbywa się 4 razy dziennie, jakiś czas po 0:00, 6:00, 12:00 i 18:00.</li>
+        <li>Możesz ustawić to opóźnienie w minutach.</li>
+    ]]></string>
+
+    <string name="adjustment_time_minutes">Opóźnienie (minuty)</string>
+
+    <string name="do_not_disturb_dnd">Nie przeszkadzać (DnD)</string>
+    <string name="mirror_phone_s_dnd">Synchronizuj z telefonem</string>
+
+    <string name="DnD_info_message"><![CDATA[
+    W tym trybie alarmy i sygnały będą wyciszone.
+    ]]></string>
+
+    <string name="auto_light_at_night_only">Tylko w nocy</string>
+    <string name="keep_alive">Keep Alive (większe zużycie baterii)</string>
+
+    <string name="enter_timer_time">Wprowadź czas timera</string>
+    <string name="max_reminders_reached">Osiągnięto limit przypomnień</string>
+
+    <string name="fine_time_adjustment">Korekta czasu</string>
+    <string name="_0000">0000</string>
+	<string name="fine_adjustment_info"><![CDATA[
+    Podczas ustawiania czasu, niektóre modele zegarków mogą pokazywać czas, który jest przesunięty o kilka sekund.
+    Ta opcja pozwala na precyzyjne dopasowanie korekty czasu.
+    Wartość w milisekundach, jest dodawana do czasu wysyłanego z aplikacji do zegarka. Możesz ustawić wartości między -5000 i 5000ms.
+    Na przykład, jeśli twój zegarek jest 2.5 sekundy przed rzeczywistym czasem, ustaw tę wartość na -2500, aby synchronizować go dokładnie.
+    ]]></string>
+    <string name="required_permissions_denied_cannot_access_screen">Brak wymaganych uprawnień.</string>
+    <string name="calendar_permission_denied_cannot_access_events">Brak dostępu do kalendarza.</string>
+    <string name="clear_app_storage_from_android_setting_and_restart_the_app_to_add_permissions">" Clear app storage from Android Setting and restart the app to add permissions."</string>
+    <string name="phone_number">Numer telefonu</string>
+    <string name="enter_phone_number">Wprowadź numer telefonu</string>
+
+    <string name="when_to_run">Opóźnienie synchronizacji</string>
+    <string name="minutes_between_0_and_59">0 - 59 minut</string>
+	<string name="fine_adjustment">Korekta czasu</string>
+    <string name="ms_between_10000_and_10000">-10000 - 10000ms</string>
+    <string name="sending_time_to_watch">Wysyłanie czasu…</string>
+    <string name="time_set">Czas ustawiony</string>
+	<string name="apierror_ensure_the_official_g_shock_app_is_not_running">Błąd API! Upewnij się, że oficjalna aplikacja Casio nie jest uruchomiona.</string>
+    <string name="bluetooth_is_not_enabled">Bluetooth wyłączony</string>
+    <string name="disconnected_due_to_inactivity">Rozłączono z powodu braku aktywności</string>
+	<string name="when_found_lift_phone_to_stop_ringing">Znaleziono telefon, podnieś go, aby zatrzymać dzwonienie</string>
+	<string name="emaillocationaction_emailaddress">EmailLocationAction: email: %1$s</string>
+    <string name="flashlight_not_available">Latarka niedostępna</string>
+
+    <string name="alarms_set_to_watch">Alarmy wysłane</string>
+    <string name="events_set">Wydarzenia ustawione</string>
+	<string name="reminders_sent_to_watch">Przypomnienia wysłane do zegarka</string>
+    <string name="event_not_compatible_with_watch">Wydarzenie nie jest kompatybilne z zegarkiem</string>
+    <string name="settings_sent_to_watch">Ustawienia wysłane</string>
+	<string name="sorry_your_device_does_not_support_bluetooth_exiting">Przepraszamy, twoje urządzenie nie obsługuje Bluetooth. Wychodzę…</string>
+    <string name="permission_required_to_turn_on_bluetooth">Wymagane uprawnienia Bluetooth</string>
+    <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">Brak uprawnień do włączenia Bluetooth. Włącz Bluetooth ręcznie.</string>
+    <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Uprawnienia są trwale odrzucone. Proszę je włącz w ustawieniach aplikacji.</string>
+    <string name="timer_set">Timer ustawiony</string>
+    <string name="press_and_hold_for_3_seconds">Przytrzymaj\n3 sekundy</string>
+    <string name="short_press_to_run_actions">Krótkie naciśnięcie\naby uruchomić\nAkcje</string>
+    <string name="g_shock_smart_sync_is_running">G-Shock Smart Sync jest uruchomiony</string>
+    <string name="preventing_the_app_from_closing">Zapobieganie zamknięciu aplikacji</string>
+    <string name="g_shock_smart_sync_is_not_running">G-Shock Smart Sync nie jest uruchomiony.</string>
+    <string name="health_connect_not_available">"Health Connect" nie jest dostępny. Proszę go zainstalować.</string>
+	<string name="cover_hold_to_unlock">Przytrzymaj aby odblokować</string>
+    <string name="cover_connected">Połączono</string>
+	<string name="alarm_editor_title">Edytuj alarm</string>
+    <string name="alarm_editor_label">Tytuł</string>
+    <string name="alarm_editor_repeat">Powtarzanie</string>
+    <string name="alarm_editor_save">Zapisz</string>
+    <string name="footer_last_sync">Ostatnia synchronizacja: %1$s</string>
+    <string name="footer_never">Nigdy</string>
+    <string name="footer_active">%1$d aktywny</string>
+    <string name="footer_disabled">%1$d wyłączony</string>
+    <string name="disconnected_info_title">Zegarek nie jest połączony</string>
+    <string name="disconnected_info_body">Połącz zegarek, aby wysyłać alarmy.</string>
+    <string name="exact_alarm_dialog_title">Bezpieczeństwo po stronie telefonu</string>
+    <string name="exact_alarm_dialog_body">Jeśli zegarek nie jest połączony, gdy alarm powinien dzwonić, telefon może go wysłać przez domyślną aplikację zegarka. Ta funkcja wymaga uprawnień do zaplanowania dokładnych alarmów.</string>
+    <string name="exact_alarm_dialog_settings">Otwórz ustawienia</string>
+    <string name="exact_alarm_dialog_not_now">Nie teraz</string>
+
+    <string name="find_phone_instruction">Aby uruchomić akcje, uruchom funkcję "Znajdź telefon" na zegarku</string>	
+    <string name="press_and_hold_connection_button_to_continue">Przytrzymaj przycisk połączenia (zwykle lewy dolny) na zegarku 3 sekundy, aby połączyć.</string>
+	<string name="looking_for_a_device">Szukanie urządzenia.</string>
+    <string name="add_watch">Dodaj zegarek</string>
+    <string name="connect">Połącz</string>
+    <string name="disconnect">Rozłącz</string>
+    <string name="connecting">Łączenie…</string>
+    <string name="connection_error">Błąd połączenia</string>
+    <string name="cached_prefix">cached: %1$s</string>
+    <string name="not_yet_synced">Niezsynchronizowane</string>
+    <string name="connect_to_read_watch">Połącz, aby odczytać zegarek</string>
+    <string name="paired_watches_empty">Brak sparowanych zegarków.</string>
+    <string name="forget_watch_confirm_title">Zapomnij %1$s?</string>
+    <string name="forget_watch_confirm_body">Ta operacja usuwa zegarek z listy sparowanych i usuwa wszystkie jego alarmy, ustawienia i historię synchronizacji na tym telefonie. Sam zegarek nie jest dotknięty.</string>
+
+    <string name="status_connected">Połączono</string>
+    <string name="status_not_connected">Niepołączono</string>
+    <string name="status_disconnected">Rozłączono</string>
+
+    <string name="status_online">Online</string>
+	<string name="watch_snackbar_connected">%1$s połączony</string>
+    <string name="watch_snackbar_connected_no_name">Zegarek połączony</string>
+    <string name="status_offline">Offline</string>
+
+    <string name="metric_battery">Bateria</string>
+    <string name="metric_temperature">Temperatura</string>
+    <string name="settings_section_locale">Ustawienia regionalne</string>
+    <string name="settings_section_actions">Akcje</string>
+    <string name="settings_section_watch_behavior">Zachowanie zegarka</string>
+    <string name="settings_section_sync">Synchronizacja</string>
+    <string name="sync_history_title">Historia synchronizacji</string>
+    <string name="sync_history_no_entries">Brak zdarzeń synchronizacji</string>
+    <string name="sync_history_clear">Wyczyść historię</string>
+    <string name="sync_history_clear_confirm_title">Wyczyść historię synchronizacji?</string>
+    <string name="sync_history_clear_confirm_body">Usuwa wszystkie 50 wpisów dla %1$s. Historia innych zegarków nie jest dotknięta.</string>
+    <string name="find_phone_dialog_title">Znajdź telefon</string>
+    <string name="find_phone_volume_label">Głośność: %1$d%%</string>
+    <string name="find_phone_melody_label">Melodia</string>
+    <string name="find_phone_melody_alarm">Alarm</string>
+    <string name="find_phone_melody_ringtone">Ton</string>
+    <string name="find_phone_melody_notification">Powiadomienie</string>
+    <string name="find_phone_test_tone">Test</string>
+    <string name="find_phone_notification_title">Znajdowanie telefonu</string>
+    <string name="find_phone_notification_text">Telefon dzwoni. Naciśnij Stop, aby wyciszyć.</string>
+    <string name="stop">Stop</string>
+    <string name="watches">Zegarki</string>
+    <string name="no_paired_watches">Brak sparowanych zegarków</string>
+    <string name="watch_not_connected">Zegarek nie jest połączony</string>
+    
+    <!-- Pairing error messages -->
+    <string name="pairing_failed_generic">Połączenie nie powiodło się: %1$s. Proszę spróbować ponownie.</string>
+    <string name="pairing_activity_finishing">Nie można rozpocząć połączenia: Aktivit jest zamykana. Proszę spróbować ponownie.</string>
+    <string name="pairing_crash_recovery">Odzyskano z poprzedniego błędu połączenia. Możesz spróbować ponownie.</string>
+    <string name="pairing_crash_detected"><![CDATA[
+        Aplikacja wykryła poprzedni błąd podczas połączenia. Logi błędów zostały zapisane.
+        <p>Jeśli ten problem będzie się powtarzać, proszę zgłosić go na <a href="https://github.com/izivkov/CasioGShockSmartSync/issues">GitHub</a> z modelem urządzenia i zegarka.</p>
+    ]]></string>
+</resources>

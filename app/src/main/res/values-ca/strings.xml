@@ -24,7 +24,7 @@
 
     ]]></string>
 
-    <string name="alarms_screen_info"><![CDATA[Els rellotges <b>B5600/B5000/B2100</b> tenen 5 alarmes i una configuració de "senyal" (senyal horari) mostrada aquí.
+    <string name="alarms_screen_info"><![CDATA[Els rellotges <b>B5600/B5000/B2100/ABL-100</b> tenen 5 alarmes i una configuració de "senyal" (senyal horari) mostrada aquí.
     Les alarmes es poden actualitzar prement sobre el valor de l\'hora de cada alarma. Apareixerà un diàleg nou que permet establir l\'hora de l\'alarma.
     Un cop configurades les alarmes, podeu enviar-les al rellotge o a l\'aplicació de rellotge del telèfon.]]></string>
     <string name="events_screen_info"><![CDATA[Aquesta pantalla mostra els Esdeveniments del teu <b>Google Calendar</b> i permet enviar-los als <b>recordatoris</b> del rellotge.\n\nSi no apareixen esdeveniments, assegura\'t que tens esdeveniments futurs o esdeveniments repetitius no caducats al teu calendari de Google.]]>
