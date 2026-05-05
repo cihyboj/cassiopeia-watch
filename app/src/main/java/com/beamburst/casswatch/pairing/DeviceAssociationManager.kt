@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.utils.CrashReportHelper
 import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.utils.Utils
 import org.avmedia.gshockapi.ProgressEvents
 import timber.log.Timber
 import javax.inject.Inject
@@ -59,6 +60,9 @@ class DeviceAssociationManager @Inject constructor(
 
     suspend fun cleanupLocalStorage() {
         val repositoryAssociations = repository.getAssociations(context)
+            .map { Utils.sanitizeMacAddress(it) }
+            .filter { it.isNotBlank() }
+            .toSet()
         val localAddresses = LocalDataStorage.getDeviceAddresses(context)
 
         // 1. Identify which addresses SHOULD be removed
@@ -84,23 +88,33 @@ class DeviceAssociationManager @Inject constructor(
 
             // 2. Auto-Discovery: Add any system associations to LocalDataStorage if not already there
             systemAssociations.forEach { association ->
-                LocalDataStorage.addDeviceAddress(context, association.address)
+                val normalizedAddress = Utils.sanitizeMacAddress(association.address)
+                if (normalizedAddress.isBlank()) return@forEach
+                LocalDataStorage.addDeviceAddress(context, normalizedAddress)
                 association.name?.let {
-                    LocalDataStorage.setDeviceName(context, association.address, it)
+                    LocalDataStorage.setDeviceName(context, normalizedAddress, it)
                 }
             }
 
             // 3. Update the "LastDeviceAddress" if none is set
             if (LocalDataStorage.get(context, "LastDeviceAddress", "").isNullOrEmpty()) {
-                systemAssociations.firstOrNull()?.let {
-                    LocalDataStorage.put(context, "LastDeviceAddress", it.address)
-                }
+                systemAssociations
+                    .map { Utils.sanitizeMacAddress(it.address) }
+                    .firstOrNull { it.isNotBlank() }
+                    ?.let {
+                        LocalDataStorage.put(
+                            context,
+                            "LastDeviceAddress",
+                            it
+                        )
+                    }
             }
 
             // 4. Re-fetch the final list of active addresses after auto-discovery
             val finalActiveAddresses =
                 LocalDataStorage.getDeviceAddresses(context)
-                    .map { it.uppercase() }
+                    .map { Utils.sanitizeMacAddress(it) }
+                    .filter { it.isNotBlank() }
                     .toSet()
 
             if (!isLocationEnabled()) {
@@ -113,13 +127,20 @@ class DeviceAssociationManager @Inject constructor(
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 cdm.myAssociations.forEach { associationInfo ->
-                    val macAddress = associationInfo.deviceMacAddress?.toString()?.uppercase() ?: return@forEach
+                    val macAddress = associationInfo.deviceMacAddress
+                        ?.toString()
+                        ?.let { Utils.sanitizeMacAddress(it) }
+                        ?.takeIf { it.isNotBlank() }
+                        ?: return@forEach
                     manageDevicePresence(cdm, associationInfo, macAddress, macAddress in finalActiveAddresses)
                 }
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 // API 31-32: only string-based API available
                 @Suppress("DEPRECATION")
-                val systemMacs = cdm.associations.map { it.uppercase() }.toSet()
+                val systemMacs = cdm.associations
+                    .map { Utils.sanitizeMacAddress(it) }
+                    .filter { it.isNotBlank() }
+                    .toSet()
 
                 systemMacs.forEach { mac ->
                     val shouldObserve = mac in finalActiveAddresses
@@ -195,7 +216,10 @@ class DeviceAssociationManager @Inject constructor(
 
     @SuppressLint("MissingPermission")
     private fun startFallbackScan(addresses: List<String>) {
-        val newAddressesSet = addresses.map { it.uppercase() }.toSet()
+        val newAddressesSet = addresses
+            .map { Utils.sanitizeMacAddress(it) }
+            .filter { it.isNotBlank() }
+            .toSet()
 
         // Optimization: If the addresses haven't changed, don't restart the scan
         if (activeScanAddresses == newAddressesSet) {
@@ -215,9 +239,9 @@ class DeviceAssociationManager @Inject constructor(
                         android.app.PendingIntent.FLAG_MUTABLE
             )
 
-        repository.startFallbackScan(context, addresses, pendingIntent)
+        repository.startFallbackScan(context, newAddressesSet.toList(), pendingIntent)
 
-        activeScanAddresses = if (addresses.isEmpty()) {
+        activeScanAddresses = if (newAddressesSet.isEmpty()) {
             null
         } else {
             newAddressesSet

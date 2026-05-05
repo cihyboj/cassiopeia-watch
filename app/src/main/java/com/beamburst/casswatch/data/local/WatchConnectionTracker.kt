@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.data.local
 
+import com.beamburst.casswatch.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,10 +44,20 @@ class WatchConnectionTracker @Inject constructor(
 
     fun mark(address: String?, state: ConnectionState) {
         if (address == null) return
-        _states.update { it + (address to state) }
+        val normalizedAddress = Utils.sanitizeMacAddress(address)
+        if (normalizedAddress.isBlank()) return
+        _states.update { states ->
+            states
+                .filterKeys { !it.equals(normalizedAddress, ignoreCase = true) }
+                .plus(normalizedAddress to state)
+        }
     }
 
     fun remove(address: String) {
-        _states.update { it - address }
+        val normalizedAddress = Utils.sanitizeMacAddress(address)
+        if (normalizedAddress.isBlank()) return
+        _states.update { states ->
+            states.filterKeys { !it.equals(normalizedAddress, ignoreCase = true) }
+        }
     }
 }

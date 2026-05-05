@@ -133,30 +133,52 @@ object LocalDataStorage {
 
     fun getDeviceAddresses(context: Context): List<String> {
         val addresses = get(context, "DeviceAddresses", "") ?: ""
-        return if (addresses.isEmpty()) emptyList() else addresses.split(",").distinct()
+        return if (addresses.isEmpty()) {
+            emptyList()
+        } else {
+            addresses
+                .split(",")
+                .map { normalizeDeviceAddress(it) }
+                .filter { it.isNotBlank() }
+                .distinctBy { it.lowercase() }
+        }
     }
 
     suspend fun addDeviceAddress(context: Context, address: String) {
+        val normalizedAddress = normalizeDeviceAddress(address)
+        if (normalizedAddress.isBlank()) return
+
         val addresses = getDeviceAddresses(context).toMutableList()
-        if (!addresses.contains(address)) {
-            addresses.add(address)
-            put(context, "DeviceAddresses", addresses.joinToString(","))
+        if (addresses.none { it.equals(normalizedAddress, ignoreCase = true) }) {
+            addresses.add(normalizedAddress)
+            putAsync(context, "DeviceAddresses", addresses.joinToString(","))
         }
     }
 
     suspend fun removeDeviceAddress(context: Context, address: String) {
+        val normalizedAddress = normalizeDeviceAddress(address)
         val addresses = getDeviceAddresses(context).toMutableList()
-        if (addresses.remove(address)) {
-            put(context, "DeviceAddresses", addresses.joinToString(","))
-            deleteAsync(context, "DeviceName_$address")
+        if (addresses.removeAll { it.equals(normalizedAddress, ignoreCase = true) }) {
+            putAsync(context, "DeviceAddresses", addresses.joinToString(","))
+            listOf(address, normalizedAddress, address.lowercase(), address.uppercase())
+                .distinct()
+                .forEach { deleteAsync(context, "DeviceName_$it") }
         }
     }
 
     fun getDeviceName(context: Context, address: String): String? {
-        return get(context, "DeviceName_$address")
+        val normalizedAddress = normalizeDeviceAddress(address)
+        return listOf(normalizedAddress, address, address.lowercase(), address.uppercase())
+            .distinct()
+            .firstNotNullOfOrNull { get(context, "DeviceName_$it") }
     }
 
     suspend fun setDeviceName(context: Context, address: String, name: String) {
-        put(context, "DeviceName_$address", name)
+        val normalizedAddress = normalizeDeviceAddress(address)
+        if (normalizedAddress.isBlank()) return
+        putAsync(context, "DeviceName_$normalizedAddress", name)
     }
+
+    private fun normalizeDeviceAddress(address: String): String =
+        Utils.sanitizeMacAddress(address.trim())
 }

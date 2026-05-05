@@ -16,6 +16,7 @@ import com.beamburst.casswatch.data.local.WatchSnapshot
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.pairing.DeviceAssociationManager
 import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.utils.Utils
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -64,28 +65,38 @@ class MultiWatchViewModel @Inject constructor(
 
     fun select(address: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val selectedWatch = paired.value.firstOrNull { it.address.equals(address, ignoreCase = true) }
-            if (selectedWatch?.state != ConnectionState.CONNECTED && tracker.states.value[address] == null) {
-                tracker.mark(address, ConnectionState.DISCONNECTED)
+            val normalizedAddress = Utils.sanitizeMacAddress(address)
+            if (normalizedAddress.isBlank()) return@launch
+            val selectedWatch = paired.value.firstOrNull {
+                it.address.equals(normalizedAddress, ignoreCase = true)
             }
-            selector.select(address)
+            if (
+                selectedWatch?.state != ConnectionState.CONNECTED &&
+                tracker.states.value.stateFor(normalizedAddress) == null
+            ) {
+                tracker.mark(normalizedAddress, ConnectionState.DISCONNECTED)
+            }
+            selector.select(normalizedAddress)
             refresh()
         }
     }
 
     fun connect(address: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            selector.select(address)
+            val normalizedAddress = Utils.sanitizeMacAddress(address)
+            if (normalizedAddress.isBlank()) return@launch
+            selector.select(normalizedAddress)
             val previouslySelected = paired.value.firstOrNull {
-                it.state == ConnectionState.CONNECTED && !it.address.equals(address, ignoreCase = true)
+                it.state == ConnectionState.CONNECTED &&
+                    !it.address.equals(normalizedAddress, ignoreCase = true)
             }?.address
 
             runCatching {
                 previouslySelected?.let { tracker.mark(it, ConnectionState.DISCONNECTED) }
                 if (repository.isConnected()) repository.disconnect()
-                tracker.mark(address, ConnectionState.CONNECTING)
-                repository.waitForConnection(address)
-                tracker.mark(address, ConnectionState.CONNECTED)
+                tracker.mark(normalizedAddress, ConnectionState.CONNECTING)
+                repository.waitForConnection(normalizedAddress)
+                tracker.mark(normalizedAddress, ConnectionState.CONNECTED)
                 syncHistoryLogger.record(
                     trigger = SyncTrigger.CONNECTION_CONNECTED,
                     kinds = setOf(SyncKind.CONNECTION),
@@ -93,8 +104,8 @@ class MultiWatchViewModel @Inject constructor(
                     details = SyncDetails.Empty.copy(connection = "Started from watch row Connect menu"),
                 )
             }.onFailure {
-                Timber.e(it, "Failed to connect watch $address")
-                tracker.mark(address, ConnectionState.ERROR)
+                Timber.e(it, "Failed to connect watch $normalizedAddress")
+                tracker.mark(normalizedAddress, ConnectionState.ERROR)
                 syncHistoryLogger.record(
                     trigger = SyncTrigger.CONNECTION_FAILED,
                     kinds = setOf(SyncKind.CONNECTION),
@@ -109,9 +120,11 @@ class MultiWatchViewModel @Inject constructor(
 
     fun disconnect(address: String) {
         viewModelScope.launch(Dispatchers.IO) {
+            val normalizedAddress = Utils.sanitizeMacAddress(address)
+            if (normalizedAddress.isBlank()) return@launch
             runCatching {
                 repository.disconnect()
-                tracker.mark(address, ConnectionState.DISCONNECTED)
+                tracker.mark(normalizedAddress, ConnectionState.DISCONNECTED)
                 syncHistoryLogger.record(
                     trigger = SyncTrigger.CONNECTION_DISCONNECTED,
                     kinds = setOf(SyncKind.CONNECTION),
@@ -119,8 +132,8 @@ class MultiWatchViewModel @Inject constructor(
                     details = SyncDetails.Empty.copy(connection = "Started from watch row Disconnect menu"),
                 )
             }.onFailure {
-                Timber.e(it, "Failed to disconnect watch $address")
-                tracker.mark(address, ConnectionState.ERROR)
+                Timber.e(it, "Failed to disconnect watch $normalizedAddress")
+                tracker.mark(normalizedAddress, ConnectionState.ERROR)
                 syncHistoryLogger.record(
                     trigger = SyncTrigger.CONNECTION_FAILED,
                     kinds = setOf(SyncKind.CONNECTION),
@@ -135,10 +148,12 @@ class MultiWatchViewModel @Inject constructor(
 
     fun forget(address: String) {
         viewModelScope.launch(Dispatchers.IO) {
+            val normalizedAddress = Utils.sanitizeMacAddress(address)
+            if (normalizedAddress.isBlank()) return@launch
             val remaining = LocalDataStorage.getDeviceAddresses(appContext)
-                .filterNot { it.equals(address, ignoreCase = true) }
+                .filterNot { it.equals(normalizedAddress, ignoreCase = true) }
 
-            if (selector.currentAddress()?.equals(address, ignoreCase = true) == true) {
+            if (selector.currentAddress()?.equals(normalizedAddress, ignoreCase = true) == true) {
                 remaining.firstOrNull()?.let { selector.select(it) } ?: selector.clear()
             }
 
@@ -147,15 +162,15 @@ class MultiWatchViewModel @Inject constructor(
             }
 
             runCatching {
-                repository.disassociate(appContext, address)
-                LocalDataStorage.removeDeviceAddress(appContext, address)
+                repository.disassociate(appContext, normalizedAddress)
+                LocalDataStorage.removeDeviceAddress(appContext, normalizedAddress)
                 deviceAssociationManager.syncAssociations()
-                PerWatchCacheCleaner.wipe(appContext, address)
+                PerWatchCacheCleaner.wipe(appContext, normalizedAddress)
             }.onFailure {
-                Timber.e(it, "Failed to forget watch $address")
+                Timber.e(it, "Failed to forget watch $normalizedAddress")
             }
 
-            tracker.remove(address)
+            tracker.remove(normalizedAddress)
             refresh()
         }
     }
@@ -168,17 +183,20 @@ class MultiWatchViewModel @Inject constructor(
             .getOrDefault(emptyList())
         val localAddresses = LocalDataStorage.getDeviceAddresses(appContext)
         val addresses = (associations.map { it.address } + localAddresses)
+            .map { Utils.sanitizeMacAddress(it) }
             .filter { it.isNotBlank() }
             .distinctBy { it.lowercase() }
 
         return addresses.map { address ->
-            val association = associations.firstOrNull { it.address.equals(address, ignoreCase = true) }
+            val association = associations.firstOrNull {
+                Utils.sanitizeMacAddress(it.address).equals(address, ignoreCase = true)
+            }
             val rawName = association?.name ?: LocalDataStorage.getDeviceName(appContext, address)
             val name = rawName?.removePrefix("CASIO")?.trim()
                 ?.takeIf { it.isNotBlank() }
                 ?: appContext.getString(R.string.no_watch)
             val isSelected = selected?.equals(address, ignoreCase = true) == true
-            val state = states[address]
+            val state = states.stateFor(address)
                 ?: if (isSelected && repository.isConnected()) ConnectionState.CONNECTED else ConnectionState.DISCONNECTED
             val snapshot = WatchSnapshot.load(appContext, address)
 
@@ -192,4 +210,7 @@ class MultiWatchViewModel @Inject constructor(
             )
         }
     }
+
+    private fun Map<String, ConnectionState>.stateFor(address: String): ConnectionState? =
+        this[address] ?: entries.firstOrNull { it.key.equals(address, ignoreCase = true) }?.value
 }

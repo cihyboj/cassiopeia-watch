@@ -4,6 +4,7 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.utils.Utils
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
 import kotlinx.coroutines.CoroutineScope
@@ -75,20 +76,24 @@ class DeviceManager @Inject constructor(
     }
 
     private fun isValidDeviceAddress(address: String): Boolean =
-        LocalDataStorage.get(appContext, "LastDeviceAddress", "") != address &&
-                repository.validateBluetoothAddress(address)
+        Utils.sanitizeMacAddress(address).let { normalizedAddress ->
+            LocalDataStorage.get(appContext, "LastDeviceAddress", "") != normalizedAddress &&
+                    repository.validateBluetoothAddress(normalizedAddress)
+        }
 
     private fun updateDeviceAddress(address: String) {
-        LocalDataStorage.put(appContext, "LastDeviceAddress", address)
+        val normalizedAddress = Utils.sanitizeMacAddress(address)
+        LocalDataStorage.put(appContext, "LastDeviceAddress", normalizedAddress)
         CoroutineScope(Dispatchers.IO).launch {
-            LocalDataStorage.addDeviceAddress(appContext, address)
+            LocalDataStorage.addDeviceAddress(appContext, normalizedAddress)
         }
     }
 
     fun saveLastConnectedDevice(name: String, address: String) {
         DeviceInfo(name, address).let { deviceInfo ->
+            val normalizedAddress = Utils.sanitizeMacAddress(deviceInfo.address)
             LocalDataStorage.put(appContext, "LastDeviceName", deviceInfo.name)
-            LocalDataStorage.put(appContext, "LastDeviceAddress", deviceInfo.address)
+            LocalDataStorage.put(appContext, "LastDeviceAddress", normalizedAddress)
         }
     }
 

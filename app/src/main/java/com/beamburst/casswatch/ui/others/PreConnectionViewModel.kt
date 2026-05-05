@@ -20,6 +20,7 @@ import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.pairing.DeviceAssociationManager
 import com.beamburst.casswatch.utils.CrashReportHelper
 import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.utils.Utils
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ICDPDelegate
 import org.avmedia.gshockapi.ProgressEvents
@@ -167,8 +168,10 @@ constructor(
             EventAction(EVENT_DEVICE_ADDRESS) {
                 val address = ProgressEvents.getPayload(EVENT_DEVICE_ADDRESS) as? String
                 if (!address.isNullOrBlank()) {
+                    val normalizedAddress = Utils.sanitizeMacAddress(address)
+                    if (normalizedAddress.isBlank()) return@EventAction
                     viewModelScope.launch {
-                        LocalDataStorage.put(appContext, KEY_LAST_DEVICE_ADDRESS, address)
+                        LocalDataStorage.put(appContext, KEY_LAST_DEVICE_ADDRESS, normalizedAddress)
                         loadPairedDevices()
                     }
                 }
@@ -192,17 +195,22 @@ constructor(
     fun setDevice(address: String, name: String) {
         viewModelScope.launch {
             try {
+                val normalizedAddress = Utils.sanitizeMacAddress(address)
+                if (normalizedAddress.isBlank()) {
+                    Timber.w("Ignoring invalid device address for setDevice: $address")
+                    return@launch
+                }
                 val logDetails: Map<String, String> = mapOf(
-                    "address" to address,
+                    "address" to normalizedAddress,
                     "name" to name,
                     "action" to "setting_device"
                 )
                 Timber.i("Updating local storage: $logDetails")
 
-                LocalDataStorage.put(appContext, KEY_LAST_DEVICE_ADDRESS, address)
-                LocalDataStorage.addDeviceAddress(appContext, address)
+                LocalDataStorage.put(appContext, KEY_LAST_DEVICE_ADDRESS, normalizedAddress)
+                LocalDataStorage.addDeviceAddress(appContext, normalizedAddress)
                 LocalDataStorage.put(appContext, KEY_LAST_DEVICE_NAME, name)
-                LocalDataStorage.setDeviceName(appContext, address, name)
+                LocalDataStorage.setDeviceName(appContext, normalizedAddress, name)
 
                 _watchName.value = name
 
@@ -222,17 +230,22 @@ constructor(
     @SuppressLint("MissingPermission")
     fun disassociate(context: Context, address: String) {
         viewModelScope.launch {
+            val normalizedAddress = Utils.sanitizeMacAddress(address)
             try {
+                if (normalizedAddress.isBlank()) {
+                    Timber.w("Ignoring invalid device address for disassociate: $address")
+                    return@launch
+                }
                 // 1. Remove software association via API (clears CDM association)
-                api.disassociate(context, address)
-                LocalDataStorage.removeDeviceAddress(context, address)
+                api.disassociate(context, normalizedAddress)
+                LocalDataStorage.removeDeviceAddress(context, normalizedAddress)
 
                 // 2. Handle hardware bond safely (no reflection, version-aware)
                 val adapter = BluetoothAdapter.getDefaultAdapter()
-                val device: BluetoothDevice? = adapter?.getRemoteDevice(address)
+                val device: BluetoothDevice? = adapter?.getRemoteDevice(normalizedAddress)
                 device?.let { btDevice ->
                     if (btDevice.bondState != BluetoothDevice.BOND_NONE) {
-                        Timber.i("Device $address bonded (state: ${btDevice.bondState}). CDM disassociate initiated unbond process.")
+                        Timber.i("Device $normalizedAddress bonded (state: ${btDevice.bondState}). CDM disassociate initiated unbond process.")
                         // CDM disassociate often triggers bond removal automatically via broadcast
                         // Monitor existing ACTION_BOND_STATE_CHANGED receiver for completion
                     }
@@ -240,7 +253,7 @@ constructor(
 
                 // 3. Clear last device if matching
                 val lastAddress = LocalDataStorage.get(context, KEY_LAST_DEVICE_ADDRESS, "")
-                if (address.equals(lastAddress, ignoreCase = true)) {
+                if (normalizedAddress.equals(lastAddress, ignoreCase = true)) {
                     LocalDataStorage.put(context, KEY_LAST_DEVICE_ADDRESS, "")
                     LocalDataStorage.put(context, KEY_LAST_DEVICE_NAME, noWatchString)
                     _watchName.value = noWatchString
@@ -252,10 +265,10 @@ constructor(
 
                 // Refresh UI and log
                 loadPairedDevices()
-                Timber.i("Device $address removed from app. Bond cleanup via CDM (user may need to forget in Settings if persists).")
+                Timber.i("Device $normalizedAddress removed from app. Bond cleanup via CDM (user may need to forget in Settings if persists).")
 
             } catch (e: Exception) {
-                Timber.e(e, "Failed to disassociate device: $address")
+                Timber.e(e, "Failed to disassociate device: $normalizedAddress")
             }
         }
     }

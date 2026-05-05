@@ -80,27 +80,18 @@ class Utils {
          * 1. Converting to Uppercase.
          * 2. Removing all non-hex characters (spaces, dashes, colons).
          * 3. Re-inserting colons at the standard 2-character intervals.
+         *
+         * Returns a blank string when the input cannot produce a complete MAC address.
          */
         fun sanitizeMacAddress(mac: String): String {
             // Clean the input: Uppercase and remove everything except 0-9 and A-F
             val cleanHex: String = mac.uppercase().replace(Regex(MAC_REGEX_PATTERN), "")
 
-            // If it's not a full MAC address, just return the cleaned hex
             if (cleanHex.length != EXPECTED_MAC_LENGTH) {
-                return cleanHex
+                return ""
             }
 
-            // Use a builder to re-format with colons (e.g., AA:BB:CC:DD:EE:FF)
-            val builder: StringBuilder = StringBuilder()
-            for (i in cleanHex.indices) {
-                builder.append(cleanHex[i])
-                // Add a colon after every 2 characters, but not at the very end
-                if ((i + 1) % 2 == 0 && i != cleanHex.length - 1) {
-                    builder.append(COLON_SEPARATOR)
-                }
-            }
-
-            return builder.toString()
+            return cleanHex.chunked(2).joinToString(COLON_SEPARATOR)
         }
     }
 }
