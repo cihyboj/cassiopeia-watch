@@ -31,7 +31,7 @@ object AlarmSchedulePlanner {
                     }
                 }
                 else -> alarm.copy(
-                    enabled = selectedDays.contains(today) && alarm.time().isAfter(currentTime)
+                    enabled = selectedDays.contains(alarm.nextPossibleRingDay(today, currentTime))
                 )
             }
         }
@@ -44,4 +44,7 @@ object AlarmSchedulePlanner {
         }
 
     private fun Alarm.time(): LocalTime = LocalTime.of(hour, minute)
+
+    private fun Alarm.nextPossibleRingDay(today: DayOfWeek, currentTime: LocalTime): DayOfWeek =
+        if (time().isAfter(currentTime)) today else today.plus(1)
 }

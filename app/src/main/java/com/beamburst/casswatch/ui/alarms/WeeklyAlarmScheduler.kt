@@ -99,8 +99,20 @@ class WeeklyAlarmScheduler @Inject constructor(
             }.onSuccess {
                 AlarmSyncStorage.saveAlarms(context, addr, desiredAlarms, dirty = false, firedAts = firedAts)
             }
-        } else if (AlarmSyncStorage.isDirty(context, addr)) {
-            AlarmSyncStorage.saveAlarms(context, addr, desiredAlarms, dirty = false, firedAts = firedAts)
+        } else {
+            syncLogger.record(
+                trigger = SyncTrigger.AUTO_ON_RECONNECT,
+                kinds = alarmSyncHistoryKinds,
+                success = true,
+                details = alarmSyncDetailsForWatchPayload(
+                    alarms = alarmsToSend,
+                    hourlySignalTarget = hourlySignalTarget,
+                    actions = listOf("Weekly alarm schedule verified on reconnect"),
+                ),
+            )
+            if (AlarmSyncStorage.isDirty(context, addr)) {
+                AlarmSyncStorage.saveAlarms(context, addr, desiredAlarms, dirty = false, firedAts = firedAts)
+            }
         }
     }
 }
