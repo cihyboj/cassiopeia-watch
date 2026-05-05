@@ -27,6 +27,19 @@ fun HourlySignalCard(
 ) {
     val state by alarmViewModel.hourlySignal.collectAsState()
 
+    HourlySignalCardContent(
+        state = state,
+        onAction = alarmViewModel::onHourlySignalAction,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun HourlySignalCardContent(
+    state: HourlySignalUiState,
+    onAction: (HourlySignalAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val endDisplay = if (state.endHour == 0) "00" else String.format("%02d", state.endHour)
     val startDisplay = String.format("%d", state.startHour)
     val caption = stringResource(R.string.hourly_signal_window_caption, startDisplay, endDisplay)
@@ -36,10 +49,10 @@ fun HourlySignalCard(
             currentStartHour = state.startHour,
             currentEndHour = state.endHour,
             onSave = { start, end ->
-                alarmViewModel.onHourlySignalAction(HourlySignalAction.SaveWindow(start, end))
+                onAction(HourlySignalAction.SaveWindow(start, end))
             },
             onDismiss = {
-                alarmViewModel.onHourlySignalAction(HourlySignalAction.DismissDialog)
+                onAction(HourlySignalAction.DismissDialog)
             }
         )
     }
@@ -49,7 +62,7 @@ fun HourlySignalCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    alarmViewModel.onHourlySignalAction(HourlySignalAction.OpenDialog)
+                    onAction(HourlySignalAction.OpenDialog)
                 }
                 .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
             verticalAlignment = Alignment.CenterVertically,
@@ -72,7 +85,7 @@ fun HourlySignalCard(
             AppSwitch(
                 checked = state.enabled,
                 onCheckedChange = { on ->
-                    alarmViewModel.onHourlySignalAction(HourlySignalAction.SetEnabled(on))
+                    onAction(HourlySignalAction.SetEnabled(on))
                 }
             )
         }

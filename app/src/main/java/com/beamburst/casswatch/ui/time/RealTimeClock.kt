@@ -1,4 +1,4 @@
-import com.beamburst.casswatch.ui.common.AppTextExtraLarge
+import com.beamburst.casswatch.ui.common.AppTextVeryLarge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,7 +26,7 @@ fun RealTimeClock(modifier: Modifier = Modifier) {
     }
 
     // Display the current time
-    AppTextExtraLarge(
+    AppTextVeryLarge(
         text = currentTime,
         modifier = modifier
     )

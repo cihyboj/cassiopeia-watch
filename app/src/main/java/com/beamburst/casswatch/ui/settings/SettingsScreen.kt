@@ -214,5 +214,117 @@ fun BottomRow(modifier: Modifier, settingsViewModel: SettingsViewModel = hiltVie
 @Preview(showBackground = true)
 @Composable
 fun PreviewSettingsScreen() {
-        SettingsScreen()
+    SettingsScreenPreviewContent()
+}
+
+@Composable
+private fun SettingsScreenPreviewContent() {
+    CassiopeiaWatchTheme(dynamicColor = false) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                ScreenTitle(
+                    stringResource(id = R.string.settings),
+                    Modifier
+                )
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = Spacing.lg)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+                ) {
+                    SettingsSectionTitle(stringResource(R.string.settings_section_actions))
+                    PressCard(
+                        title = stringResource(R.string.short_button_press),
+                        subtitle = BroadcastSpec.Short.action,
+                        enabled = true,
+                        onEnabledChange = {},
+                    )
+                    PressCard(
+                        title = stringResource(R.string.find_my_phone),
+                        subtitle = stringResource(R.string.find_phone_card_subtitle),
+                        enabled = false,
+                        onEnabledChange = {},
+                    )
+
+                    HorizontalDivider()
+
+                    SettingsSectionTitle(stringResource(R.string.settings_section_sync))
+                    TimeAdjustmentPreviewRow()
+                    SyncHistoryPreviewRow()
+                }
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = MaterialTheme.shapes.medium,
+                    tonalElevation = Spacing.xxs
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = Spacing.md, end = Spacing.sm, top = Spacing.xs, bottom = Spacing.xs),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        AppButton(
+                            onClick = {},
+                            text = stringResource(id = R.string.send_to_watch)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimeAdjustmentPreviewRow() {
+    SettingCard { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(padding),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xxs)
+        ) {
+            AppText(
+                text = stringResource(R.string.time_adjustment),
+                style = MaterialTheme.typography.titleMedium
+            )
+            AppText(
+                text = "+0.5s",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun SyncHistoryPreviewRow() {
+    SettingCard { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(padding),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xxs)
+        ) {
+            AppText(
+                text = stringResource(R.string.sync_history_title),
+                style = MaterialTheme.typography.titleMedium
+            )
+            AppText(
+                text = stringResource(R.string.sync_history_preview_last_sync),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }

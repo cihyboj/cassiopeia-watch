@@ -10,7 +10,7 @@
     <string name="home" translatable="false">Home</string>
     <string name="alarm_view_simple">Daily</string>
     <string name="alarm_view_weekly">Weekly</string>
-    <string name="send_alarms_to_watch">Send to\n Watch</string>
+    <string name="send_alarms_to_watch">Send to Watch</string>
     <string name="enabled">Enabled</string>
     <string name="disabled">Disabled</string>
     <string name="send_alarms_to_phone">Send to\nPhone</string>
@@ -45,6 +45,7 @@
     <string name="email_item">Email Item</string>
     <string name="email_example_com">me@example.com</string>
     <string name="watch_alarms">Watch Alarms</string>
+    <string name="alarm_preview_name_morning" translatable="false">Morning</string>
     <string name="hourly_signal_title">Hourly signal</string>
     <string name="hourly_signal_window_caption">%1$s:00 – %2$s:00</string>
     <string name="hourly_signal_chimes_at">Chimes at %1$s (%2$d chimes / day)</string>
@@ -69,13 +70,13 @@
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="google_calendar_events">Google Calendar Events</string>
     <string name="local_time">Local Time</string>
-    <string name="send_to_watch">Send to\nWatch</string>
+    <string name="send_to_watch">Send to Watch</string>
     <string name="phonecall_item">PhoneCall Item</string>
     <string name="home_time">Home Time</string>
     <string name="running_actions">Running Actions</string>
     <string name="title_placeholder">Title Placeholder</string>
     <string name="settings">Settings</string>
-    <string name="send_to_watch_settings">Send to\nWatch</string>
+    <string name="send_to_watch_settings">Send to Watch</string>
     <string name="font" translatable="false">Font</string>
     <string name="time_format">Time Format</string>
     <string name="_12h">12h</string>
@@ -232,6 +233,7 @@
     <string name="settings_section_watch_behavior">Watch behavior</string>
     <string name="settings_section_sync">Sync</string>
     <string name="sync_history_title" translatable="false">Sync history</string>
+    <string name="sync_history_preview_last_sync" translatable="false">Last sync just now</string>
     <string name="sync_history_no_entries" translatable="false">No sync events yet</string>
     <string name="sync_history_clear" translatable="false">Clear history</string>
     <string name="sync_history_clear_confirm_title" translatable="false">Clear sync history?</string>

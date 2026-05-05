@@ -30,16 +30,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.beamburst.casswatch.R
+import com.beamburst.casswatch.theme.CassiopeiaWatchTheme
 import com.beamburst.casswatch.theme.Spacing
 import com.beamburst.casswatch.ui.common.AppButton
+import com.beamburst.casswatch.ui.common.AppCard
 import com.beamburst.casswatch.ui.common.AppSnackbar
+import com.beamburst.casswatch.ui.common.AppText
 import com.beamburst.casswatch.ui.common.ButtonData
 import com.beamburst.casswatch.ui.common.ButtonsRow
 import com.beamburst.casswatch.ui.common.ItemView
 import com.beamburst.casswatch.ui.common.ScreenTitle
-
+import java.time.DayOfWeek
+import android.content.res.Configuration
 @Composable
 fun AlarmList(alarmViewModel: AlarmViewModel = hiltViewModel()) {
     val alarms by alarmViewModel.alarms.collectAsState()
@@ -229,4 +234,156 @@ fun AlarmsScreen(
             )
         }
     }
+}
+
+@Composable
+private fun AlarmsScreenPreviewContent(viewMode: AlarmViewMode) {
+    CassiopeiaWatchTheme(dynamicColor = false) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background,
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .fillMaxWidth()
+                        .padding(bottom = Spacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+                ) {
+                    ScreenTitle(
+                        text = stringResource(R.string.watch_alarms),
+                        modifier = Modifier
+                    )
+
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
+                    ) {
+                        SegmentedButton(
+                            selected = viewMode == AlarmViewMode.SIMPLE,
+                            onClick = {},
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                            label = { Text(stringResource(R.string.alarm_view_simple)) }
+                        )
+                        SegmentedButton(
+                            selected = viewMode == AlarmViewMode.WEEKLY,
+                            onClick = {},
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                            label = { Text(stringResource(R.string.alarm_view_weekly)) }
+                        )
+                    }
+
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        ItemView {
+                            AlarmItem(
+                                hours = 11,
+                                minutes = 15,
+                                name = stringResource(R.string.alarm_preview_name_morning),
+                                isAlarmEnabled = true,
+                                onToggleAlarm = {},
+                                onTap = {},
+                                showDaySelector = viewMode == AlarmViewMode.WEEKLY,
+                                selectedDays = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
+                            )
+                        }
+                        ItemView {
+                            AlarmItem(
+                                hours = 13,
+                                minutes = 15,
+                                name = "Lunch",
+                                isAlarmEnabled = false,
+                                onToggleAlarm = {},
+                                onTap = {},
+                                showDaySelector = viewMode == AlarmViewMode.WEEKLY,
+                                selectedDays = setOf(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY)
+                            )
+                        }
+                    }
+
+                    PreviewHourlySignalCard(
+                        enabled = true,
+                        caption = "7-18 active window",
+                        modifier = Modifier.padding(horizontal = Spacing.lg),
+                    )
+                    PreviewDisconnectedInfoCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewHourlySignalCard(
+    enabled: Boolean,
+    caption: String,
+    modifier: Modifier = Modifier,
+) {
+    AppCard(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xxs)
+        ) {
+            AppText(
+                text = "Hourly signal",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            AppText(
+                text = if (enabled) caption else "Off",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.5f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun PreviewDisconnectedInfoCard(modifier: Modifier = Modifier) {
+    AppCard(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+        ) {
+            AppText(
+                text = "Watch not connected",
+                style = MaterialTheme.typography.titleMedium
+            )
+            AppText(
+                text = "You can edit alarms here and send them to the watch later.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            AppButton(
+                text = "Send to phone",
+                onClick = {},
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Preview(name = "Alarms simple", showBackground = true)
+@Composable
+private fun PreviewAlarmsScreenSimple() {
+    AlarmsScreenPreviewContent(viewMode = AlarmViewMode.SIMPLE)
+}
+
+@Preview(
+    name = "Alarms weekly",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun PreviewAlarmsScreenWeekly() {
+    AlarmsScreenPreviewContent(viewMode = AlarmViewMode.WEEKLY)
 }

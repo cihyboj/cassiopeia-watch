@@ -34,6 +34,17 @@ fun LocalTimeView(
     modifier: Modifier,
     timeModel: TimeViewModel = hiltViewModel()
 ) {
+    LocalTimeCardContent(
+        modifier = modifier,
+        onSendTime = { timeModel.onAction(TimeAction.SendTimeToWatch) },
+    )
+}
+
+@Composable
+fun LocalTimeCardContent(
+    modifier: Modifier,
+    onSendTime: () -> Unit,
+) {
     AppCard(
         modifier = modifier
     ) {
@@ -47,7 +58,7 @@ fun LocalTimeView(
                     .weight(1f)
                     .padding(horizontal = Spacing.lg),
             ) {
-                AppTextLarge(
+                AppText(
                     text = stringResource(
                         id = R.string.local_time
                     ),
@@ -77,9 +88,7 @@ fun LocalTimeView(
                     text = stringResource(
                         id = R.string.send_to_watch
                     ),
-                    onClick = {
-                        timeModel.onAction(TimeAction.SendTimeToWatch)
-                    }
+                    onClick = onSendTime,
                 )
             }
         }
@@ -124,10 +133,13 @@ fun SendTimeButton(text: String, onClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun PreviewLocalTimeCard() {
-    LocalTimeView(
-        Modifier
-            .wrapContentHeight()
-            .fillMaxWidth()
-            .padding(vertical = Spacing.xxs)
-    )
+    com.beamburst.casswatch.theme.CassiopeiaWatchTheme(dynamicColor = false) {
+        LocalTimeCardContent(
+            modifier = Modifier
+                .wrapContentHeight()
+                .fillMaxWidth()
+                .padding(vertical = Spacing.xxs),
+            onSendTime = {},
+        )
+    }
 }

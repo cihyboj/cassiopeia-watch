@@ -39,18 +39,18 @@ val OutlineLight = Color(0xFF79747E)
 
 
 // Dark Theme Colors
-val PrimaryDark = Color(0xFFB0C7FF)
-val OnPrimaryDark = Color(0xFF002B72)
+val PrimaryDark = Color(0xFF2D7CFF)
+val OnPrimaryDark = Color(0xFFFFFFFF)
 val PrimaryContainerDark = Color(0xFF143F9C)
 val OnPrimaryContainerDark = Color(0xFFDCE4FF)
 
-val SecondaryDark = Color(0xFF66FFF9)
-val OnSecondaryDark = Color(0xFF003734)
-val SecondaryContainerDark = Color(0xFF00504D)
-val OnSecondaryContainerDark = Color(0xFFCEF9F3)
+val SecondaryDark = Color(0xFF111B2E)
+val OnSecondaryDark = Color(0xFFFFFFFF) // alarm hours, watch not connected header
+val SecondaryContainerDark = Color(0xFF111B2E)
+val OnSecondaryContainerDark = Color(0xFFFFB020)
 
-val TertiaryDark = Color(0xFFFFB0C9)
-val OnTertiaryDark = Color(0xFF650031)
+val TertiaryDark = Color(0xFF111B2E)
+val OnTertiaryDark = Color(0xFFFFB020)
 val TertiaryContainerDark = Color(0xFF8E0045)
 val OnTertiaryContainerDark = Color(0xFFFFD8E4)
 
@@ -59,10 +59,10 @@ val OnErrorDark = Color(0xFF601410)
 val ErrorContainerDark = Color(0xFF8C1D18)
 val OnErrorContainerDark = Color(0xFFF9DEDC)
 
-val BackgroundDark = Color(0xFF1B1B1F)
+val BackgroundDark = Color(0xFF0D1117)
 val OnBackgroundDark = Color(0xFFE4E1E6)
-val SurfaceDark = Color(0xFF1B1B1F)
+val SurfaceDark = Color(0xFF111B2E)
 val OnSurfaceDark = Color(0xFFE4E1E6)
-val SurfaceVariantDark = Color(0xFF49454F)
+val SurfaceVariantDark = Color(0xFF11262E)
 val OnSurfaceVariantDark = Color(0xFFCAC4D0)
-val OutlineDark = Color(0xFF938F99)
+val OutlineDark = Color(0xFF1E2A46)

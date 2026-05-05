@@ -147,7 +147,7 @@ private fun WeekdayTextRow(
         DayOfWeek.entries.forEach { day ->
             val isSelected = day in selectedDays
             val baseColor = if (isSelected) {
-                MaterialTheme.colorScheme.primary
+                MaterialTheme.colorScheme.onTertiary
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
             }
@@ -159,7 +159,7 @@ private fun WeekdayTextRow(
                     else -> baseColor.copy(alpha = 0.45f)
                 },
                 style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    fontWeight = FontWeight.Normal,
                     textDecoration = if (isSelected) TextDecoration.Underline else TextDecoration.None
                 )
             )

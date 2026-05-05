@@ -1,7 +1,7 @@
 package com.beamburst.casswatch.ui.time
 
-import com.beamburst.casswatch.ui.common.AppTextExtraLarge
-import com.beamburst.casswatch.ui.common.AppTextLarge
+import com.beamburst.casswatch.ui.common.AppTextVeryLarge
+import com.beamburst.casswatch.ui.common.AppText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,6 +36,25 @@ fun TimerView(
     timeModel: TimeViewModel = hiltViewModel()
 ) {
     val state by timeModel.state.collectAsState()
+    TimerCardContent(
+        modifier = modifier,
+        timerSeconds = state.timer,
+        onSetTimer = { hours, minutes, seconds ->
+            timeModel.onAction(TimeAction.SetTimer(hours, minutes, seconds))
+        },
+        onSendTimer = {
+            timeModel.onAction(TimeAction.UpdateTimer(state.timer))
+        },
+    )
+}
+
+@Composable
+fun TimerCardContent(
+    modifier: Modifier = Modifier,
+    timerSeconds: Int,
+    onSetTimer: (hours: Int, minutes: Int, seconds: Int) -> Unit,
+    onSendTimer: () -> Unit,
+) {
     var showTimerDialog by remember { mutableStateOf(false) }
 
     fun makeLongString(inSeconds: Int): String {
@@ -53,7 +72,7 @@ fun TimerView(
 
     val handleConfirm: (hours: Int, minutes: Int, seconds: Int) -> Unit =
         { hours, minutes, seconds ->
-            timeModel.onAction(TimeAction.SetTimer(hours, minutes, seconds))
+            onSetTimer(hours, minutes, seconds)
             showTimerDialog = false
         }
 
@@ -74,7 +93,7 @@ fun TimerView(
                     .padding(horizontal = Spacing.lg),
                 verticalArrangement = Arrangement.Center
             ) {
-                AppTextLarge(
+                AppText(
                     text = stringResource(R.string.timer)
                 )
                 TimerTimeView(
@@ -82,7 +101,7 @@ fun TimerView(
                         .fillMaxWidth()
                         .padding(top = Spacing.sm)
                         .clickable { showTimerDialog = true },
-                    timeText = makeLongString(state.timer)
+                    timeText = makeLongString(timerSeconds)
                 )
             }
 
@@ -95,9 +114,7 @@ fun TimerView(
             ) {
                 SendTimerButton(
                     modifier = Modifier.padding(Spacing.xxs),
-                    onClick = {
-                        timeModel.onAction(TimeAction.UpdateTimer(state.timer))
-                    }
+                    onClick = onSendTimer,
                 )
             }
         }
@@ -110,7 +127,7 @@ fun TimerView(
                     .background(MaterialTheme.colorScheme.background)
                     .padding(Spacing.xxs)
             ) {
-                val (hours, minutes, seconds) = convertSecondsToTime(state.timer)
+                val (hours, minutes, seconds) = convertSecondsToTime(timerSeconds)
                 TimerPicker(
                     hours = hours,
                     minutes = minutes,
@@ -125,7 +142,7 @@ fun TimerView(
 
 @Composable
 fun TimerTimeView(modifier: Modifier = Modifier, timeText: String) {
-    AppTextExtraLarge(
+    AppTextVeryLarge(
         text = timeText,
         modifier = modifier,
     )
@@ -154,5 +171,12 @@ fun convertSecondsToTime(totalSeconds: Int): Triple<Int, Int, Int> {
 @Preview(showBackground = true)
 @Composable
 fun PreviewTimerView() {
-    TimerView(Modifier)
+    com.beamburst.casswatch.theme.CassiopeiaWatchTheme(dynamicColor = false) {
+        TimerCardContent(
+            modifier = Modifier,
+            timerSeconds = 5 * 60 + 30,
+            onSetTimer = { _, _, _ -> },
+            onSendTimer = {},
+        )
+    }
 }

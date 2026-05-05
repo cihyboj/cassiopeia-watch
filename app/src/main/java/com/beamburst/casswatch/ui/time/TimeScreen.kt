@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.time
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -70,8 +71,46 @@ fun TimeScreen(timeViewModel: TimeViewModel = hiltViewModel()) {
     }
 }
 
-@Preview(showBackground = true)
+@Composable
+private fun TimeScreenPreviewContent() {
+    CassiopeiaWatchTheme(dynamicColor = false) {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = Spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                ScreenTitle(
+                    stringResource(id = R.string.home),
+                    Modifier
+                )
+
+                LocalTimeCardContent(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.lg),
+                    onSendTime = {},
+                )
+
+                TimerCardContent(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.lg),
+                    timerSeconds = 330,
+                    onSetTimer = { _, _, _ -> },
+                    onSendTimer = {},
+                )
+            }
+        }
+    }
+}
+
+@Preview(
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun PreviewTimeScreen() {
-    TimeScreen()
+    TimeScreenPreviewContent()
 }
