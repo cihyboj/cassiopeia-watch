@@ -51,6 +51,7 @@ fun AlarmList(alarmViewModel: AlarmViewModel = hiltViewModel()) {
     val viewMode by alarmViewModel.viewMode.collectAsState()
     val alarmDays by alarmViewModel.alarmDays.collectAsState()
     val firedAts by alarmViewModel.firedAts.collectAsState()
+    val syncWarnings by alarmViewModel.syncWarnings.collectAsState()
 
     Column(modifier = Modifier.fillMaxWidth()) {
         alarms.forEachIndexed { index, alarm ->
@@ -67,7 +68,8 @@ fun AlarmList(alarmViewModel: AlarmViewModel = hiltViewModel()) {
                         },
                         onTap = { alarmViewModel.openEditor(index) },
                         showDaySelector = viewMode == AlarmViewMode.WEEKLY,
-                        selectedDays = alarmDays[index] ?: emptySet()
+                        selectedDays = alarmDays[index] ?: emptySet(),
+                        syncWarning = syncWarnings[index],
                     )
                 }
             }

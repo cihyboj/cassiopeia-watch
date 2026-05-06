@@ -18,6 +18,7 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
         const val EXTRA_ALARM_HOUR = "alarm_hour"
         const val EXTRA_ALARM_MINUTE = "alarm_minute"
         const val EXTRA_ALARM_NAME = "alarm_name"
+        const val EXTRA_DEVICE_ADDRESS = "device_address"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -25,7 +26,8 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
         val expectedHash = intent.getStringExtra(EXTRA_EXPECTED_HASH) ?: return
 
         val store = SyncHistoryStore(context)
-        val addr = LocalDataStorage.getDeviceAddresses(context).firstOrNull()
+        val addr = intent.getStringExtra(EXTRA_DEVICE_ADDRESS)
+            ?: LocalDataStorage.getDeviceAddresses(context).firstOrNull()
         val entries = if (addr != null) store.load(addr) else emptyList()
         val lastSuccess = entries.firstOrNull { it.success && SyncKind.ALARMS in it.kinds }
         val watchHasAlarm = lastSuccess?.details?.alarmHashes?.contains(expectedHash) == true

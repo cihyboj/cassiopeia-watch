@@ -40,7 +40,8 @@ fun AlarmItem(
     onToggleAlarm: (Boolean) -> Unit,
     onTap: () -> Unit,
     showDaySelector: Boolean = false,
-    selectedDays: Set<DayOfWeek> = emptySet()
+    selectedDays: Set<DayOfWeek> = emptySet(),
+    syncWarning: String? = null,
 ) {
     var isEnabled by remember(isAlarmEnabled) { mutableStateOf(isAlarmEnabled) }
     val isWeekly = showDaySelector
@@ -52,49 +53,52 @@ fun AlarmItem(
             .clickable { onTap() },
     ) {
         if (isWeekly) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(Spacing.md),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = Spacing.sm),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.xs)
-                ) {
-                    if (!name.isNullOrBlank()) {
-                        AppText(
-                            text = name,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    AppTextVeryLarge(
-                        text = String.format(Locale.US, "%02d:%02d", hours, minutes),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
+            Column {
                 Row(
-                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Spacing.md),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    WeekdayTextRow(
-                        selectedDays = selectedDays,
-                        enabled = isEnabled
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.sm))
-                    AppSwitch(
-                        checked = showAsEnabled,
-                        onCheckedChange = { checked ->
-                            isEnabled = checked
-                            onToggleAlarm(checked)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = Spacing.sm),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        if (!name.isNullOrBlank()) {
+                            AppText(
+                                text = name,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                    )
+                        AppTextVeryLarge(
+                            text = String.format(Locale.US, "%02d:%02d", hours, minutes),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        WeekdayTextRow(
+                            selectedDays = selectedDays,
+                            enabled = isEnabled
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.sm))
+                        AppSwitch(
+                            checked = showAsEnabled,
+                            onCheckedChange = { checked ->
+                                isEnabled = checked
+                                onToggleAlarm(checked)
+                            }
+                        )
+                    }
                 }
+                AlarmSyncWarningText(syncWarning)
             }
         } else {
             Column {
@@ -130,9 +134,25 @@ fun AlarmItem(
                         }
                     )
                 }
+                AlarmSyncWarningText(syncWarning)
             }
         }
     }
+}
+
+@Composable
+private fun AlarmSyncWarningText(syncWarning: String?) {
+    if (syncWarning.isNullOrBlank()) return
+    AppText(
+        text = syncWarning,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.padding(
+            start = Spacing.md,
+            end = Spacing.md,
+            bottom = Spacing.md
+        )
+    )
 }
 
 @Composable

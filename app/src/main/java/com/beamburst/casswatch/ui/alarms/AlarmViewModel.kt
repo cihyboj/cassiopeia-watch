@@ -19,6 +19,7 @@ import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.local.WatchConnectionTracker
 import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
+import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.scratchpad.AlarmNameStorage
 import org.avmedia.gshockapi.Alarm
@@ -29,6 +30,8 @@ import com.beamburst.casswatch.ui.common.AppSnackbar
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -115,6 +118,7 @@ class AlarmViewModel @Inject constructor(
     private val store: SyncHistoryStore,
     private val watchSelector: CurrentWatchSelector,
     private val connectionTracker: WatchConnectionTracker,
+    private val phoneFallbackScheduler: PhoneFallbackScheduler,
 ) : ViewModel() {
 
     companion object {
@@ -145,8 +149,12 @@ class AlarmViewModel @Inject constructor(
     private val _hourlySignal = MutableStateFlow(HourlySignalUiState())
     val hourlySignal: StateFlow<HourlySignalUiState> = _hourlySignal.asStateFlow()
 
+    private val _syncWarnings = MutableStateFlow<Map<Int, String>>(emptyMap())
+    val syncWarnings: StateFlow<Map<Int, String>> = _syncWarnings.asStateFlow()
+
     private var exactAlarmPermissionRequested = false
     private val eventSubscriberName = "AlarmViewModel-${System.identityHashCode(this)}"
+    private val warningTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val lastAlarmSync: StateFlow<SyncEntry?> = watchSelector.selected
@@ -194,6 +202,11 @@ class AlarmViewModel @Inject constructor(
                 loadAlarms()
             }
         }
+        viewModelScope.launch(Dispatchers.IO) {
+            lastAlarmSync.collect {
+                refreshSyncRiskState()
+            }
+        }
         startFireTimeTick()
     }
 
@@ -228,6 +241,7 @@ class AlarmViewModel @Inject constructor(
                 startHour = signalSettings.startHour,
                 endHour   = signalSettings.endHour,
             )
+            refreshSyncRiskState()
     }
 
     override fun onCleared() {
@@ -263,6 +277,7 @@ class AlarmViewModel @Inject constructor(
         if (anyFired) {
             _firedAts.value = updatedFiredAts
             AlarmSyncStorage.saveAlarms(appContext, addr, _alarms.value, dirty = true, firedAts = updatedFiredAts)
+            refreshSyncRiskState(isDirtyOverride = true)
         }
     }
 
@@ -322,6 +337,7 @@ class AlarmViewModel @Inject constructor(
                             else createDefaultLocalAlarms()
             ProgressEvents.onNext("Error")
         }
+        refreshSyncRiskState()
     }
 
     private suspend fun refreshConnectionState() {
@@ -342,11 +358,14 @@ class AlarmViewModel @Inject constructor(
         AlarmSyncStorage.saveAlarms(appContext, addr, updated, dirty = true, firedAts = _firedAts.value)
     }
 
-    fun toggleAlarm(index: Int, isEnabled: Boolean) =
+    fun toggleAlarm(index: Int, isEnabled: Boolean) {
         updateAlarm(index) { it.copy(enabled = isEnabled) }
+        refreshSyncRiskState(isDirtyOverride = true)
+    }
 
     fun onTimeChanged(index: Int, hours: Int, minutes: Int) {
         updateAlarm(index) { it.copy(hour = hours, minute = minutes, name = null) }
+        refreshSyncRiskState(isDirtyOverride = true)
     }
 
     fun onHourlySignalAction(action: HourlySignalAction) {
@@ -395,6 +414,7 @@ class AlarmViewModel @Inject constructor(
         val addr = watchSelector.currentAddress() ?: return
         AlarmSyncStorage.saveViewMode(appContext, addr, mode)
         AlarmSyncStorage.saveAlarms(appContext, addr, _alarms.value, dirty = true, firedAts = _firedAts.value)
+        refreshSyncRiskState(isDirtyOverride = true)
     }
 
     fun toggleDay(alarmIndex: Int, day: DayOfWeek) {
@@ -406,6 +426,7 @@ class AlarmViewModel @Inject constructor(
         val addr = watchSelector.currentAddress() ?: return
         AlarmSyncStorage.saveDaySelections(appContext, addr, _alarmDays.value)
         AlarmSyncStorage.saveAlarms(appContext, addr, _alarms.value, dirty = true, firedAts = _firedAts.value)
+        refreshSyncRiskState(isDirtyOverride = true)
     }
 
     fun sendAlarmsToWatch() = viewModelScope.launch {
@@ -475,6 +496,7 @@ class AlarmViewModel @Inject constructor(
             ),
         )
         if (result.isSuccess) {
+            refreshSyncRiskState(isDirtyOverride = false)
             AppSnackbar(appContext.getString(R.string.alarms_set_to_watch))
         } else {
             ProgressEvents.onNext("Error", result.exceptionOrNull()?.message ?: "")
@@ -515,6 +537,7 @@ class AlarmViewModel @Inject constructor(
         _alarmDays.update { it + (index to days) }
         val addr = watchSelector.currentAddress() ?: return
         AlarmSyncStorage.saveDaySelections(appContext, addr, _alarmDays.value)
+        refreshSyncRiskState(isDirtyOverride = true)
         _editorTarget.value = null
     }
 
@@ -564,5 +587,68 @@ class AlarmViewModel @Inject constructor(
         if (addr == null || !api.isConnected()) return false
         val tracked = connectionTracker.states.value[addr]
         return tracked == ConnectionState.CONNECTED || tracked == null
+    }
+
+    private fun refreshSyncRiskState(isDirtyOverride: Boolean? = null) = viewModelScope.launch(Dispatchers.IO) {
+        val addr = watchSelector.currentAddress()
+        if (addr == null) {
+            _syncWarnings.value = emptyMap()
+            phoneFallbackScheduler.cancelAll(_alarms.value.indices.toList())
+            return@launch
+        }
+
+        val settings = WatchSettingsCache.load(appContext, addr)
+        val autoSyncEnabled = settings?.timeAdjustment ?: true
+        val adjustmentTimeMinutes = settings?.adjustmentTimeMinutes ?: 0
+        val isDirty = isDirtyOverride ?: AlarmSyncStorage.isDirty(appContext, addr)
+        val syncedHashes = lastAlarmSync.value?.details?.alarmHashes.orEmpty()
+        val now = LocalDateTime.now()
+        val warnings = mutableMapOf<Int, String>()
+
+        _alarms.value.forEachIndexed { index, alarm ->
+            val risk = AlarmSyncRiskEvaluator.evaluate(
+                alarm = alarm,
+                alarmIndex = index,
+                alarmDays = _alarmDays.value[index] ?: emptySet(),
+                viewMode = _viewMode.value,
+                firedAts = _firedAts.value,
+                isDirty = isDirty,
+                syncedHashes = syncedHashes,
+                now = now,
+                autoSyncEnabled = autoSyncEnabled,
+                adjustmentTimeMinutes = adjustmentTimeMinutes,
+            )
+
+            if (risk == null) {
+                phoneFallbackScheduler.cancel(index)
+            } else {
+                warnings[index] = appContext.getString(
+                    if (risk.nextAutoSyncAt == null) {
+                        R.string.alarm_sync_risk_auto_off
+                    } else {
+                        R.string.alarm_sync_risk_before_auto_sync
+                    },
+                    risk.nextAlarmAt.format(warningTimeFormatter)
+                )
+                if (phoneFallbackScheduler.canScheduleExactAlarms()) {
+                    phoneFallbackScheduler.schedule(
+                        alarmIndex = index,
+                        expectedHash = alarmHash(alarm.hour, alarm.minute, emptySet(), enabled = true),
+                        fireInstant = risk.nextAlarmAt
+                            .atZone(ZoneId.systemDefault())
+                            .toInstant()
+                            .toEpochMilli(),
+                        alarmHour = alarm.hour,
+                        alarmMinute = alarm.minute,
+                        alarmName = alarm.name,
+                        deviceAddress = addr,
+                    )
+                } else {
+                    phoneFallbackScheduler.cancel(index)
+                }
+            }
+        }
+
+        _syncWarnings.value = warnings
     }
 }

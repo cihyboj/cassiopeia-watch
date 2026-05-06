@@ -29,7 +29,8 @@ class PhoneFallbackScheduler @Inject constructor(
         fireInstant: Long,
         alarmHour: Int,
         alarmMinute: Int,
-        alarmName: String?
+        alarmName: String?,
+        deviceAddress: String,
     ) {
         if (!canScheduleExactAlarms()) {
             Timber.w("SCHEDULE_EXACT_ALARM not granted; skipping fallback for alarm $alarmIndex")
@@ -45,6 +46,7 @@ class PhoneFallbackScheduler @Inject constructor(
             putExtra(PhoneFallbackReceiver.EXTRA_ALARM_HOUR, alarmHour)
             putExtra(PhoneFallbackReceiver.EXTRA_ALARM_MINUTE, alarmMinute)
             putExtra(PhoneFallbackReceiver.EXTRA_ALARM_NAME, alarmName ?: "")
+            putExtra(PhoneFallbackReceiver.EXTRA_DEVICE_ADDRESS, deviceAddress)
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
