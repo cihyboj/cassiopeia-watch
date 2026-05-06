@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import AppSwitch
+import com.beamburst.casswatch.ui.common.AppSwitch
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.theme.Spacing
 import com.beamburst.casswatch.ui.common.AppCard

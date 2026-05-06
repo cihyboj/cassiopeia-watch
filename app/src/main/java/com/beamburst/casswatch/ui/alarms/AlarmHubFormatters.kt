@@ -16,6 +16,10 @@ internal fun alarmRepeatLabel(
         .joinToString(" ") { it.getDisplayName(TextStyle.SHORT, locale) }
 }
 
+/** True when the repeating pattern is a partial week (shows day strip instead of alarmRepeatLabel text). */
+internal fun useAlarmWeekdayStrip(selectedDays: Set<DayOfWeek>, showDayStrip: Boolean): Boolean =
+    showDayStrip && selectedDays.size in 1 until DayOfWeek.entries.size
+
 internal fun alarmTabSubtitle(alarms: List<org.avmedia.gshockapi.Alarm>): String {
     val enabledCount = alarms.count { it.enabled }
     return "$enabledCount ON"

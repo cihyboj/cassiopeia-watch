@@ -1,16 +1,15 @@
 package com.beamburst.casswatch.ui.alarms
 
-import AppSwitch
+import com.beamburst.casswatch.ui.common.AppSwitch
 import com.beamburst.casswatch.ui.common.AppText
 import com.beamburst.casswatch.ui.common.AppTextVeryLarge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,59 +44,66 @@ fun AlarmItem(
 ) {
     var isEnabled by remember(isAlarmEnabled) { mutableStateOf(isAlarmEnabled) }
 
+    val strip = useAlarmWeekdayStrip(selectedDays, showDaySelector)
+
     AppCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = Spacing.xxs)
             .clickable { onTap() },
     ) {
-        Column {
+        Column(
+            modifier = Modifier.padding(Spacing.md),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(Spacing.md),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                AppTextVeryLarge(
+                    text = String.format(Locale.US, "%02d:%02d", hours, minutes),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                AppSwitch(
+                    checked = showAsEnabled,
+                    onCheckedChange = { checked ->
+                        isEnabled = checked
+                        onToggleAlarm(checked)
+                    },
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(end = Spacing.sm),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+                        .weight(1f, fill = false)
+                        .padding(end = Spacing.sm)
+                        .wrapContentHeight(),
                 ) {
                     if (!name.isNullOrBlank()) {
                         AppText(
                             text = name,
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    AppTextVeryLarge(
-                        text = String.format(Locale.US, "%02d:%02d", hours, minutes),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                }
+                if (strip) {
+                    WeekdayTextRow(selectedDays = selectedDays, enabled = isEnabled)
+                } else {
                     AppText(
                         text = alarmRepeatLabel(selectedDays),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    WeekdayTextRow(
-                        selectedDays = selectedDays,
-                        enabled = isEnabled
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.sm))
-                    AppSwitch(
-                        checked = showAsEnabled,
-                        onCheckedChange = { checked ->
-                            isEnabled = checked
-                            onToggleAlarm(checked)
-                        }
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }

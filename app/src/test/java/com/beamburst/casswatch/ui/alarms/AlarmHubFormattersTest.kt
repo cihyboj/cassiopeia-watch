@@ -2,6 +2,8 @@ package com.beamburst.casswatch.ui.alarms
 
 import org.avmedia.gshockapi.Alarm
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.DayOfWeek
 import java.util.Locale
@@ -31,6 +33,27 @@ class AlarmHubFormattersTest {
                 Locale.US
             )
         )
+    }
+
+    @Test
+    fun `use weekday strip for partial selection when selector enabled`() {
+        assertTrue(useAlarmWeekdayStrip(setOf(DayOfWeek.MONDAY), true))
+        assertTrue(
+            useAlarmWeekdayStrip(
+                setOf(
+                    DayOfWeek.MONDAY,
+                    DayOfWeek.TUESDAY,
+                    DayOfWeek.WEDNESDAY,
+                    DayOfWeek.THURSDAY,
+                    DayOfWeek.FRIDAY,
+                    DayOfWeek.SATURDAY,
+                ),
+                true,
+            )
+        )
+        assertFalse(useAlarmWeekdayStrip(DayOfWeek.entries.toSet(), true))
+        assertFalse(useAlarmWeekdayStrip(emptySet(), true))
+        assertFalse(useAlarmWeekdayStrip(setOf(DayOfWeek.MONDAY), false))
     }
 
     @Test

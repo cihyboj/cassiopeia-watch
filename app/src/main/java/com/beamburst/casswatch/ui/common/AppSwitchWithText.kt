@@ -1,6 +1,5 @@
 package com.beamburst.casswatch.ui.common
 
-import AppSwitch
 import com.beamburst.casswatch.ui.common.AppText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

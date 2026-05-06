@@ -7,15 +7,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -27,8 +30,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.beamburst.casswatch.R
@@ -158,6 +163,7 @@ private fun AlarmHubActionRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AlarmHubTabs(
     activeTab: AlarmHubTab,
@@ -172,26 +178,42 @@ private fun AlarmHubTabs(
         AlarmHubTab.TIMER to (stringResource(R.string.timer) to timerSubtitle),
         AlarmHubTab.SIGNAL to (stringResource(R.string.alarm_hub_signal) to signalSubtitle),
     )
+    val count = tabs.size
 
-    TabRow(
-        selectedTabIndex = tabs.indexOfFirst { it.first == activeTab }.coerceAtLeast(0),
+    Surface(
         modifier = modifier,
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
-        tabs.forEach { (tab, labels) ->
-            Tab(
-                selected = tab == activeTab,
-                onClick = { onTabSelected(tab) },
-                text = {
-                    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                        Text(labels.first)
-                        Text(
-                            text = labels.second,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            )
+        SingleChoiceSegmentedButtonRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.xs),
+        ) {
+            tabs.forEachIndexed { index, (tab, labels) ->
+                SegmentedButton(
+                    selected = tab == activeTab,
+                    onClick = { onTabSelected(tab) },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = count),
+                    modifier = Modifier.heightIn(min = 52.dp),
+                    label = {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Text(
+                                text = labels.first,
+                                style = MaterialTheme.typography.titleSmall,
+                            )
+                            Text(
+                                text = labels.second,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                )
+            }
         }
     }
 }
