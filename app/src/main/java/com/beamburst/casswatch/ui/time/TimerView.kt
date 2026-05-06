@@ -33,17 +33,17 @@ import com.beamburst.casswatch.ui.common.AppCard
 @Composable
 fun TimerView(
     modifier: Modifier = Modifier,
-    timeModel: TimeViewModel = hiltViewModel()
+    timerViewModel: TimerViewModel = hiltViewModel()
 ) {
-    val state by timeModel.state.collectAsState()
+    val state by timerViewModel.state.collectAsState()
     TimerCardContent(
         modifier = modifier,
         timerSeconds = state.timer,
         onSetTimer = { hours, minutes, seconds ->
-            timeModel.onAction(TimeAction.SetTimer(hours, minutes, seconds))
+            timerViewModel.setTimer(hours, minutes, seconds)
         },
         onSendTimer = {
-            timeModel.onAction(TimeAction.UpdateTimer(state.timer))
+            timerViewModel.sendTimerToWatch()
         },
     )
 }
@@ -54,6 +54,7 @@ fun TimerCardContent(
     timerSeconds: Int,
     onSetTimer: (hours: Int, minutes: Int, seconds: Int) -> Unit,
     onSendTimer: () -> Unit,
+    showSendButton: Boolean = true,
 ) {
     var showTimerDialog by remember { mutableStateOf(false) }
 
@@ -105,17 +106,19 @@ fun TimerCardContent(
                 )
             }
 
-            Column(
-                modifier = Modifier
-                    .wrapContentWidth()
-                    .padding(horizontal = Spacing.sm),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                SendTimerButton(
-                    modifier = Modifier.padding(Spacing.xxs),
-                    onClick = onSendTimer,
-                )
+            if (showSendButton) {
+                Column(
+                    modifier = Modifier
+                        .wrapContentWidth()
+                        .padding(horizontal = Spacing.sm),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    SendTimerButton(
+                        modifier = Modifier.padding(Spacing.xxs),
+                        onClick = onSendTimer,
+                    )
+                }
             }
         }
     }

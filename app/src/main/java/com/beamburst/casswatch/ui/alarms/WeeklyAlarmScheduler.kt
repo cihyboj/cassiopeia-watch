@@ -45,11 +45,10 @@ class WeeklyAlarmScheduler @Inject constructor(
     suspend fun applyTodaySchedule() {
         val addr = watchSelector.currentAddress() ?: return
 
-        val viewMode = AlarmSyncStorage.loadViewMode(context, addr)
         val alarmDays = AlarmSyncStorage.loadDaySelections(context, addr)
         val storedAlarms = AlarmSyncStorage.loadAlarms(context, addr)
         val firedAts = AlarmSyncStorage.loadFiredAts(context, addr)
-        val shouldWrite = AlarmSyncStorage.isDirty(context, addr) || viewMode == AlarmViewMode.WEEKLY
+        val shouldWrite = AlarmSyncStorage.isDirty(context, addr) || !storedAlarms.isNullOrEmpty()
 
         if (!shouldWrite) return
 
@@ -66,7 +65,7 @@ class WeeklyAlarmScheduler @Inject constructor(
             alarms = desiredAlarms,
             alarmDays = alarmDays,
             now = now,
-            viewMode = viewMode,
+            viewMode = AlarmViewMode.WEEKLY,
             firedAts = firedAts
         )
         val alarmsToSend = if (WatchInfo.chimeInSettings) {
@@ -90,7 +89,7 @@ class WeeklyAlarmScheduler @Inject constructor(
                 details = alarmSyncDetailsForWatchPayload(
                     alarms = alarmsToSend,
                     hourlySignalTarget = hourlySignalTarget,
-                    actions = listOf("Weekly alarm schedule applied on reconnect"),
+                    actions = listOf("Alarm schedule applied on reconnect"),
                 ),
             )
 
@@ -107,7 +106,7 @@ class WeeklyAlarmScheduler @Inject constructor(
                 details = alarmSyncDetailsForWatchPayload(
                     alarms = alarmsToSend,
                     hourlySignalTarget = hourlySignalTarget,
-                    actions = listOf("Weekly alarm schedule verified on reconnect"),
+                    actions = listOf("Alarm schedule verified on reconnect"),
                 ),
             )
             if (AlarmSyncStorage.isDirty(context, addr)) {

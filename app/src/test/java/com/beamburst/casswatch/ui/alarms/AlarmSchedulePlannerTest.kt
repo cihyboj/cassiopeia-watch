@@ -199,7 +199,7 @@ class AlarmSchedulePlannerTest {
     }
 
     @Test
-    fun simpleModeLeavesAlarmsUnchanged() {
+    fun `missing day selections behave as all days`() {
         val alarms = listOf(
             Alarm(11, 15, true, false, "Daily"),
             Alarm(9, 3, false, false, "Off")
@@ -207,7 +207,7 @@ class AlarmSchedulePlannerTest {
 
         val planned = AlarmSchedulePlanner.applyWeeklySchedule(
             alarms = alarms,
-            alarmDays = mapOf(0 to setOf(DayOfWeek.MONDAY)),
+            alarmDays = emptyMap(),
             now = LocalDateTime.of(2026, 5, 1, 16, 55),
             viewMode = AlarmViewMode.SIMPLE
         )

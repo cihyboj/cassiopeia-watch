@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 data class TimeState(
-    val timer: Int = 0,
     val homeTime: String = "",
     val batteryLevel: Int = 0,
     val temperature: Int = 0,
@@ -47,8 +46,6 @@ data class TimeState(
 )
 
 sealed interface TimeAction {
-    data class SetTimer(val hours: Int, val minutes: Int, val seconds: Int) : TimeAction
-    data class UpdateTimer(val timeMs: Int) : TimeAction
     data object SendTimeToWatch : TimeAction
     data object RefreshState : TimeAction
 }
@@ -66,10 +63,6 @@ class TimeViewModel @Inject constructor(
     private val watchSelector: CurrentWatchSelector,
     private val connectionTracker: WatchConnectionTracker,
 ) : ViewModel() {
-    companion object {
-        private const val EVENT_SUBSCRIBER_ID = "TimeViewModel"
-    }
-
     private val _state = MutableStateFlow(TimeState())
     val state = _state.asStateFlow()
 
@@ -132,40 +125,12 @@ class TimeViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        ProgressEvents.subscriber.stop(EVENT_SUBSCRIBER_ID)
+        ProgressEvents.subscriber.stop(progressEventsSubscriberId)
         super.onCleared()
     }
 
     fun onAction(action: TimeAction) {
         when (action) {
-            is TimeAction.SetTimer -> {
-                val timer = action.hours * 3600 + action.minutes * 60 + action.seconds
-                _state.value = _state.value.copy(timer = timer)
-                saveWatchSnapshot(
-                    timer = timer,
-                    battery = _state.value.batteryLevel,
-                    temperature = _state.value.temperature,
-                    homeTime = _state.value.homeTime,
-                )
-            }
-
-            is TimeAction.UpdateTimer -> {
-                viewModelScope.launch {
-                    if (!api.isConnected()) {
-                        AppSnackbar(appContext.getString(R.string.watch_not_connected))
-                    } else {
-                        api.setTimer(action.timeMs)
-                        saveWatchSnapshot(
-                            timer = action.timeMs,
-                            battery = _state.value.batteryLevel,
-                            temperature = _state.value.temperature,
-                            homeTime = _state.value.homeTime,
-                        )
-                        AppSnackbar(appContext.getString(R.string.timer_set))
-                    }
-                }
-            }
-
             TimeAction.SendTimeToWatch -> {
                 viewModelScope.launch {
                     if (!api.isConnected()) {
@@ -222,13 +187,11 @@ class TimeViewModel @Inject constructor(
             // cannot keep forcing "disconnected" on every tick (second reconnect).
             linkLossUiHoldActive.set(false)
             runCatching {
-                val timer = api.getTimer()
                 val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
                 val battery = api.getBatteryLevel()
                 val temperature = api.getWatchTemperature()
-                saveWatchSnapshot(timer, battery, temperature, homeTime)
+                saveWatchSnapshot(battery, temperature, homeTime)
                 _state.value = TimeState(
-                    timer = timer,
                     homeTime = homeTime,
                     batteryLevel = battery,
                     temperature = temperature,
@@ -279,13 +242,11 @@ class TimeViewModel @Inject constructor(
                     isConnected = true,
                 )
 
-                val timer = api.getTimer()
                 val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
                 val battery = api.getBatteryLevel()
                 val temperature = api.getWatchTemperature()
-                saveWatchSnapshot(timer, battery, temperature, homeTime)
+                saveWatchSnapshot(battery, temperature, homeTime)
                 _state.value = TimeState(
-                    timer = timer,
                     homeTime = homeTime,
                     batteryLevel = battery,
                     temperature = temperature,
@@ -308,7 +269,6 @@ class TimeViewModel @Inject constructor(
     private fun loadCachedState(address: String?) {
         val snapshot = address?.let { WatchSnapshot.load(appContext, it) }
         _state.value = TimeState(
-            timer = snapshot?.timer ?: 0,
             homeTime = snapshot?.homeTime.orEmpty(),
             batteryLevel = snapshot?.battery ?: 0,
             temperature = snapshot?.temperature ?: 0,
@@ -323,13 +283,14 @@ class TimeViewModel @Inject constructor(
         return tracked == ConnectionState.CONNECTED || tracked == null
     }
 
-    private fun saveWatchSnapshot(timer: Int, battery: Int, temperature: Int, homeTime: String) {
+    private fun saveWatchSnapshot(battery: Int, temperature: Int, homeTime: String) {
         val addr = watchSelector.currentAddress() ?: return
+        val current = WatchSnapshot.load(appContext, addr)
         WatchSnapshot.save(
             appContext,
             addr,
             WatchSnapshot(
-                timer = timer,
+                timer = current?.timer,
                 battery = battery,
                 temperature = temperature,
                 homeTime = homeTime.takeIf { it.isNotBlank() },

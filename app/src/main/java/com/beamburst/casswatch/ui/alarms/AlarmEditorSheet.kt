@@ -84,29 +84,27 @@ fun AlarmEditorSheet(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            if (draft.viewMode == AlarmViewMode.WEEKLY) {
-                Spacer(Modifier.height(Spacing.md))
-                AppText(
-                    text = stringResource(R.string.alarm_editor_repeat),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(Spacing.sm))
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
-                ) {
-                    DayOfWeek.entries.forEach { day ->
-                        FilterChip(
-                            selected = day in selectedDays,
-                            onClick = {
-                                selectedDays = if (day in selectedDays) selectedDays - day else selectedDays + day
-                            },
-                            label = {
-                                Text(day.getDisplayName(TextStyle.SHORT, Locale.getDefault()))
-                            }
-                        )
-                    }
+            Spacer(Modifier.height(Spacing.md))
+            AppText(
+                text = stringResource(R.string.alarm_editor_repeat),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(Spacing.sm))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                DayOfWeek.entries.forEach { day ->
+                    FilterChip(
+                        selected = day in selectedDays,
+                        onClick = {
+                            selectedDays = if (day in selectedDays) selectedDays - day else selectedDays + day
+                        },
+                        label = {
+                            Text(day.getDisplayName(TextStyle.SHORT, Locale.getDefault()))
+                        }
+                    )
                 }
             }
 

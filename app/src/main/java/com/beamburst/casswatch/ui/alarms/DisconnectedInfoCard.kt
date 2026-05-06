@@ -17,7 +17,7 @@ import com.beamburst.casswatch.ui.common.AppText
 
 @Composable
 fun DisconnectedInfoCard(
-    onSendToPhone: () -> Unit,
+    onSendToPhone: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     AppCard(modifier = modifier) {
@@ -36,12 +36,14 @@ fun DisconnectedInfoCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                AppButton(
-                    text = stringResource(R.string.send_alarms_to_phone),
-                    onClick = onSendToPhone,
-                    modifier = Modifier
-                )
+            if (onSendToPhone != null) {
+                Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                    AppButton(
+                        text = stringResource(R.string.send_alarms_to_phone),
+                        onClick = onSendToPhone,
+                        modifier = Modifier
+                    )
+                }
             }
         }
     }

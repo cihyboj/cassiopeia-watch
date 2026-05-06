@@ -6,6 +6,8 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 object AlarmSchedulePlanner {
+    val AllDays: Set<DayOfWeek> = DayOfWeek.entries.toSet()
+
     fun applyWeeklySchedule(
         alarms: List<Alarm>,
         alarmDays: Map<Int, Set<DayOfWeek>>,
@@ -13,16 +15,14 @@ object AlarmSchedulePlanner {
         viewMode: AlarmViewMode,
         firedAts: Map<Int, Long> = emptyMap()   // index → firedAt millis; empty = backward compat
     ): List<Alarm> {
-        if (viewMode == AlarmViewMode.SIMPLE) return alarms
-
         val today = now.dayOfWeek
         val currentTime = now.toLocalTime()
 
         return alarms.mapIndexed { index, alarm ->
-            val selectedDays = alarmDays[index]
+            val selectedDays = alarmDays[index] ?: AllDays
             when {
                 !alarm.enabled -> alarm                              // already off → pass through
-                selectedDays.isNullOrEmpty() -> {
+                selectedDays.isEmpty() -> {
                     // Fire-once: no days selected
                     if (firedAts.containsKey(index)) {
                         alarm.copy(enabled = false)                  // consumed → disable on watch

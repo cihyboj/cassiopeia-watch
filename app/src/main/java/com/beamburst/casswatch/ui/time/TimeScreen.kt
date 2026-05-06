@@ -55,12 +55,6 @@ fun TimeScreen(timeViewModel: TimeViewModel = hiltViewModel()) {
                         .padding(horizontal = Spacing.lg)
                 )
 
-                TimerView(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.lg)
-                )
-
                 PairedWatchList(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -94,14 +88,6 @@ private fun TimeScreenPreviewContent() {
                     onSendTime = {},
                 )
 
-                TimerCardContent(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.lg),
-                    timerSeconds = 330,
-                    onSetTimer = { _, _, _ -> },
-                    onSendTimer = {},
-                )
             }
         }
     }

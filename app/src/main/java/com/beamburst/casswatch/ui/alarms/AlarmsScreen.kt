@@ -13,10 +13,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -43,12 +42,16 @@ import com.beamburst.casswatch.ui.common.ButtonData
 import com.beamburst.casswatch.ui.common.ButtonsRow
 import com.beamburst.casswatch.ui.common.ItemView
 import com.beamburst.casswatch.ui.common.ScreenTitle
+import com.beamburst.casswatch.ui.time.TimerCardContent
+import com.beamburst.casswatch.ui.time.TimerViewModel
 import java.time.DayOfWeek
 import android.content.res.Configuration
+
+private enum class AlarmHubTab { ALARMS, TIMER, SIGNAL }
+
 @Composable
 fun AlarmList(alarmViewModel: AlarmViewModel = hiltViewModel()) {
     val alarms by alarmViewModel.alarms.collectAsState()
-    val viewMode by alarmViewModel.viewMode.collectAsState()
     val alarmDays by alarmViewModel.alarmDays.collectAsState()
     val firedAts by alarmViewModel.firedAts.collectAsState()
     val syncWarnings by alarmViewModel.syncWarnings.collectAsState()
@@ -67,8 +70,8 @@ fun AlarmList(alarmViewModel: AlarmViewModel = hiltViewModel()) {
                             alarmViewModel.toggleAlarm(index, isEnabled)
                         },
                         onTap = { alarmViewModel.openEditor(index) },
-                        showDaySelector = viewMode == AlarmViewMode.WEEKLY,
-                        selectedDays = alarmDays[index] ?: emptySet(),
+                        showDaySelector = true,
+                        selectedDays = alarmDays[index] ?: AlarmSchedulePlanner.AllDays,
                         syncWarning = syncWarnings[index],
                     )
                 }
@@ -108,34 +111,88 @@ private fun ExactAlarmPermissionDialog(onDismiss: () -> Unit, onOpenSettings: ()
 }
 
 @Composable
-private fun AlarmsActionRow(alarmViewModel: AlarmViewModel) {
+private fun AlarmHubActionRow(
+    activeTab: AlarmHubTab,
+    alarmViewModel: AlarmViewModel,
+    timerViewModel: TimerViewModel,
+    modifier: Modifier = Modifier,
+) {
     val isConnected by alarmViewModel.isConnected.collectAsState()
 
     if (isConnected) {
-        val buttons = listOf(
-            ButtonData(
+        val buttons = buildList {
+            if (activeTab == AlarmHubTab.ALARMS) add(ButtonData(
                 text = stringResource(id = R.string.send_alarms_to_phone),
                 onClick = { alarmViewModel.sendAlarmsToPhone() }
-            ),
-            ButtonData(
-                text = stringResource(id = R.string.send_alarms_to_watch),
-                onClick = { alarmViewModel.sendAlarmsToWatch() }
-            )
-        )
+            ))
+            add(ButtonData(
+                text = stringResource(id = R.string.send_to_watch),
+                onClick = {
+                    when (activeTab) {
+                        AlarmHubTab.ALARMS -> alarmViewModel.sendAlarmsToWatch()
+                        AlarmHubTab.TIMER -> timerViewModel.sendTimerToWatch()
+                        AlarmHubTab.SIGNAL -> alarmViewModel.sendHourlySignalToWatch()
+                    }
+                }
+            ))
+        }
         ButtonsRow(
             buttons = buttons,
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
             rowPadding = Spacing.sm
         )
     } else {
         DisconnectedInfoCard(
-            onSendToPhone = { alarmViewModel.sendAlarmsToPhone() },
+            onSendToPhone = if (activeTab == AlarmHubTab.ALARMS) {
+                { alarmViewModel.sendAlarmsToPhone() }
+            } else {
+                null
+            },
             modifier = Modifier
+                .then(modifier)
                 .fillMaxWidth()
                 .padding(vertical = Spacing.sm)
         )
+    }
+}
+
+@Composable
+private fun AlarmHubTabs(
+    activeTab: AlarmHubTab,
+    alarmSubtitle: String,
+    timerSubtitle: String,
+    signalSubtitle: String,
+    onTabSelected: (AlarmHubTab) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val tabs = listOf(
+        AlarmHubTab.ALARMS to (stringResource(R.string.alarms) to alarmSubtitle),
+        AlarmHubTab.TIMER to (stringResource(R.string.timer) to timerSubtitle),
+        AlarmHubTab.SIGNAL to (stringResource(R.string.alarm_hub_signal) to signalSubtitle),
+    )
+
+    TabRow(
+        selectedTabIndex = tabs.indexOfFirst { it.first == activeTab }.coerceAtLeast(0),
+        modifier = modifier,
+    ) {
+        tabs.forEach { (tab, labels) ->
+            Tab(
+                selected = tab == activeTab,
+                onClick = { onTabSelected(tab) },
+                text = {
+                    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                        Text(labels.first)
+                        Text(
+                            text = labels.second,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -143,12 +200,16 @@ private fun AlarmsActionRow(alarmViewModel: AlarmViewModel) {
 @Composable
 fun AlarmsScreen(
     alarmViewModel: AlarmViewModel = hiltViewModel(),
+    timerViewModel: TimerViewModel = hiltViewModel(),
     onNavigateToHistory: () -> Unit = {},
 ) {
-    val viewMode by alarmViewModel.viewMode.collectAsState()
+    val alarms by alarmViewModel.alarms.collectAsState()
+    val hourlySignal by alarmViewModel.hourlySignal.collectAsState()
+    val timerState by timerViewModel.state.collectAsState()
     val editorTarget by alarmViewModel.editorTarget.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showPermissionDialog by remember { mutableStateOf(false) }
+    var activeTab by remember { mutableStateOf(AlarmHubTab.ALARMS) }
 
     LaunchedEffect(Unit) {
         alarmViewModel.uiEvents.collect { event ->
@@ -197,49 +258,56 @@ fun AlarmsScreen(
                     modifier = Modifier
                 )
 
-                SingleChoiceSegmentedButtonRow(
+                AlarmsFooter(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
-                ) {
-                    SegmentedButton(
-                        selected = viewMode == AlarmViewMode.SIMPLE,
-                        onClick = { alarmViewModel.setViewMode(AlarmViewMode.SIMPLE) },
-                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                        label = { Text(stringResource(R.string.alarm_view_simple)) }
-                    )
-                    SegmentedButton(
-                        selected = viewMode == AlarmViewMode.WEEKLY,
-                        onClick = { alarmViewModel.setViewMode(AlarmViewMode.WEEKLY) },
-                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                        label = { Text(stringResource(R.string.alarm_view_weekly)) }
-                    )
-                }
+                        .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+                    alarmViewModel = alarmViewModel,
+                    onLastSyncClick = onNavigateToHistory,
+                )
 
-                AlarmList(alarmViewModel)
-                Column(
+                AlarmHubTabs(
+                    activeTab = activeTab,
+                    alarmSubtitle = alarmTabSubtitle(alarms),
+                    timerSubtitle = timerTabSubtitle(timerState.timer),
+                    signalSubtitle = signalTabSubtitle(hourlySignal),
+                    onTabSelected = { activeTab = it },
                     modifier = Modifier
-                        .fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.sm)
-                ) {
-                    HourlySignalCard()
-                    AlarmsActionRow(alarmViewModel = alarmViewModel)
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.lg)
+                )
+
+                when (activeTab) {
+                    AlarmHubTab.ALARMS -> AlarmList(alarmViewModel)
+                    AlarmHubTab.TIMER -> TimerCardContent(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Spacing.lg),
+                        timerSeconds = timerState.timer,
+                        onSetTimer = timerViewModel::setTimer,
+                        onSendTimer = timerViewModel::sendTimerToWatch,
+                        showSendButton = false,
+                    )
+                    AlarmHubTab.SIGNAL -> HourlySignalCard(
+                        modifier = Modifier.padding(horizontal = Spacing.lg)
+                    )
                 }
             }
 
-            AlarmsFooter(
+            AlarmHubActionRow(
+                activeTab = activeTab,
+                alarmViewModel = alarmViewModel,
+                timerViewModel = timerViewModel,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
-                alarmViewModel = alarmViewModel,
-                onLastSyncClick = onNavigateToHistory,
             )
         }
     }
 }
 
 @Composable
-private fun AlarmsScreenPreviewContent(viewMode: AlarmViewMode) {
+private fun AlarmsScreenPreviewContent() {
     CassiopeiaWatchTheme(dynamicColor = false) {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -259,24 +327,16 @@ private fun AlarmsScreenPreviewContent(viewMode: AlarmViewMode) {
                         modifier = Modifier
                     )
 
-                    SingleChoiceSegmentedButtonRow(
+                    AlarmHubTabs(
+                        activeTab = AlarmHubTab.ALARMS,
+                        alarmSubtitle = "1 ON",
+                        timerSubtitle = "05:30",
+                        signalSubtitle = "07-18",
+                        onTabSelected = {},
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
-                    ) {
-                        SegmentedButton(
-                            selected = viewMode == AlarmViewMode.SIMPLE,
-                            onClick = {},
-                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                            label = { Text(stringResource(R.string.alarm_view_simple)) }
-                        )
-                        SegmentedButton(
-                            selected = viewMode == AlarmViewMode.WEEKLY,
-                            onClick = {},
-                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                            label = { Text(stringResource(R.string.alarm_view_weekly)) }
-                        )
-                    }
+                            .padding(horizontal = Spacing.lg)
+                    )
 
                     Column(modifier = Modifier.fillMaxWidth()) {
                         ItemView {
@@ -287,7 +347,7 @@ private fun AlarmsScreenPreviewContent(viewMode: AlarmViewMode) {
                                 isAlarmEnabled = true,
                                 onToggleAlarm = {},
                                 onTap = {},
-                                showDaySelector = viewMode == AlarmViewMode.WEEKLY,
+                                showDaySelector = true,
                                 selectedDays = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
                             )
                         }
@@ -299,8 +359,8 @@ private fun AlarmsScreenPreviewContent(viewMode: AlarmViewMode) {
                                 isAlarmEnabled = false,
                                 onToggleAlarm = {},
                                 onTap = {},
-                                showDaySelector = viewMode == AlarmViewMode.WEEKLY,
-                                selectedDays = setOf(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY)
+                                showDaySelector = true,
+                                selectedDays = AlarmSchedulePlanner.AllDays
                             )
                         }
                     }
@@ -378,7 +438,7 @@ private fun PreviewDisconnectedInfoCard(modifier: Modifier = Modifier) {
 @Preview(name = "Alarms simple", showBackground = true)
 @Composable
 private fun PreviewAlarmsScreenSimple() {
-    AlarmsScreenPreviewContent(viewMode = AlarmViewMode.SIMPLE)
+    AlarmsScreenPreviewContent()
 }
 
 @Preview(
@@ -387,5 +447,5 @@ private fun PreviewAlarmsScreenSimple() {
     uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun PreviewAlarmsScreenWeekly() {
-    AlarmsScreenPreviewContent(viewMode = AlarmViewMode.WEEKLY)
+    AlarmsScreenPreviewContent()
 }

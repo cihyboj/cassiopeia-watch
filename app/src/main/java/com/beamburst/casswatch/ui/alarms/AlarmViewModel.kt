@@ -66,7 +66,6 @@ data class AlarmDraft(
     val minute: Int,
     val name: String,
     val days: Set<DayOfWeek>,
-    val viewMode: AlarmViewMode
 )
 
 data class HourlySignalUiState(
@@ -131,7 +130,7 @@ class AlarmViewModel @Inject constructor(
     private val _uiEvents = MutableSharedFlow<UiEvent>()
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
 
-    private val _viewMode = MutableStateFlow(AlarmViewMode.SIMPLE)
+    private val _viewMode = MutableStateFlow(AlarmViewMode.WEEKLY)
     val viewMode: StateFlow<AlarmViewMode> = _viewMode.asStateFlow()
 
     private val _alarmDays = MutableStateFlow<Map<Int, Set<DayOfWeek>>>(emptyMap())
@@ -211,7 +210,7 @@ class AlarmViewModel @Inject constructor(
     }
 
     private fun loadLocalStateForAddress(addr: String?) {
-            _viewMode.value = if (addr != null) AlarmSyncStorage.loadViewMode(appContext, addr) else AlarmViewMode.SIMPLE
+            _viewMode.value = AlarmViewMode.WEEKLY
             _alarmDays.value = if (addr != null) AlarmSyncStorage.loadDaySelections(appContext, addr) else emptyMap()
             _firedAts.value = if (addr != null) AlarmSyncStorage.loadFiredAts(appContext, addr) else emptyMap()
             _isConnected.value = isSelectedWatchConnected(addr)
@@ -222,19 +221,10 @@ class AlarmViewModel @Inject constructor(
                 }
             }
 
-            val signalSettings = if (addr != null && !HourlySignalSettings.isMigrated(appContext, addr)) {
-                val legacyChime = AlarmSyncStorage.loadAlarms(appContext, addr)
-                    ?.getOrNull(0)?.hasHourlyChime ?: false
-                val initial = if (legacyChime) {
-                    HourlySignalSettings(enabled = true, startHour = 1, endHour = 0)
-                } else {
-                    HourlySignalSettings.Default
-                }
-                HourlySignalSettings.save(appContext, addr, initial)
-                HourlySignalSettings.markMigrated(appContext, addr)
-                initial
+            val signalSettings = if (addr != null) {
+                HourlySignalSettings.load(appContext, addr)
             } else {
-                if (addr != null) HourlySignalSettings.load(appContext, addr) else HourlySignalSettings.Default
+                HourlySignalSettings.Default
             }
             _hourlySignal.value = HourlySignalUiState(
                 enabled   = signalSettings.enabled,
@@ -257,7 +247,6 @@ class AlarmViewModel @Inject constructor(
     }
 
     private fun tickFireOnceAlarms() {
-        if (_viewMode.value != AlarmViewMode.WEEKLY) return
         val addr = watchSelector.currentAddress() ?: return
         val now = System.currentTimeMillis()
         val nowTime = LocalTime.now()
@@ -266,7 +255,7 @@ class AlarmViewModel @Inject constructor(
         val updatedFiredAts = _firedAts.value.toMutableMap()
         _alarms.value.forEachIndexed { index, alarm ->
             val isFireOnce = alarm.enabled &&
-                _alarmDays.value[index].isNullOrEmpty() &&
+                _alarmDays.value[index]?.isEmpty() == true &&
                 !updatedFiredAts.containsKey(index)
             if (isFireOnce && nowTime.isAfter(LocalTime.of(alarm.hour, alarm.minute))) {
                 updatedFiredAts[index] = now
@@ -409,10 +398,45 @@ class AlarmViewModel @Inject constructor(
         }
     }
 
+    fun sendHourlySignalToWatch() = viewModelScope.launch {
+        val addr = watchSelector.currentAddress()
+        if (!api.isConnected()) {
+            AppSnackbar(appContext.getString(R.string.watch_not_connected))
+            return@launch
+        }
+
+        val settings = if (addr != null) {
+            HourlySignalSettings.load(appContext, addr)
+        } else {
+            HourlySignalSettings.Default
+        }
+        val syncTime = LocalDateTime.now()
+        val hourlySignalTarget = HourlySignalEvaluator.shouldChimeAt(syncTime, settings)
+        val result = runCatching {
+            applyHourlySignalToWatch(api, settings, syncTime)
+        }
+        syncLogger.record(
+            trigger = SyncTrigger.MANUAL_SEND_ALARMS,
+            kinds = setOf(SyncKind.HOURLY_SIGNAL),
+            success = result.isSuccess,
+            errorMessage = result.exceptionOrNull()?.message,
+            details = alarmSyncDetailsForWatchPayload(
+                alarms = emptyList(),
+                hourlySignalTarget = hourlySignalTarget,
+                actions = listOf("Hourly signal sent from Alarms screen"),
+            ),
+        )
+        if (result.isSuccess) {
+            AppSnackbar(appContext.getString(R.string.hourly_signal_sent_to_watch))
+        } else {
+            ProgressEvents.onNext("Error", result.exceptionOrNull()?.message ?: "")
+        }
+    }
+
     fun setViewMode(mode: AlarmViewMode) {
-        _viewMode.value = mode
+        _viewMode.value = AlarmViewMode.WEEKLY
         val addr = watchSelector.currentAddress() ?: return
-        AlarmSyncStorage.saveViewMode(appContext, addr, mode)
+        AlarmSyncStorage.saveViewMode(appContext, addr, AlarmViewMode.WEEKLY)
         AlarmSyncStorage.saveAlarms(appContext, addr, _alarms.value, dirty = true, firedAts = _firedAts.value)
         refreshSyncRiskState(isDirtyOverride = true)
     }
@@ -454,7 +478,7 @@ class AlarmViewModel @Inject constructor(
             alarms = desiredAlarms,
             alarmDays = _alarmDays.value,
             now = LocalDateTime.now(),
-            viewMode = _viewMode.value,
+            viewMode = AlarmViewMode.WEEKLY,
             firedAts = currentFiredAts
         )
 
@@ -510,8 +534,7 @@ class AlarmViewModel @Inject constructor(
             hour = alarm.hour,
             minute = alarm.minute,
             name = alarm.name ?: "",
-            days = _alarmDays.value[index] ?: emptySet(),
-            viewMode = _viewMode.value
+            days = _alarmDays.value[index] ?: AlarmSchedulePlanner.AllDays,
         )
     }
 
@@ -520,7 +543,7 @@ class AlarmViewModel @Inject constructor(
     }
 
     fun upsertAlarm(index: Int, hour: Int, minute: Int, name: String, days: Set<DayOfWeek>) {
-        val isFireOnce = _viewMode.value == AlarmViewMode.WEEKLY && days.isEmpty()
+        val isFireOnce = days.isEmpty()
         if (isFireOnce && !exactAlarmPermissionRequested) {
             exactAlarmPermissionRequested = true
             viewModelScope.launch { _uiEvents.emit(UiEvent.RequestExactAlarmPermission) }
@@ -553,15 +576,18 @@ class AlarmViewModel @Inject constructor(
                 .filter { it.value.enabled }
                 .forEach { (index, alarm) ->
                     val selectedDays = _alarmDays.value[index]
-                    val days = if (selectedDays.isNullOrEmpty()) allDays
-                               else ArrayList(selectedDays.map { it.toCalendarDay() })
+                    val days = when {
+                        selectedDays == null -> allDays
+                        selectedDays.isEmpty() -> null
+                        else -> ArrayList(selectedDays.map { it.toCalendarDay() })
+                    }
 
                     val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
                         putExtra(AlarmClock.EXTRA_MESSAGE, alarm.name)
                         putExtra(AlarmClock.EXTRA_HOUR, alarm.hour)
                         putExtra(AlarmClock.EXTRA_MINUTES, alarm.minute)
                         putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_TIME)
-                        putExtra(AlarmClock.EXTRA_DAYS, days)
+                        if (days != null) putExtra(AlarmClock.EXTRA_DAYS, days)
                         putExtra(AlarmClock.EXTRA_SKIP_UI, true)
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
@@ -609,8 +635,8 @@ class AlarmViewModel @Inject constructor(
             val risk = AlarmSyncRiskEvaluator.evaluate(
                 alarm = alarm,
                 alarmIndex = index,
-                alarmDays = _alarmDays.value[index] ?: emptySet(),
-                viewMode = _viewMode.value,
+                alarmDays = _alarmDays.value[index] ?: AlarmSchedulePlanner.AllDays,
+                viewMode = AlarmViewMode.WEEKLY,
                 firedAts = _firedAts.value,
                 isDirty = isDirty,
                 syncedHashes = syncedHashes,
