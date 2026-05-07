@@ -29,6 +29,7 @@ import com.beamburst.casswatch.ui.common.AppButton
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.common.AppText
 import com.beamburst.casswatch.ui.common.ScreenTitle
+import com.beamburst.casswatch.utils.NtpTimeSettings
 import org.avmedia.gshockapi.WatchInfo
 
 @SuppressLint("MutableCollectionMutableState")
@@ -176,6 +177,9 @@ fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
     SettingsSectionTitle(stringResource(R.string.settings_section_sync))
     TimeAdjustment(settingsViewModel::onSettingUpdated)
     SyncHistoryRow(onNavigate = onNavigateToHistory)
+
+    SettingsSectionTitle(stringResource(R.string.settings_section_advanced))
+    NtpTimeSettingsCard(settingsViewModel)
 }
 
 @Composable
@@ -257,6 +261,9 @@ private fun SettingsScreenPreviewContent() {
                     SettingsSectionTitle(stringResource(R.string.settings_section_sync))
                     TimeAdjustmentPreviewRow()
                     SyncHistoryPreviewRow()
+
+                    SettingsSectionTitle(stringResource(R.string.settings_section_advanced))
+                    NtpTimePreviewRow()
                 }
 
                 Surface(
@@ -322,6 +329,28 @@ private fun SyncHistoryPreviewRow() {
             )
             AppText(
                 text = stringResource(R.string.sync_history_preview_last_sync),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun NtpTimePreviewRow() {
+    SettingCard { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(padding),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xxs)
+        ) {
+            AppText(
+                text = stringResource(R.string.ntp_time_title),
+                style = MaterialTheme.typography.titleMedium
+            )
+            AppText(
+                text = NtpTimeSettings.DEFAULT_SERVER,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

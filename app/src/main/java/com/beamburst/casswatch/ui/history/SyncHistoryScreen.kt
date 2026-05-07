@@ -33,14 +33,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.SyncEntry
 import com.beamburst.casswatch.data.local.SyncKind
-import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.theme.Spacing
 import java.time.Instant
 import java.time.ZoneId
@@ -158,7 +161,13 @@ fun SyncHistoryScreen(
 private fun SyncEntryRow(entry: SyncEntry, expanded: Boolean, onClick: () -> Unit) {
     val mono = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
     val ts = TS_FMT.format(Instant.ofEpochMilli(entry.timestamp))
-    val tag = entry.trigger.logTag()
+    val tag = syncHistoryTag(entry.trigger)
+    val tagColor = syncHistoryTone(entry.trigger, entry.success).color()
+    val glyphColor = if (entry.success) {
+        SyncHistoryTone.SUCCESS.color()
+    } else {
+        SyncHistoryTone.ERROR.color()
+    }
     val kindsStr = entry.kinds.joinToString(" ") { k ->
         when (k) {
             SyncKind.TIME -> "time"
@@ -170,10 +179,32 @@ private fun SyncEntryRow(entry: SyncEntry, expanded: Boolean, onClick: () -> Uni
             SyncKind.ACTION -> "action"
         }
     }
-    val glyphColor = if (entry.success) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     val glyph = if (entry.success) "✓" else "✗"
     val errorSnippet = if (!entry.success) entry.errorMessage?.take(60) ?: "" else ""
-    val line = "$ts  $tag  $kindsStr  $glyph${if (errorSnippet.isNotEmpty()) "  $errorSnippet" else ""}"
+    val neutralColor = MaterialTheme.colorScheme.onSurface
+    val line = buildAnnotatedString {
+        withStyle(SpanStyle(color = neutralColor)) {
+            append(ts)
+            append("  ")
+        }
+        withStyle(SpanStyle(color = tagColor)) {
+            append(tag)
+        }
+        withStyle(SpanStyle(color = neutralColor)) {
+            append("  ")
+            append(kindsStr)
+            append("  ")
+        }
+        withStyle(SpanStyle(color = glyphColor)) {
+            append(glyph)
+        }
+        if (errorSnippet.isNotEmpty()) {
+            withStyle(SpanStyle(color = neutralColor)) {
+                append("  ")
+                append(errorSnippet)
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -184,7 +215,6 @@ private fun SyncEntryRow(entry: SyncEntry, expanded: Boolean, onClick: () -> Uni
         Text(
             text = line,
             style = mono,
-            color = if (entry.success) MaterialTheme.colorScheme.onSurface else glyphColor,
             softWrap = false,
             overflow = TextOverflow.Ellipsis,
         )
@@ -195,12 +225,13 @@ private fun SyncEntryRow(entry: SyncEntry, expanded: Boolean, onClick: () -> Uni
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
                     .padding(start = 16.dp, top = 4.dp, bottom = 4.dp),
             ) {
-                Text("trigger = ${entry.trigger.description()}", style = mono)
+                Text("trigger = ${syncHistoryDescription(entry.trigger)}", style = mono)
                 if (SyncKind.CONNECTION in entry.kinds) {
-                    Text("connection = ${entry.details.connection ?: entry.trigger.description()}", style = mono)
+                    Text("connection = ${entry.details.connection ?: syncHistoryDescription(entry.trigger)}", style = mono)
                 }
                 entry.details.actions?.forEach { action ->
-                    Text("action = $action", style = mono)
+                    val isTimeSourceLine = action.startsWith("Time source:") || action.startsWith("NTP failed:")
+                    Text(if (isTimeSourceLine) action else "action = $action", style = mono)
                 }
                 if (SyncKind.TIME in entry.kinds) {
                     val humanTs = entry.details.timeMs?.let { TS_FMT.format(Instant.ofEpochMilli(it)) } ?: "-"
@@ -226,34 +257,12 @@ private fun SyncEntryRow(entry: SyncEntry, expanded: Boolean, onClick: () -> Uni
     }
 }
 
-private fun SyncTrigger.logTag(): String =
+@Composable
+private fun SyncHistoryTone.color(): Color =
     when (this) {
-        SyncTrigger.AUTO -> "AUTO  "
-        SyncTrigger.AUTO_ON_RECONNECT -> "RECON "
-        SyncTrigger.WATCH_SHORT_PRESS -> "SHORT "
-        SyncTrigger.WATCH_LONG_PRESS -> "LONG  "
-        SyncTrigger.WATCH_NORMAL_CONNECTION -> "NCONN "
-        SyncTrigger.WATCH_ALWAYS_CONNECTED -> "ACONN "
-        SyncTrigger.CONNECTION_CONNECTED -> "CONN  "
-        SyncTrigger.CONNECTION_DISCONNECTED -> "DISC  "
-        SyncTrigger.CONNECTION_FAILED -> "FAIL  "
-        else -> "MANUAL"
-    }
-
-private fun SyncTrigger.description(): String =
-    when (this) {
-        SyncTrigger.AUTO -> "Automatic sync"
-        SyncTrigger.AUTO_ON_RECONNECT -> "Automatic sync on reconnect"
-        SyncTrigger.WATCH_SHORT_PRESS -> "Short button press"
-        SyncTrigger.WATCH_LONG_PRESS -> "Long button press / Find Phone"
-        SyncTrigger.WATCH_NORMAL_CONNECTION -> "Normal connection button"
-        SyncTrigger.WATCH_ALWAYS_CONNECTED -> "Always-connected button"
-        SyncTrigger.MANUAL_SET_TIME -> "Manual time sync"
-        SyncTrigger.MANUAL_SEND_ALARMS -> "Manual alarm sync"
-        SyncTrigger.MANUAL_SEND_EVENTS -> "Manual event sync"
-        SyncTrigger.MANUAL_SEND_SETTINGS -> "Manual settings sync"
-        SyncTrigger.MANUAL_SETTINGS_SET_TIME -> "Settings set-time action"
-        SyncTrigger.CONNECTION_CONNECTED -> "Connection setup complete"
-        SyncTrigger.CONNECTION_DISCONNECTED -> "Disconnected"
-        SyncTrigger.CONNECTION_FAILED -> "Connection failed"
+        SyncHistoryTone.SUCCESS -> Color(0xFF2E7D32)
+        SyncHistoryTone.WARNING -> Color(0xFFB26A00)
+        SyncHistoryTone.ERROR -> MaterialTheme.colorScheme.error
+        SyncHistoryTone.INFO -> Color(0xFF1565C0)
+        SyncHistoryTone.NEUTRAL -> MaterialTheme.colorScheme.onSurface
     }

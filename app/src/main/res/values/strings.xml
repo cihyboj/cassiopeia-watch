@@ -236,6 +236,13 @@
     <string name="settings_section_actions">Actions</string>
     <string name="settings_section_watch_behavior">Watch behavior</string>
     <string name="settings_section_sync">Sync</string>
+    <string name="settings_section_advanced" translatable="false">Advanced</string>
+    <string name="ntp_time_title" translatable="false">NTP time source</string>
+    <string name="ntp_time_caption" translatable="false">Use network time when writing the watch time.</string>
+    <string name="ntp_time_server" translatable="false">Server</string>
+    <string name="ntp_time_server_dialog_title" translatable="false">NTP server</string>
+    <string name="ntp_time_server_blank_default" translatable="false">Leave blank to use %1$s.</string>
+    <string name="ntp_time_server_invalid" translatable="false">Use a hostname or IP address without spaces or a path.</string>
     <string name="sync_history_title" translatable="false">Sync history</string>
     <string name="sync_history_preview_last_sync" translatable="false">Last sync just now</string>
     <string name="sync_history_no_entries" translatable="false">No sync events yet</string>

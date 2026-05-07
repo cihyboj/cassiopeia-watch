@@ -37,8 +37,11 @@ import com.beamburst.casswatch.ui.alarms.HourlySignalEvaluator
 import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.utils.NtpTimeSettings
 import com.beamburst.casswatch.utils.PhoneFinder
 import com.beamburst.casswatch.utils.SyncHistoryLogger
+import com.beamburst.casswatch.utils.WatchTimeProvider
+import com.beamburst.casswatch.utils.syncHistoryActions
 import org.avmedia.gshockapi.Settings
 import org.avmedia.gshockapi.WatchInfo
 import org.json.JSONObject
@@ -68,6 +71,11 @@ data class PressCardsUiState(
     val findPhone:      FindPhoneCardState = FindPhoneCardState(),
 )
 
+data class NtpTimeUiState(
+    val enabled: Boolean = false,
+    val server: String = NtpTimeSettings.DEFAULT_SERVER,
+)
+
 sealed class PressCardAction {
     data class ToggleShortBroadcast(val on: Boolean)  : PressCardAction()
     data class ToggleLongBroadcast(val on: Boolean)   : PressCardAction()
@@ -87,6 +95,7 @@ constructor(
         private val syncLogger: SyncHistoryLogger,
         private val watchSelector: CurrentWatchSelector,
         private val connectionTracker: WatchConnectionTracker,
+        private val watchTimeProvider: WatchTimeProvider,
 ) : ViewModel() {
 
     fun onSettingUpdated(setting: Setting) {
@@ -102,8 +111,12 @@ constructor(
     private val _pressCards = MutableStateFlow(PressCardsUiState())
     val pressCards: StateFlow<PressCardsUiState> = _pressCards.asStateFlow()
 
+    private val _ntpTime = MutableStateFlow(NtpTimeUiState())
+    val ntpTime: StateFlow<NtpTimeUiState> = _ntpTime.asStateFlow()
+
     init {
         initializeSettings()
+        loadNtpTimeSettings()
         observeSelectedWatchSettings()
         loadPressCards()
     }
@@ -153,6 +166,29 @@ constructor(
     private fun updateSettingsAndMap(newSettings: ArrayList<Setting>) {
         val newMap = newSettings.associateBy { it::class.java }
         _state.update { it.copy(settings = newSettings, settingsMap = newMap) }
+    }
+
+    private fun loadNtpTimeSettings() {
+        _ntpTime.value = NtpTimeUiState(
+            enabled = LocalDataStorage.getNtpTimeEnabled(appContext),
+            server = LocalDataStorage.getNtpTimeServer(appContext),
+        )
+    }
+
+    fun setNtpTimeEnabled(enabled: Boolean) {
+        _ntpTime.update { it.copy(enabled = enabled) }
+        viewModelScope.launch {
+            LocalDataStorage.setNtpTimeEnabled(appContext, enabled)
+        }
+    }
+
+    fun setNtpTimeServer(rawServer: String): Boolean {
+        val normalized = NtpTimeSettings.normalizeServer(rawServer) ?: return false
+        _ntpTime.update { it.copy(server = normalized) }
+        viewModelScope.launch {
+            LocalDataStorage.setNtpTimeServer(appContext, normalized)
+        }
+        return true
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -467,8 +503,9 @@ constructor(
             AppSnackbar(appContext.getString(R.string.watch_not_connected))
             return@launch
         }
-        val timeOffset = LocalDataStorage.getFineTimeAdjustment(appContext)
-        val timeMs = System.currentTimeMillis() + timeOffset
+        val watchTime = watchTimeProvider.nowForWatch()
+        val timeMs = watchTime.timeMs
+        watchTime.fallbackReason?.let { AppSnackbar(it) }
         val addr = watchSelector.currentAddress()
         val signalSettings = if (addr != null) {
             HourlySignalSettings.load(appContext, addr)
@@ -491,7 +528,7 @@ constructor(
                 eventCount = null,
                 hourlySignalTarget = hourlyTarget,
                 timeMs = timeMs,
-                actions = listOf("Settings screen set-time button"),
+                actions = watchTime.syncHistoryActions("Settings screen set-time button"),
             ),
         )
         if (result.isSuccess) {

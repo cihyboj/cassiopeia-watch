@@ -112,7 +112,7 @@ object LocalDataStorage {
     }
 
     private suspend fun putBoolean(context: Context, key: String, value: Boolean) {
-        put(context, key, value.toString())
+        putAsync(context, key, value.toString())
     }
 
     fun getTimeAdjustmentNotification(context: Context): Boolean {
@@ -128,7 +128,25 @@ object LocalDataStorage {
     }
 
     suspend fun setFineTimeAdjustment(context: Context, fineTimeAdjustment: Int) {
-        put(context, "fineTimeAdjustment", fineTimeAdjustment.toString())
+        putAsync(context, "fineTimeAdjustment", fineTimeAdjustment.toString())
+    }
+
+    fun getNtpTimeEnabled(context: Context): Boolean {
+        return getBoolean(context, "ntpTimeEnabled")
+    }
+
+    suspend fun setNtpTimeEnabled(context: Context, enabled: Boolean) {
+        putBoolean(context, "ntpTimeEnabled", enabled)
+    }
+
+    fun getNtpTimeServer(context: Context): String {
+        val stored = get(context, "ntpTimeServer", NtpTimeSettings.DEFAULT_SERVER).orEmpty()
+        return NtpTimeSettings.normalizeServer(stored) ?: NtpTimeSettings.DEFAULT_SERVER
+    }
+
+    suspend fun setNtpTimeServer(context: Context, server: String) {
+        val normalized = NtpTimeSettings.normalizeServer(server) ?: return
+        putAsync(context, "ntpTimeServer", normalized)
     }
 
     fun getDeviceAddresses(context: Context): List<String> {

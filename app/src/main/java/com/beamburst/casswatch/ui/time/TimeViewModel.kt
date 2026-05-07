@@ -30,6 +30,8 @@ import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import com.beamburst.casswatch.utils.Utils
 import com.beamburst.casswatch.ui.common.AppSnackbar
+import com.beamburst.casswatch.utils.WatchTimeProvider
+import com.beamburst.casswatch.utils.syncHistoryActions
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
 import org.avmedia.gshockapi.WatchInfo
@@ -62,6 +64,7 @@ class TimeViewModel @Inject constructor(
     private val syncLogger: SyncHistoryLogger,
     private val watchSelector: CurrentWatchSelector,
     private val connectionTracker: WatchConnectionTracker,
+    private val watchTimeProvider: WatchTimeProvider,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TimeState())
     val state = _state.asStateFlow()
@@ -137,8 +140,9 @@ class TimeViewModel @Inject constructor(
                         AppSnackbar(appContext.getString(R.string.watch_not_connected))
                         return@launch
                     }
-                    val timeOffset = LocalDataStorage.getFineTimeAdjustment(appContext)
-                    val timeMs = System.currentTimeMillis() + timeOffset
+                    val watchTime = watchTimeProvider.nowForWatch()
+                    val timeMs = watchTime.timeMs
+                    watchTime.fallbackReason?.let { AppSnackbar(it) }
                     AppSnackbar(appContext.getString(R.string.sending_time_to_watch))
                     val result = runCatching {
                         api.setTime(timeMs = timeMs)
@@ -160,7 +164,7 @@ class TimeViewModel @Inject constructor(
                         eventCount = null,
                         hourlySignalTarget = null,
                         timeMs = timeMs,
-                        actions = listOf("Time screen send-time button"),
+                        actions = watchTime.syncHistoryActions("Time screen send-time button"),
                     ),
                 )
                     if (result.isSuccess) {
