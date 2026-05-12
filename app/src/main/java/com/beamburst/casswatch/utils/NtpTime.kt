@@ -261,15 +261,24 @@ class WatchTimeWriter @Inject constructor(
     }
 
     /**
-     * User-facing time write. Always uses the one-shot setTime path: in practice `api.setTime`'s
-     * observed return duration reflects BLE-queue time rather than watch-side delivery, so the
-     * aimed-at-second-boundary optimization can't be driven from learned latency. Until we have
-     * a reliable end-to-end delivery measurement, manual sync mirrors the connect-time write,
-     * matching its drift (~1 s) and "OK" confirmation behavior.
+     * User-facing time write. When the BLE cache is warm (post-primeTimeCache), aims at the next
+     * integer-second boundary: sleeps until `target − learned_latency`, then sends
+     * `setTime(target)` so the watch adopts an exact integer second at approximately NTP-correct
+     * moment. Sub-second alignment matters because empirically the watch firmware truncates
+     * the hundredths byte in CURRENT_TIME — encoding "now mid-second" makes it adopt "now floored
+     * to second" and the watch ends up ~500 ms behind on average (~1 s worst-case).
+     *
+     * Falls back to the cold-path (one-shot `setTime` with no boundary alignment) when the cache
+     * is not yet warm — the 2–4 s Mode-1 round-trip makes pre-aiming useless and would push the
+     * arriving packet far past the targeted second anyway.
      */
     suspend fun write(api: IGShockAPI, watchTime: WatchTime): TimeWriteResult {
         val address = watchSelector.currentAddress()
-        return writeColdPath(api, watchTime, address)
+        return if (connectionTracker.isCacheWarm(address)) {
+            writeAimedAtSecondBoundary(api, watchTime, address)
+        } else {
+            writeColdPath(api, watchTime, address)
+        }
     }
 
     /**
@@ -367,6 +376,7 @@ class WatchTimeWriter @Inject constructor(
         watchTime: WatchTime,
         address: String?,
     ): TimeWriteResult {
+        val cacheWarmAtStart = connectionTracker.isCacheWarm(address)
         val estimateMs = address
             ?.let { LocalDataStorage.getLearnedTimeWriteCompensation(context, it) }
             ?.takeIf { it > 0L }
@@ -378,31 +388,39 @@ class WatchTimeWriter @Inject constructor(
         val waitMs = fireAt - nowBefore
         if (waitMs > 0L) delay(waitMs)
 
-        val startMs = SystemClock.elapsedRealtime()
-        var threw = false
+        val preSendWallMs = System.currentTimeMillis()
+        val preSendElapsedMs = SystemClock.elapsedRealtime()
         try {
             api.setTime(timeMs = target)
         } catch (t: Throwable) {
-            threw = true
+            // Skip sample recording on throw to avoid biasing learned latency.
             throw t
-        } finally {
-            val durationMs = SystemClock.elapsedRealtime() - startMs
-            // Successful Mode-2 samples are stable and small — record them for future
-            // estimateMs improvement. Skip on throw to avoid biasing on partial failures.
-            if (!threw && address != null) {
-                val generation = connectionTracker.connectionGeneration(address)
-                if (shouldRecordLatencySample(address, generation)) {
-                    runCatching {
-                        LocalDataStorage.addTimeWriteLatencySample(context, address, durationMs)
-                    }
+        }
+        val durationMs = SystemClock.elapsedRealtime() - preSendElapsedMs
+        connectionTracker.markCacheWarmIfFast(address, durationMs)
+        if (address != null) {
+            val generation = connectionTracker.connectionGeneration(address)
+            if (shouldRecordLatencySample(address, generation)) {
+                runCatching {
+                    LocalDataStorage.addTimeWriteLatencySample(context, address, durationMs)
                 }
             }
         }
-        val durationMs = SystemClock.elapsedRealtime() - startMs
+        val ntp = watchTime.ntpCache
+        val diagnostics = SyncDiagnostics(
+            encodedTimeMs = target,
+            preSendWallMs = preSendWallMs,
+            ntpOffsetMs = ntp?.offsetMs,
+            ntpRttMs = ntp?.roundTripMs,
+            ntpAgeMs = ntp?.let { preSendElapsedMs - it.capturedElapsedRealtimeMs },
+            durationMs = durationMs,
+            cacheWarmAtWriteStart = cacheWarmAtStart,
+        )
         return TimeWriteResult(
             timeMs = target,
             durationMs = durationMs,
             compensationMs = estimateMs,
+            diagnostics = diagnostics,
         )
     }
 }
