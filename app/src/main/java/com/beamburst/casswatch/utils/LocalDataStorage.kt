@@ -109,6 +109,27 @@ object LocalDataStorage {
         return prettyPrintedString
     }
 
+    /**
+     * Replaces ALL stored preferences with the keys in [json]. All values are written as
+     * strings (the only type this store uses). Returns the number of entries written.
+     * Caller is responsible for restarting the app afterwards so cached values in
+     * ViewModels and singletons are reloaded.
+     */
+    suspend fun restoreFromJsonObject(context: Context, json: JSONObject): Int {
+        mutex.withLock {
+            context.dataStore.edit { preferences ->
+                preferences.clear()
+                val keys = json.keys()
+                while (keys.hasNext()) {
+                    val k = keys.next()
+                    val v = json.optString(k, "")
+                    preferences[stringPreferencesKey(k)] = v
+                }
+            }
+        }
+        return json.length()
+    }
+
     private fun getBoolean(context: Context, key: String): Boolean {
         return get(context, key, "false")?.toBoolean() ?: false
     }

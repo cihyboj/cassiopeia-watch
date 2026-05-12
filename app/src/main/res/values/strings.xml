@@ -269,6 +269,19 @@
     <string name="pairing_failed_generic" translatable="false">Pairing failed: %1$s. Please try again.</string>
     <string name="pairing_activity_finishing" translatable="false">Cannot start pairing: Activity is closing. Please try again.</string>
     <string name="pairing_crash_recovery" translatable="false">Recovered from previous pairing crash. You can try pairing again.</string>
+    <string name="backup_title" translatable="false">Backup</string>
+    <string name="backup_caption" translatable="false">Save or restore all app settings, paired watches, alarms, and sync history as a JSON file.</string>
+    <string name="backup_export_button" translatable="false">Export…</string>
+    <string name="backup_import_button" translatable="false">Import…</string>
+    <string name="backup_export_default_name" translatable="false">casswatch-backup-%1$s.json</string>
+    <string name="backup_export_success" translatable="false">Backup saved (%1$d entries).</string>
+    <string name="backup_export_failed" translatable="false">Export failed: %1$s</string>
+    <string name="backup_import_success" translatable="false">Restored %1$d entries. Restart the app to load them.</string>
+    <string name="backup_import_malformed" translatable="false">File is not a valid backup: %1$s</string>
+    <string name="backup_import_version_mismatch" translatable="false">Unsupported backup version (found %1$d).</string>
+    <string name="backup_import_failed" translatable="false">Import failed: %1$s</string>
+    <string name="backup_restart_now" translatable="false">Restart now</string>
+
     <string name="pairing_crash_detected" translatable="false"><![CDATA[
         The app detected a previous crash during pairing. Crash logs have been saved.
         <p>If this issue persists, please report it on <a href="https://github.com/izivkov/CasioGShockSmartSync/issues">GitHub</a> with your device model and watch model.</p>

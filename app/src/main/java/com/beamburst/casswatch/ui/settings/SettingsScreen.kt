@@ -181,6 +181,7 @@ fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
 
     SettingsSectionTitle(stringResource(R.string.settings_section_advanced))
     NtpTimeSettingsCard(settingsViewModel)
+    BackupSection()
 }
 
 @Composable
