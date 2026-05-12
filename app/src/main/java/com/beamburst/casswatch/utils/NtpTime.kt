@@ -15,10 +15,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import com.beamburst.casswatch.data.local.SyncDetails
+import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.data.local.SyncTrigger
 import org.avmedia.gshockapi.IGShockAPI
 import timber.log.Timber
-import java.time.Instant
-import java.time.ZoneId
 
 data class WatchTime(
     val ntpCache: NtpOffsetCache?,
@@ -46,21 +48,23 @@ data class TimeWriteResult(
     val timeMs: Long?,
     val durationMs: Long,
     val compensationMs: Long,
+    val diagnostics: SyncDiagnostics? = null,
 )
 
 fun WatchTime.syncHistoryActions(
     primaryAction: String,
     writeResult: TimeWriteResult? = null,
 ): List<String> =
-    listOfNotNull(
-        primaryAction,
-        "Time source: $sourceLabel",
-        fallbackReason,
-        ntpDiagnostic(SystemClock.elapsedRealtime()),
+    buildList {
+        add(primaryAction)
+        add("Time source: $sourceLabel")
+        fallbackReason?.let(::add)
+        ntpDiagnostic(SystemClock.elapsedRealtime())?.let(::add)
         writeResult?.let {
-            "Time write duration: ${it.durationMs}ms; compensation: ${it.compensationMs}ms"
-        },
-    )
+            add("Time write duration: ${it.durationMs}ms; compensation: ${it.compensationMs}ms")
+            it.diagnostics?.formatLines()?.forEach(::add)
+        }
+    }
 
 object NtpTimeSettings {
     const val DEFAULT_SERVER = "pool.ntp.org"
@@ -229,7 +233,20 @@ class WatchTimeWriter @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val watchSelector: CurrentWatchSelector,
     private val connectionTracker: com.beamburst.casswatch.data.local.WatchConnectionTracker,
+    private val syncHistoryLogger: SyncHistoryLogger,
 ) {
+    companion object {
+        /**
+         * Upper bound on `primeTimeCache`. Generous enough for the slowest legitimate
+         * Mode-1 (DST + up to 6 World Cities BLE reads on a slow link), short enough to
+         * detect a hung BLE stack and recover before the watch firmware gives up.
+         */
+        const val PRIME_TIMEOUT_MS = 8_000L
+    }
+
+    enum class PrimeOutcome { OK, TIMEOUT, FAILURE }
+    data class PrimeResult(val outcome: PrimeOutcome, val durationMs: Long, val error: Throwable? = null)
+
     private val skippedGenerationByAddress = mutableMapOf<String, Long>()
 
     internal fun shouldRecordLatencySample(address: String, generation: Long): Boolean {
@@ -237,26 +254,10 @@ class WatchTimeWriter @Inject constructor(
     }
 
     private fun resolveNowMs(watchTime: WatchTime): Long {
-        val raw = watchTime.resolveTimeMs(
+        return watchTime.resolveTimeMs(
             wallNowMs = System.currentTimeMillis(),
             elapsedNowMs = SystemClock.elapsedRealtime(),
         ) ?: System.currentTimeMillis().plus(watchTime.fineAdjustmentMs)
-        return raw - gshockApiDstBugCompensationMs()
-    }
-
-    /**
-     * GShockAPI 1.4.70's `TimeIO.sendToWatchSet` computes a DST adjustment as
-     * `dstOffset_quarterHours * 60 * 15` and adds it to the epoch ms timestamp before
-     * encoding for the watch. The constant `15` looks like a typo where `1000` (ms/sec)
-     * was intended — net result is the watch is set forward by *seconds-treated-as-ms*
-     * during DST (e.g. 3600 ms ≈ 3.6 s ahead for a 1-hour DST zone). We subtract the
-     * same bogus offset here so the two cancel out and the watch shows real local time.
-     * Reported upstream — remove once GShockAPI is patched.
-     */
-    private fun gshockApiDstBugCompensationMs(): Long {
-        val zone = ZoneId.systemDefault()
-        val dstSeconds = zone.rules.getDaylightSavings(Instant.now()).seconds
-        return dstSeconds
     }
 
     /**
@@ -272,30 +273,59 @@ class WatchTimeWriter @Inject constructor(
     }
 
     /**
-     * Connect-time silent priming write. Always runs a single `setTime` to populate the
-     * library's CachedIO entries and put the watch time close to correct while the user is
-     * still watching the connect animation. Only marks the generation warmed if the call
-     * actually came back under [WatchConnectionTracker.CACHE_WARM_THRESHOLD_MS] — that's
-     * the only signal that a subsequent aimed-at-boundary write will land near the target.
+     * Connect-time silent cache priming. Calls the library's `primeTimeCache` which
+     * performs the BLE round-trips (DST + WorldCities) without writing a timestamp,
+     * so the watch never flashes a wrong time during the connect animation. A
+     * subsequent user-facing `setTime` then hits the warm cache and lands within
+     * ~50 ms of real time. Marks the generation warmed only if the prime returned
+     * under [WatchConnectionTracker.CACHE_WARM_THRESHOLD_MS] — i.e. the cache was
+     * already warm or the round-trips finished promptly.
      */
-    suspend fun warmAndSet(api: IGShockAPI, watchTime: WatchTime): TimeWriteResult {
+    suspend fun primeCache(api: IGShockAPI): PrimeResult {
         val address = watchSelector.currentAddress()
-        val timeMs = resolveNowMs(watchTime)
         val startMs = SystemClock.elapsedRealtime()
-        runCatching { api.setTime(timeMs = timeMs) }
-            .onFailure { Timber.w(it, "Cache-warm setTime failed") }
-        val durationMs = SystemClock.elapsedRealtime() - startMs
-        connectionTracker.markCacheWarmIfFast(address, durationMs)
-        // Don't record latency samples from the cold warming write — they'd pollute the
-        // Mode-2 distribution we use to estimate BLE send latency.
-        if (address != null) {
-            skippedGenerationByAddress[address] = connectionTracker.connectionGeneration(address)
+        val res = withTimeoutOrNull(PRIME_TIMEOUT_MS) {
+            runCatching { api.primeTimeCache() }
         }
-        return TimeWriteResult(
-            timeMs = timeMs,
-            durationMs = durationMs,
-            compensationMs = watchTime.latencyCompensationMs,
-        )
+        val durationMs = SystemClock.elapsedRealtime() - startMs
+        val result = when {
+            res == null -> {
+                Timber.w("primeTimeCache timed out after ${durationMs}ms")
+                PrimeResult(PrimeOutcome.TIMEOUT, durationMs)
+            }
+            res.isFailure -> {
+                val err = res.exceptionOrNull()
+                Timber.w(err, "primeTimeCache failed")
+                PrimeResult(PrimeOutcome.FAILURE, durationMs, err)
+            }
+            else -> {
+                connectionTracker.markCacheWarmIfFast(address, durationMs)
+                PrimeResult(PrimeOutcome.OK, durationMs)
+            }
+        }
+        runCatching {
+            syncHistoryLogger.record(
+                trigger = SyncTrigger.CONNECTION_CONNECTED,
+                kinds = setOf(SyncKind.CONNECTION),
+                success = result.outcome == PrimeOutcome.OK,
+                errorMessage = when (result.outcome) {
+                    PrimeOutcome.TIMEOUT -> "Cache prime timed out after ${PRIME_TIMEOUT_MS}ms"
+                    PrimeOutcome.FAILURE -> result.error?.message ?: result.error?.javaClass?.simpleName
+                    PrimeOutcome.OK -> null
+                },
+                details = SyncDetails(
+                    alarmHashes = null,
+                    eventCount = null,
+                    hourlySignalTarget = null,
+                    timeMs = null,
+                    connection = "Cache prime",
+                    actions = listOf(
+                        "primeTimeCache: ${result.outcome.name.lowercase()} in ${durationMs}ms",
+                    ),
+                ),
+            )
+        }
+        return result
     }
 
     private suspend fun writeColdPath(
@@ -304,18 +334,31 @@ class WatchTimeWriter @Inject constructor(
         address: String?,
     ): TimeWriteResult {
         val timeMs = resolveNowMs(watchTime)
-        val startMs = SystemClock.elapsedRealtime()
+        val cacheWarmAtStart = connectionTracker.isCacheWarm(address)
+        val preSendWallMs = System.currentTimeMillis()
+        val preSendElapsedMs = SystemClock.elapsedRealtime()
         api.setTime(timeMs = timeMs)
-        val durationMs = SystemClock.elapsedRealtime() - startMs
+        val durationMs = SystemClock.elapsedRealtime() - preSendElapsedMs
         connectionTracker.markCacheWarmIfFast(address, durationMs)
         // Mode-1 samples mix cache-miss BLE reads into the latency; do not learn from them.
         if (address != null) {
             skippedGenerationByAddress[address] = connectionTracker.connectionGeneration(address)
         }
+        val ntp = watchTime.ntpCache
+        val diagnostics = SyncDiagnostics(
+            encodedTimeMs = timeMs,
+            preSendWallMs = preSendWallMs,
+            ntpOffsetMs = ntp?.offsetMs,
+            ntpRttMs = ntp?.roundTripMs,
+            ntpAgeMs = ntp?.let { preSendElapsedMs - it.capturedElapsedRealtimeMs },
+            durationMs = durationMs,
+            cacheWarmAtWriteStart = cacheWarmAtStart,
+        )
         return TimeWriteResult(
             timeMs = timeMs,
             durationMs = durationMs,
             compensationMs = watchTime.latencyCompensationMs,
+            diagnostics = diagnostics,
         )
     }
 
@@ -472,7 +515,7 @@ data class SntpResult(
     val elapsedRealtimeMs: Long,
 )
 
-private fun formatSignedMs(value: Long): String =
+internal fun formatSignedMs(value: Long): String =
     if (value >= 0L) "+${value}ms" else "${value}ms"
 
 private fun formatAge(ageMs: Long): String {

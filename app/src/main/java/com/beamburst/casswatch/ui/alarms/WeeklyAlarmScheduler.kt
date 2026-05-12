@@ -134,14 +134,12 @@ class WeeklyAlarmScheduler @Inject constructor(
 
     private suspend fun runAutoTimeSyncOnReconnect() {
         // GShockAPI's CachedIO is cold on a fresh connection — the first setTime takes
-        // 2-3s (Mode 1). Subsequent setTimes return in ~5ms (Mode 2). To get accurate
-        // auto-sync, we issue a silent priming setTime first (its drift doesn't matter
-        // and is briefly visible during the connect animation), then the user-facing
-        // write below hits the warm cache and lands within <500ms of real time.
+        // 2-3s (Mode 1). Subsequent setTimes return in ~5ms (Mode 2). Prime the cache
+        // first (no timestamp written, no visible effect on the watch), then the
+        // user-facing write below hits the warm cache and lands within <500ms.
         runCatching {
-            val primingTime = watchTimeProvider.nowForWatch()
-            watchTimeWriter.warmAndSet(api, primingTime)
-        }.onFailure { Timber.w(it, "Auto-reconnect time-write priming failed") }
+            watchTimeWriter.primeCache(api)
+        }.onFailure { Timber.w(it, "Auto-reconnect cache prime failed") }
 
         val watchTime = watchTimeProvider.nowForWatch()
         var writeResult: com.beamburst.casswatch.utils.TimeWriteResult? = null

@@ -75,11 +75,12 @@ class MainEventHandler(
     }
 
     /**
-     * Fires a silent `setTime` once per fresh connection generation. The first setTime on a
-     * connection triggers GShockAPI's slow CachedIO miss path (DST + WorldCities BLE reads,
-     * 2–4 s). Doing this immediately after initialization — while the watch is still in its
-     * connect animation anyway — moves the cost off the user-visible sync path and makes
-     * later user-initiated `Send Time` writes hit the fast Mode-2 path (~50 ms accuracy).
+     * Primes GShockAPI's CachedIO once per fresh connection generation. The first time
+     * write on a fresh connection otherwise triggers a 2–4 s slow path (DST + WorldCities
+     * BLE reads). Calling [WatchTimeWriter.primeCache] right after initialization — while
+     * the watch is still in its connect animation — moves the cost off the user-visible
+     * sync path so later `Send Time` writes hit the fast Mode-2 path (~50 ms accuracy)
+     * without ever flashing an incorrect time on the watch.
      */
     private fun dispatchCacheWarm() {
         val address = watchSelector.currentAddress() ?: return
@@ -97,8 +98,7 @@ class MainEventHandler(
         }
         CoroutineScope(Dispatchers.IO).launch {
             runCatching {
-                val watchTime = watchTimeProvider.nowForWatch()
-                watchTimeWriter.warmAndSet(repository, watchTime)
+                watchTimeWriter.primeCache(repository)
             }.onFailure { Timber.w(it, "Cache-warm dispatch failed") }
         }
     }
