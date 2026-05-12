@@ -29,6 +29,7 @@ class PerWatchCacheCleanerTest {
         val keys = PerWatchCacheCleaner.wipeKeys(addr)
         assertTrue("SyncHistory_$addr" in keys)
         assertTrue("WatchSnapshot_$addr" in keys)
+        assertTrue("AutoSyncOnReconnect_$addr" in keys)
     }
 
     @Test

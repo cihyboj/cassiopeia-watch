@@ -16,7 +16,9 @@ import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.MultiWatchMigrator
+import com.beamburst.casswatch.data.local.WatchConnectionTracker
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.pairing.CompanionDevicePresenceMonitor
 import com.beamburst.casswatch.pairing.DeviceAssociationManager
@@ -28,6 +30,8 @@ import com.beamburst.casswatch.ui.common.CrashLogDialog
 import com.beamburst.casswatch.ui.others.CoverScreen
 import com.beamburst.casswatch.utils.ActivityProvider
 import com.beamburst.casswatch.utils.SyncHistoryLogger
+import com.beamburst.casswatch.utils.WatchTimeProvider
+import com.beamburst.casswatch.utils.WatchTimeWriter
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -74,9 +78,22 @@ class GShockApplication : Application(), IScreenManager {
     @Inject
     lateinit var syncHistoryLogger: SyncHistoryLogger
 
+    @Inject
+    lateinit var watchTimeProvider: WatchTimeProvider
+
+    @Inject
+    lateinit var watchTimeWriter: WatchTimeWriter
+
+    @Inject
+    lateinit var watchSelector: CurrentWatchSelector
+
+    @Inject
+    lateinit var connectionTracker: WatchConnectionTracker
+
     fun init() {
         Timber.i("Initializing GShockApplication")
         weeklyAlarmScheduler.ensureInitialized()
+        watchTimeProvider.refreshNtpInBackground()
         CoroutineScope(Dispatchers.IO).launch {
             deviceAssociationManager.init()
         }
@@ -94,7 +111,11 @@ class GShockApplication : Application(), IScreenManager {
                 repository = repository,
                 screenManager = this,
                 sessionUiBridge = watchSessionUiBridge,
-                syncLogger = syncHistoryLogger
+                syncLogger = syncHistoryLogger,
+                watchTimeProvider = watchTimeProvider,
+                watchTimeWriter = watchTimeWriter,
+                watchSelector = watchSelector,
+                connectionTracker = connectionTracker,
             )
         eventHandler.setupEventSubscription()
 

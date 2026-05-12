@@ -8,7 +8,9 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -135,6 +137,11 @@ object LocalDataStorage {
         return getBoolean(context, "ntpTimeEnabled")
     }
 
+    fun ntpTimeEnabledFlow(context: Context): Flow<Boolean> =
+        context.dataStore.data.map { prefs ->
+            prefs[stringPreferencesKey("ntpTimeEnabled")]?.toBoolean() ?: false
+        }
+
     suspend fun setNtpTimeEnabled(context: Context, enabled: Boolean) {
         putBoolean(context, "ntpTimeEnabled", enabled)
     }
@@ -148,6 +155,97 @@ object LocalDataStorage {
         val normalized = NtpTimeSettings.normalizeServer(server) ?: return
         putAsync(context, "ntpTimeServer", normalized)
     }
+
+    fun getNtpOffsetCache(context: Context): NtpOffsetCache? {
+        val raw = get(context, "ntpOffsetCache", null) ?: return null
+        return parseNtpOffsetCache(raw)
+    }
+
+    fun ntpOffsetCacheFlow(context: Context): Flow<NtpOffsetCache?> =
+        context.dataStore.data.map { prefs ->
+            prefs[stringPreferencesKey("ntpOffsetCache")]?.let(::parseNtpOffsetCache)
+        }
+
+    private fun parseNtpOffsetCache(raw: String): NtpOffsetCache? =
+        runCatching {
+            val json = JSONObject(raw)
+            NtpOffsetCache(
+                server = json.getString("server"),
+                offsetMs = json.getLong("offsetMs"),
+                roundTripMs = json.getLong("roundTripMs"),
+                capturedElapsedRealtimeMs = json.getLong("capturedElapsedRealtimeMs"),
+                ntpTimeAtCaptureMs = json.getLong("ntpTimeAtCaptureMs"),
+            )
+        }.getOrNull()
+
+    fun getAutoSyncOnReconnect(context: Context, address: String): Boolean? =
+        get(context, autoSyncOnReconnectKey(address), null)?.toBooleanStrictOrNull()
+
+    suspend fun setAutoSyncOnReconnect(context: Context, address: String, enabled: Boolean) {
+        putBoolean(context, autoSyncOnReconnectKey(address), enabled)
+    }
+
+    suspend fun getOrInitializeAutoSyncOnReconnect(
+        context: Context,
+        address: String,
+        seed: Boolean?,
+    ): Boolean {
+        val current = getAutoSyncOnReconnect(context, address)
+        if (current != null) return current
+        val initialized = seed ?: false
+        setAutoSyncOnReconnect(context, address, initialized)
+        return initialized
+    }
+
+    suspend fun setNtpOffsetCache(context: Context, cache: NtpOffsetCache) {
+        val json = JSONObject()
+            .put("server", cache.server)
+            .put("offsetMs", cache.offsetMs)
+            .put("roundTripMs", cache.roundTripMs)
+            .put("capturedElapsedRealtimeMs", cache.capturedElapsedRealtimeMs)
+            .put("ntpTimeAtCaptureMs", cache.ntpTimeAtCaptureMs)
+        putAsync(context, "ntpOffsetCache", json.toString())
+    }
+
+    fun getLearnedTimeWriteCompensation(context: Context, address: String): Long =
+        learnedLatencyCompensationMs(
+            parseLatencySamples(
+                get(context, timeWriteLatencyKey(address), "").orEmpty(),
+                nowMs = System.currentTimeMillis(),
+            ).map { it.durationMs },
+        )
+
+    fun getTimeWriteLatencySamples(context: Context, address: String): List<Long> =
+        parseLatencySamples(
+            get(context, timeWriteLatencyKey(address), "").orEmpty(),
+            nowMs = System.currentTimeMillis(),
+        ).map { it.durationMs }
+            .takeLast(MAX_LATENCY_SAMPLE_COUNT)
+
+    internal data class LatencySample(val durationMs: Long, val capturedAtMs: Long)
+
+    internal fun parseLatencySamples(raw: String, nowMs: Long): List<LatencySample> =
+        raw.split(",")
+            .mapNotNull { parseLatencySampleToken(it.trim(), nowMs) }
+            .filter { nowMs - it.capturedAtMs <= LATENCY_SAMPLE_RETENTION_MS }
+            .takeLast(MAX_LATENCY_SAMPLE_COUNT)
+
+    suspend fun addTimeWriteLatencySample(context: Context, address: String, durationMs: Long) {
+        if (durationMs !in MIN_LATENCY_SAMPLE_MS..MAX_LATENCY_SAMPLE_MS) return
+        val nowMs = System.currentTimeMillis()
+        val samples = parseLatencySamples(
+            get(context, timeWriteLatencyKey(address), "").orEmpty(),
+            nowMs = nowMs,
+        ).plus(LatencySample(durationMs = durationMs, capturedAtMs = nowMs))
+            .takeLast(MAX_LATENCY_SAMPLE_COUNT)
+        putAsync(context, timeWriteLatencyKey(address), serializeLatencySamples(samples))
+    }
+
+    fun timeWriteLatencyKey(address: String): String =
+        "TimeWriteLatency_${normalizeDeviceAddress(address)}"
+
+    fun autoSyncOnReconnectKey(address: String): String =
+        "AutoSyncOnReconnect_${normalizeDeviceAddress(address)}"
 
     fun getDeviceAddresses(context: Context): List<String> {
         val addresses = get(context, "DeviceAddresses", "") ?: ""
@@ -199,4 +297,19 @@ object LocalDataStorage {
 
     private fun normalizeDeviceAddress(address: String): String =
         Utils.sanitizeMacAddress(address.trim())
+
+    private fun parseLatencySampleToken(raw: String, nowMs: Long): LatencySample? {
+        if (raw.isBlank()) return null
+        val split = raw.split("@")
+        if (split.size == 2) {
+            val durationMs = split[0].toLongOrNull() ?: return null
+            val capturedAtMs = split[1].toLongOrNull() ?: return null
+            return LatencySample(durationMs, capturedAtMs)
+        }
+        val legacyDurationMs = raw.toLongOrNull() ?: return null
+        return LatencySample(legacyDurationMs, nowMs)
+    }
+
+    private fun serializeLatencySamples(samples: List<LatencySample>): String =
+        samples.joinToString(",") { "${it.durationMs}@${it.capturedAtMs}" }
 }

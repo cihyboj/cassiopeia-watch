@@ -236,6 +236,8 @@
     <string name="settings_section_actions">Actions</string>
     <string name="settings_section_watch_behavior">Watch behavior</string>
     <string name="settings_section_sync">Sync</string>
+    <string name="auto_sync_on_reconnect">Auto-sync on reconnect</string>
+    <string name="auto_sync_on_reconnect_caption">When watch reconnects, sync time (and use NTP if enabled).</string>
     <string name="settings_section_advanced" translatable="false">Advanced</string>
     <string name="ntp_time_title" translatable="false">NTP time source</string>
     <string name="ntp_time_caption" translatable="false">Use network time when writing the watch time.</string>

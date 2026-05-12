@@ -2,7 +2,6 @@ package com.beamburst.casswatch.ui.settings
 
 import com.beamburst.casswatch.ui.common.AppSwitch
 import com.beamburst.casswatch.ui.common.AppTextLink
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +25,7 @@ import com.beamburst.casswatch.ui.common.ValueSelectionDialog
 import org.avmedia.gshockapi.WatchInfo
 import androidx.compose.runtime.mutableIntStateOf
 import com.beamburst.casswatch.theme.Spacing
+import androidx.compose.foundation.clickable
 
 @Composable
 fun TimeAdjustment(
@@ -37,13 +37,11 @@ fun TimeAdjustment(
     val timeAdjustmentSetting: SettingsViewModel.TimeAdjustment =
         settingsViewModel.getSetting(classType)
 
-    var timeAdjustment by remember { mutableStateOf(timeAdjustmentSetting.timeAdjustment) }
     var notifyMe by remember { mutableStateOf(timeAdjustmentSetting.timeAdjustmentNotifications) }
     var adjustmentMinutes by remember { mutableStateOf(timeAdjustmentSetting.adjustmentTimeMinutes.toString()) }
     var fineAdjustment by remember { mutableIntStateOf(timeAdjustmentSetting.fineAdjustment) }
 
     LaunchedEffect(state) {
-        timeAdjustment = timeAdjustmentSetting.timeAdjustment
         notifyMe = timeAdjustmentSetting.timeAdjustmentNotifications
         adjustmentMinutes = timeAdjustmentSetting.adjustmentTimeMinutes.toString()
         fineAdjustment = timeAdjustmentSetting.fineAdjustment
@@ -66,35 +64,6 @@ fun TimeAdjustment(
                     }
                 )
             } else {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    SettingsLabel(
-                        text = stringResource(
-                            id = R.string.time_adjustment
-                        ),
-                        modifier = Modifier.padding(end = Spacing.sm)
-                    )
-                    InfoButton(
-                        infoText = stringResource(
-                            id = R.string.time_adjustment_info
-                        )
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    AppSwitch(
-                        checked = timeAdjustment,
-                        onCheckedChange = { newValue ->
-                            timeAdjustment = newValue // Update the state when the switch is toggled
-                            timeAdjustmentSetting.timeAdjustment = newValue
-                            onUpdate(timeAdjustmentSetting.copy(timeAdjustment = newValue))
-                        },
-                        modifier = Modifier
-                            .align(Alignment.CenterVertically)
-                    )
-                }
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(),

@@ -8,9 +8,11 @@ import android.app.AlertDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncTrigger
+import com.beamburst.casswatch.data.local.WatchConnectionTracker
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.session.WatchSessionUiBridge
 import com.beamburst.casswatch.services.NotificationMonitorService
@@ -19,6 +21,8 @@ import com.beamburst.casswatch.utils.ActivityProvider
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.Utils
 import com.beamburst.casswatch.utils.SyncHistoryLogger
+import com.beamburst.casswatch.utils.WatchTimeProvider
+import com.beamburst.casswatch.utils.WatchTimeWriter
 import org.avmedia.gshockapi.AppNotification
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
@@ -30,10 +34,18 @@ class MainEventHandler(
     private val screenManager: IScreenManager,
     private val sessionUiBridge: WatchSessionUiBridge,
     private val syncLogger: SyncHistoryLogger,
+    private val watchTimeProvider: WatchTimeProvider,
+    private val watchTimeWriter: WatchTimeWriter,
+    private val watchSelector: CurrentWatchSelector,
+    private val connectionTracker: WatchConnectionTracker,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "MainEventHandler"
     }
+
+    /** Generations for which a cache-warm has been dispatched, to keep it one-shot per connect. */
+    private val warmedDispatchedFor = mutableSetOf<String>()
+    private val warmedLock = Any()
 
     fun setupEventSubscription() {
         val eventActions = arrayOf(
@@ -55,9 +67,40 @@ class MainEventHandler(
         if (repository.supportsAppNotifications()) {
             NotificationMonitorService.startService(context)
         }
+        watchTimeProvider.refreshNtpInBackground()
         screenManager.showContentSelector(repository)
         showWatchConnectedSnackbar()
         sessionUiBridge.emitConnected()
+        dispatchCacheWarm()
+    }
+
+    /**
+     * Fires a silent `setTime` once per fresh connection generation. The first setTime on a
+     * connection triggers GShockAPI's slow CachedIO miss path (DST + WorldCities BLE reads,
+     * 2–4 s). Doing this immediately after initialization — while the watch is still in its
+     * connect animation anyway — moves the cost off the user-visible sync path and makes
+     * later user-initiated `Send Time` writes hit the fast Mode-2 path (~50 ms accuracy).
+     */
+    private fun dispatchCacheWarm() {
+        val address = watchSelector.currentAddress() ?: return
+        // If the user has Auto-sync-on-reconnect enabled for this watch, WeeklyAlarmScheduler
+        // will issue a (logged, user-visible) time write moments later that also warms the
+        // cache. Running a second concurrent setTime over the same BLE link wastes work and
+        // can confuse the watch firmware (inconsistent "OK" display, slower first call).
+        if (LocalDataStorage.getAutoSyncOnReconnect(context, address) == true) {
+            return
+        }
+        val generation = connectionTracker.connectionGeneration(address)
+        val key = "$address@$generation"
+        synchronized(warmedLock) {
+            if (!warmedDispatchedFor.add(key)) return
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+            runCatching {
+                val watchTime = watchTimeProvider.nowForWatch()
+                watchTimeWriter.warmAndSet(repository, watchTime)
+            }.onFailure { Timber.w(it, "Cache-warm dispatch failed") }
+        }
     }
 
     private fun showWatchConnectedSnackbar() {

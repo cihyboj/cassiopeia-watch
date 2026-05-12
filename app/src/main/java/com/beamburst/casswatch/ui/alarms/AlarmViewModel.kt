@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import javax.inject.Inject
 
@@ -624,7 +625,11 @@ class AlarmViewModel @Inject constructor(
         }
 
         val settings = WatchSettingsCache.load(appContext, addr)
-        val autoSyncEnabled = settings?.timeAdjustment ?: true
+        val autoSyncEnabled = LocalDataStorage.getOrInitializeAutoSyncOnReconnect(
+            context = appContext,
+            address = addr,
+            seed = settings?.timeAdjustment,
+        )
         val adjustmentTimeMinutes = settings?.adjustmentTimeMinutes ?: 0
         val isDirty = isDirtyOverride ?: AlarmSyncStorage.isDirty(appContext, addr)
         val syncedHashes = lastAlarmSync.value?.details?.alarmHashes.orEmpty()

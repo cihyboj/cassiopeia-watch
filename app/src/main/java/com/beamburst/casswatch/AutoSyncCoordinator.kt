@@ -19,6 +19,7 @@ import com.beamburst.casswatch.ui.events.EventsModel
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import com.beamburst.casswatch.utils.WatchTimeProvider
+import com.beamburst.casswatch.utils.WatchTimeWriter
 import com.beamburst.casswatch.utils.syncHistoryActions
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.IGShockAPI
@@ -40,6 +41,7 @@ class AutoSyncCoordinator @Inject constructor(
     private val syncLogger: SyncHistoryLogger,
     private val watchSelector: CurrentWatchSelector,
     private val watchTimeProvider: WatchTimeProvider,
+    private val watchTimeWriter: WatchTimeWriter,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "AutoSyncCoordinator"
@@ -74,11 +76,10 @@ class AutoSyncCoordinator @Inject constructor(
 
         runCatching {
             val watchTime = watchTimeProvider.nowForWatch()
-            val timeMs = watchTime.timeMs
-            api.setTime(timeMs = timeMs)
+            val writeResult = watchTimeWriter.write(api, watchTime)
             kinds += SyncKind.TIME
-            recordedTimeMs = timeMs
-            recordedActions += watchTime.syncHistoryActions("Automatic time write")
+            recordedTimeMs = writeResult.timeMs
+            recordedActions += watchTime.syncHistoryActions("Automatic time write", writeResult)
 
             val addr = watchSelector.currentAddress()
             if (addr != null) {

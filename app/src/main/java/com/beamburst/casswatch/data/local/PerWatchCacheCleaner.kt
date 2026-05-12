@@ -12,6 +12,8 @@ object PerWatchCacheCleaner {
         val extraKeys = listOf(
             "SyncHistory_$addr",
             "WatchSnapshot_$addr",
+            LocalDataStorage.timeWriteLatencyKey(addr),
+            LocalDataStorage.autoSyncOnReconnectKey(addr),
             WatchSettingsCache.cacheKey(addr),
             WatchSettingsCache.dirtyKey(addr),
         )

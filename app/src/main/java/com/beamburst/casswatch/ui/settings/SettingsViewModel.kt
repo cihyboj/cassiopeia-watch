@@ -40,7 +40,9 @@ import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.NtpTimeSettings
 import com.beamburst.casswatch.utils.PhoneFinder
 import com.beamburst.casswatch.utils.SyncHistoryLogger
+import com.beamburst.casswatch.utils.TimeWriteResult
 import com.beamburst.casswatch.utils.WatchTimeProvider
+import com.beamburst.casswatch.utils.WatchTimeWriter
 import com.beamburst.casswatch.utils.syncHistoryActions
 import org.avmedia.gshockapi.Settings
 import org.avmedia.gshockapi.WatchInfo
@@ -76,6 +78,10 @@ data class NtpTimeUiState(
     val server: String = NtpTimeSettings.DEFAULT_SERVER,
 )
 
+data class AutoSyncOnReconnectUiState(
+    val enabled: Boolean = false,
+)
+
 sealed class PressCardAction {
     data class ToggleShortBroadcast(val on: Boolean)  : PressCardAction()
     data class ToggleLongBroadcast(val on: Boolean)   : PressCardAction()
@@ -96,6 +102,7 @@ constructor(
         private val watchSelector: CurrentWatchSelector,
         private val connectionTracker: WatchConnectionTracker,
         private val watchTimeProvider: WatchTimeProvider,
+        private val watchTimeWriter: WatchTimeWriter,
 ) : ViewModel() {
 
     fun onSettingUpdated(setting: Setting) {
@@ -113,6 +120,8 @@ constructor(
 
     private val _ntpTime = MutableStateFlow(NtpTimeUiState())
     val ntpTime: StateFlow<NtpTimeUiState> = _ntpTime.asStateFlow()
+    private val _autoSyncOnReconnect = MutableStateFlow(AutoSyncOnReconnectUiState())
+    val autoSyncOnReconnect: StateFlow<AutoSyncOnReconnectUiState> = _autoSyncOnReconnect.asStateFlow()
 
     init {
         initializeSettings()
@@ -147,6 +156,7 @@ constructor(
 
     private suspend fun loadSettingsForAddress(addr: String?) {
         updateSettingsAndMap(defaultSettings())
+        loadAutoSyncOnReconnectForAddress(addr)
         val cached = if (addr != null) WatchSettingsCache.load(appContext, addr) else null
         if (cached != null) {
             updateSettingsAndMap(fromJson(Gson().toJson(cached)))
@@ -161,6 +171,28 @@ constructor(
         }
         val settingStr = Gson().toJson(settings)
         updateSettingsAndMap(fromJson(settingStr))
+    }
+
+    private suspend fun loadAutoSyncOnReconnectForAddress(addr: String?) {
+        if (addr == null) {
+            _autoSyncOnReconnect.value = AutoSyncOnReconnectUiState(enabled = false)
+            return
+        }
+        val seed = WatchSettingsCache.load(appContext, addr)?.timeAdjustment
+        val enabled = LocalDataStorage.getOrInitializeAutoSyncOnReconnect(
+            context = appContext,
+            address = addr,
+            seed = seed,
+        )
+        _autoSyncOnReconnect.value = AutoSyncOnReconnectUiState(enabled = enabled)
+    }
+
+    fun setAutoSyncOnReconnect(enabled: Boolean) {
+        _autoSyncOnReconnect.value = AutoSyncOnReconnectUiState(enabled = enabled)
+        val addr = watchSelector.currentAddress() ?: return
+        viewModelScope.launch {
+            LocalDataStorage.setAutoSyncOnReconnect(appContext, addr, enabled)
+        }
     }
 
     private fun updateSettingsAndMap(newSettings: ArrayList<Setting>) {
@@ -179,6 +211,7 @@ constructor(
         _ntpTime.update { it.copy(enabled = enabled) }
         viewModelScope.launch {
             LocalDataStorage.setNtpTimeEnabled(appContext, enabled)
+            if (enabled) watchTimeProvider.refreshNtpInBackground()
         }
     }
 
@@ -187,6 +220,7 @@ constructor(
         _ntpTime.update { it.copy(server = normalized) }
         viewModelScope.launch {
             LocalDataStorage.setNtpTimeServer(appContext, normalized)
+            watchTimeProvider.refreshNtpInBackground()
         }
         return true
     }
@@ -504,7 +538,6 @@ constructor(
             return@launch
         }
         val watchTime = watchTimeProvider.nowForWatch()
-        val timeMs = watchTime.timeMs
         watchTime.fallbackReason?.let { AppSnackbar(it) }
         val addr = watchSelector.currentAddress()
         val signalSettings = if (addr != null) {
@@ -514,8 +547,9 @@ constructor(
         }
         val now = LocalDateTime.now()
         val hourlyTarget = HourlySignalEvaluator.shouldChimeAt(now, signalSettings)
+        var writeResult: TimeWriteResult? = null
         val result = runCatching {
-            api.setTime(timeMs = timeMs)
+            writeResult = watchTimeWriter.write(api, watchTime)
             applyHourlySignalToWatch(api, signalSettings, now)
         }
         syncLogger.record(
@@ -527,8 +561,8 @@ constructor(
                 alarmHashes = null,
                 eventCount = null,
                 hourlySignalTarget = hourlyTarget,
-                timeMs = timeMs,
-                actions = watchTime.syncHistoryActions("Settings screen set-time button"),
+                timeMs = writeResult?.timeMs,
+                actions = watchTime.syncHistoryActions("Settings screen set-time button", writeResult),
             ),
         )
         if (result.isSuccess) {

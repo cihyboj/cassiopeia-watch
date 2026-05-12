@@ -175,6 +175,7 @@ fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
     }
 
     SettingsSectionTitle(stringResource(R.string.settings_section_sync))
+    AutoSyncRow()
     TimeAdjustment(settingsViewModel::onSettingUpdated)
     SyncHistoryRow(onNavigate = onNavigateToHistory)
 

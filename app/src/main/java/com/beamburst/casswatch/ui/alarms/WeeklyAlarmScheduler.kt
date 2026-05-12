@@ -7,9 +7,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.HourlySignalSettings
+import com.beamburst.casswatch.data.local.SyncDetails
+import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
+import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.data.repository.GShockRepository
+import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.SyncHistoryLogger
+import com.beamburst.casswatch.utils.WatchTimeProvider
+import com.beamburst.casswatch.utils.WatchTimeWriter
+import com.beamburst.casswatch.utils.syncHistoryActions
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
 import org.avmedia.gshockapi.WatchInfo
@@ -23,7 +30,9 @@ class WeeklyAlarmScheduler @Inject constructor(
     private val api: GShockRepository,
     private val syncLogger: SyncHistoryLogger,
     private val watchSelector: CurrentWatchSelector,
-    @param:ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context,
+    private val watchTimeProvider: WatchTimeProvider,
+    private val watchTimeWriter: WatchTimeWriter,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "WeeklyAlarmScheduler"
@@ -44,6 +53,14 @@ class WeeklyAlarmScheduler @Inject constructor(
 
     suspend fun applyTodaySchedule() {
         val addr = watchSelector.currentAddress() ?: return
+        val autoTimeSyncEnabled = LocalDataStorage.getOrInitializeAutoSyncOnReconnect(
+            context = context,
+            address = addr,
+            seed = WatchSettingsCache.load(context, addr)?.timeAdjustment,
+        )
+        if (autoTimeSyncEnabled) {
+            runAutoTimeSyncOnReconnect()
+        }
 
         val alarmDays = AlarmSyncStorage.loadDaySelections(context, addr)
         val storedAlarms = AlarmSyncStorage.loadAlarms(context, addr)
@@ -113,5 +130,39 @@ class WeeklyAlarmScheduler @Inject constructor(
                 AlarmSyncStorage.saveAlarms(context, addr, desiredAlarms, dirty = false, firedAts = firedAts)
             }
         }
+    }
+
+    private suspend fun runAutoTimeSyncOnReconnect() {
+        // GShockAPI's CachedIO is cold on a fresh connection — the first setTime takes
+        // 2-3s (Mode 1). Subsequent setTimes return in ~5ms (Mode 2). To get accurate
+        // auto-sync, we issue a silent priming setTime first (its drift doesn't matter
+        // and is briefly visible during the connect animation), then the user-facing
+        // write below hits the warm cache and lands within <500ms of real time.
+        runCatching {
+            val primingTime = watchTimeProvider.nowForWatch()
+            watchTimeWriter.warmAndSet(api, primingTime)
+        }.onFailure { Timber.w(it, "Auto-reconnect time-write priming failed") }
+
+        val watchTime = watchTimeProvider.nowForWatch()
+        var writeResult: com.beamburst.casswatch.utils.TimeWriteResult? = null
+        val result = runCatching {
+            writeResult = watchTimeWriter.write(api, watchTime)
+        }
+        syncLogger.record(
+            trigger = SyncTrigger.AUTO_ON_RECONNECT,
+            kinds = setOf(SyncKind.TIME),
+            success = result.isSuccess,
+            errorMessage = result.exceptionOrNull()?.message,
+            details = SyncDetails(
+                alarmHashes = null,
+                eventCount = null,
+                hourlySignalTarget = null,
+                timeMs = writeResult?.timeMs,
+                actions = watchTime.syncHistoryActions(
+                    primaryAction = "Automatic reconnect time write",
+                    writeResult = writeResult,
+                ),
+            ),
+        )
     }
 }

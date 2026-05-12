@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,8 +35,10 @@ fun LocalTimeView(
     modifier: Modifier,
     timeModel: TimeViewModel = hiltViewModel()
 ) {
+    val clockSource by timeModel.clockDisplaySource.collectAsState()
     LocalTimeCardContent(
         modifier = modifier,
+        clockSource = clockSource,
         onSendTime = { timeModel.onAction(TimeAction.SendTimeToWatch) },
     )
 }
@@ -43,6 +46,7 @@ fun LocalTimeView(
 @Composable
 fun LocalTimeCardContent(
     modifier: Modifier,
+    clockSource: ClockDisplaySource = ClockDisplaySource(),
     onSendTime: () -> Unit,
 ) {
     AppCard(
@@ -65,6 +69,7 @@ fun LocalTimeCardContent(
                 )
 
                 TextClockComposable(
+                    clockSource = clockSource,
                     modifier = Modifier.align(Alignment.Start)
                 )
 
@@ -97,9 +102,10 @@ fun LocalTimeCardContent(
 
 @Composable
 fun TextClockComposable(
+    clockSource: ClockDisplaySource = ClockDisplaySource(),
     modifier: Modifier = Modifier,
 ) {
-    RealTimeClock(modifier = modifier)
+    RealTimeClock(source = clockSource, modifier = modifier)
 }
 
 @Composable
@@ -139,6 +145,7 @@ fun PreviewLocalTimeCard() {
                 .wrapContentHeight()
                 .fillMaxWidth()
                 .padding(vertical = Spacing.xxs),
+            clockSource = ClockDisplaySource(),
             onSendTime = {},
         )
     }

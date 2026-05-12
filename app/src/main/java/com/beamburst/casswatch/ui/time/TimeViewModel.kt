@@ -9,9 +9,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
@@ -28,9 +32,11 @@ import com.beamburst.casswatch.session.SessionLinkEvent
 import com.beamburst.casswatch.session.WatchSessionUiBridge
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.SyncHistoryLogger
+import com.beamburst.casswatch.utils.TimeWriteResult
 import com.beamburst.casswatch.utils.Utils
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.utils.WatchTimeProvider
+import com.beamburst.casswatch.utils.WatchTimeWriter
 import com.beamburst.casswatch.utils.syncHistoryActions
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
@@ -45,6 +51,11 @@ data class TimeState(
     val temperature: Int = 0,
     val watchName: String = "",
     val isConnected: Boolean = false
+)
+
+data class ClockDisplaySource(
+    val ntpTimeEnabled: Boolean = false,
+    val ntpOffsetCache: com.beamburst.casswatch.utils.NtpOffsetCache? = null,
 )
 
 sealed interface TimeAction {
@@ -65,12 +76,27 @@ class TimeViewModel @Inject constructor(
     private val watchSelector: CurrentWatchSelector,
     private val connectionTracker: WatchConnectionTracker,
     private val watchTimeProvider: WatchTimeProvider,
+    private val watchTimeWriter: WatchTimeWriter,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TimeState())
     val state = _state.asStateFlow()
 
     private val _uiEvents = MutableSharedFlow<UiEvent>()
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
+    val clockDisplaySource: StateFlow<ClockDisplaySource> =
+        combine(
+            LocalDataStorage.ntpTimeEnabledFlow(appContext),
+            LocalDataStorage.ntpOffsetCacheFlow(appContext),
+        ) { enabled, cache ->
+            ClockDisplaySource(
+                ntpTimeEnabled = enabled,
+                ntpOffsetCache = cache,
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = ClockDisplaySource(),
+        )
 
     /**
      * Blocks [refreshState] from showing a connected snapshot while the API still reports
@@ -141,11 +167,11 @@ class TimeViewModel @Inject constructor(
                         return@launch
                     }
                     val watchTime = watchTimeProvider.nowForWatch()
-                    val timeMs = watchTime.timeMs
                     watchTime.fallbackReason?.let { AppSnackbar(it) }
                     AppSnackbar(appContext.getString(R.string.sending_time_to_watch))
+                    var writeResult: TimeWriteResult? = null
                     val result = runCatching {
-                        api.setTime(timeMs = timeMs)
+                        writeResult = watchTimeWriter.write(api, watchTime)
                         val addr = watchSelector.currentAddress()
                         val signalSettings = if (addr != null) {
                             HourlySignalSettings.load(appContext, addr)
@@ -163,8 +189,8 @@ class TimeViewModel @Inject constructor(
                         alarmHashes = null,
                         eventCount = null,
                         hourlySignalTarget = null,
-                        timeMs = timeMs,
-                        actions = watchTime.syncHistoryActions("Time screen send-time button"),
+                        timeMs = writeResult?.timeMs,
+                        actions = watchTime.syncHistoryActions("Time screen send-time button", writeResult),
                     ),
                 )
                     if (result.isSuccess) {
