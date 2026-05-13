@@ -32,14 +32,15 @@ class DeviceAssociationManager @Inject constructor(
 
     suspend fun init() {
         recoverFromPairingCrash()
-        if (LocalDataStorage.consumeSkipCleanupFlag(context)) {
-            // Backup was just imported. Skipping orphan cleanup this once so the user can
-            // re-pair imported watches via the system CDM dialog without losing their
-            // associated DataStore metadata (alarms, name, fine adjustment, sync history).
-            Timber.i("Skipping cleanupLocalStorage — fresh backup import detected")
-        } else {
-            cleanupLocalStorage()
-        }
+        // Intentionally NOT calling cleanupLocalStorage() on every startup.
+        // It removed any DataStore address not present in the system CDM association list,
+        // which destroyed legitimate state in cases where the two stores can diverge:
+        //   - fresh backup imports (DataStore has entries, CDM doesn't yet)
+        //   - system-level "Clear data" that drops CDM associations but the user later
+        //     restored from backup
+        //   - manual CDM unpair without going through the app
+        // Stale entries are removed via the explicit "Forget watch" action in the watch
+        // list; we don't need (and shouldn't have) an automatic GC.
         syncAssociations()
     }
 
