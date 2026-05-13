@@ -308,7 +308,11 @@ class WatchTimeWriter @Inject constructor(
                 PrimeResult(PrimeOutcome.FAILURE, durationMs, err)
             }
             else -> {
-                connectionTracker.markCacheWarmIfFast(address, durationMs)
+                // A successful prime IS what populates the library's CachedIO, so the next
+                // write is guaranteed Mode-2 regardless of how long the prime itself took.
+                // markCacheWarmIfFast's 300ms threshold is wrong for primeTimeCache (which
+                // legitimately takes 1.4–2.4s); unconditionally mark the generation warm.
+                connectionTracker.markCacheWarmed(address)
                 PrimeResult(PrimeOutcome.OK, durationMs)
             }
         }
