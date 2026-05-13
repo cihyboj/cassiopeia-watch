@@ -36,6 +36,7 @@ class WeeklyAlarmScheduler @Inject constructor(
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "WeeklyAlarmScheduler"
+        private const val POST_PRIME_SETTLE_MS = 250L
     }
 
     init {
@@ -140,6 +141,13 @@ class WeeklyAlarmScheduler @Inject constructor(
         runCatching {
             watchTimeWriter.primeCache(api)
         }.onFailure { Timber.w(it, "Auto-reconnect cache prime failed") }
+
+        // Settle delay: after primeCache the watch's BLE stack just finished 5-6 back-to-back
+        // writes (DST + WorldCities). The next setTime processed immediately is observed to
+        // land ~200ms earlier on the watch's display than a setTime issued after several
+        // seconds of BLE idle (the user-click case). Letting the link quiesce here makes the
+        // auto-on-reconnect time write land with the same accuracy as a manual sync.
+        kotlinx.coroutines.delay(POST_PRIME_SETTLE_MS)
 
         val watchTime = watchTimeProvider.nowForWatch()
         var writeResult: com.beamburst.casswatch.utils.TimeWriteResult? = null
