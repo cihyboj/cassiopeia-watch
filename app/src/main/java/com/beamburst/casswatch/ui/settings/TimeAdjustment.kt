@@ -37,11 +37,13 @@ fun TimeAdjustment(
     val timeAdjustmentSetting: SettingsViewModel.TimeAdjustment =
         settingsViewModel.getSetting(classType)
 
+    var autoAdjust by remember { mutableStateOf(timeAdjustmentSetting.timeAdjustment) }
     var notifyMe by remember { mutableStateOf(timeAdjustmentSetting.timeAdjustmentNotifications) }
     var adjustmentMinutes by remember { mutableStateOf(timeAdjustmentSetting.adjustmentTimeMinutes.toString()) }
     var fineAdjustment by remember { mutableIntStateOf(timeAdjustmentSetting.fineAdjustment) }
 
     LaunchedEffect(state) {
+        autoAdjust = timeAdjustmentSetting.timeAdjustment
         notifyMe = timeAdjustmentSetting.timeAdjustmentNotifications
         adjustmentMinutes = timeAdjustmentSetting.adjustmentTimeMinutes.toString()
         fineAdjustment = timeAdjustmentSetting.fineAdjustment
@@ -53,6 +55,13 @@ fun TimeAdjustment(
                 .fillMaxWidth()
                 .padding(contentPadding)
         ) {
+            AutoAdjustmentRow(
+                checked = autoAdjust,
+                onCheckedChange = { newValue ->
+                    autoAdjust = newValue
+                    onUpdate(timeAdjustmentSetting.copy(timeAdjustment = newValue))
+                },
+            )
             if (WatchInfo.alwaysConnected) {
                 FineAdjustmentRow(
                     modifier = Modifier
@@ -133,6 +142,29 @@ fun TimeAdjustment(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun AutoAdjustmentRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = Spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            SettingsLabel(text = stringResource(id = R.string.auto_time_adjustment_master))
+            com.beamburst.casswatch.ui.common.AppText(
+                text = stringResource(id = R.string.auto_time_adjustment_master_caption),
+                style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        AppSwitch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
