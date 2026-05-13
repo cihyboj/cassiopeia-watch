@@ -125,10 +125,34 @@ object LocalDataStorage {
                     val v = json.optString(k, "")
                     preferences[stringPreferencesKey(k)] = v
                 }
+                // One-shot flag: DeviceAssociationManager.cleanupLocalStorage strips any
+                // DataStore device entry whose address isn't in the system CDM associations
+                // list. Right after an import that list won't match yet — user hasn't had a
+                // chance to re-pair — so we'd lose all imported watch metadata immediately.
+                // This flag tells the next init to skip cleanup once.
+                preferences[stringPreferencesKey(KEY_SKIP_CLEANUP_ONCE)] = "true"
             }
         }
         return json.length()
     }
+
+    /**
+     * Atomic: returns the value of the skip-cleanup flag and clears it in one DataStore edit.
+     * Read by DeviceAssociationManager.init() to decide whether to run cleanupLocalStorage
+     * this startup or defer it until next launch.
+     */
+    suspend fun consumeSkipCleanupFlag(context: Context): Boolean {
+        var was = false
+        mutex.withLock {
+            context.dataStore.edit { preferences ->
+                was = preferences[stringPreferencesKey(KEY_SKIP_CLEANUP_ONCE)] == "true"
+                if (was) preferences.remove(stringPreferencesKey(KEY_SKIP_CLEANUP_ONCE))
+            }
+        }
+        return was
+    }
+
+    private const val KEY_SKIP_CLEANUP_ONCE = "_skipCleanupOnce"
 
     private fun getBoolean(context: Context, key: String): Boolean {
         return get(context, key, "false")?.toBoolean() ?: false

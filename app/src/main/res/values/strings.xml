@@ -280,7 +280,7 @@
     <string name="backup_export_default_name" translatable="false">casswatch-backup-%1$s.json</string>
     <string name="backup_export_success" translatable="false">Backup saved (%1$d entries).</string>
     <string name="backup_export_failed" translatable="false">Export failed: %1$s</string>
-    <string name="backup_import_success" translatable="false">Restored %1$d entries. Restart the app to load them.</string>
+    <string name="backup_import_success" translatable="false">Restored %1$d entries. Restart the app to load them; then re-pair watches via Add Watch (system pairing dialog) to restore their alarms and settings.</string>
     <string name="backup_import_malformed" translatable="false">File is not a valid backup: %1$s</string>
     <string name="backup_import_version_mismatch" translatable="false">Unsupported backup version (found %1$d).</string>
     <string name="backup_import_failed" translatable="false">Import failed: %1$s</string>

@@ -1,7 +1,7 @@
 package com.beamburst.casswatch.ui.settings
 
-import android.app.Activity
-import android.os.Process
+import android.content.Context
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -120,7 +120,7 @@ fun BackupSection(modifier: Modifier = Modifier) {
                     modifier = Modifier.padding(top = Spacing.sm).fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
                 ) {
-                    Button(onClick = { restartApp(context as Activity) }) {
+                    Button(onClick = { restartApp(context) }) {
                         AppText(text = stringResource(R.string.backup_restart_now))
                     }
                 }
@@ -134,7 +134,15 @@ private fun defaultBackupFilename(context: android.content.Context): String {
     return context.getString(R.string.backup_export_default_name, stamp)
 }
 
-private fun restartApp(activity: Activity) {
-    activity.finishAffinity()
-    Process.killProcess(Process.myPid())
+private fun restartApp(context: Context) {
+    // Clean relaunch: start a fresh task with the launcher intent, then exit the current
+    // process gracefully. Avoids Process.killProcess + Android's auto-restart of a killed
+    // foreground activity, which restores stale saved-instance state and triggered ANRs
+    // when the post-import state didn't match what the restored ViewModels expected.
+    val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+        ?: return
+    val restart = Intent.makeRestartActivityTask(launchIntent.component)
+    restart.setPackage(context.packageName)
+    context.startActivity(restart)
+    Runtime.getRuntime().exit(0)
 }

@@ -32,7 +32,14 @@ class DeviceAssociationManager @Inject constructor(
 
     suspend fun init() {
         recoverFromPairingCrash()
-        cleanupLocalStorage()
+        if (LocalDataStorage.consumeSkipCleanupFlag(context)) {
+            // Backup was just imported. Skipping orphan cleanup this once so the user can
+            // re-pair imported watches via the system CDM dialog without losing their
+            // associated DataStore metadata (alarms, name, fine adjustment, sync history).
+            Timber.i("Skipping cleanupLocalStorage — fresh backup import detected")
+        } else {
+            cleanupLocalStorage()
+        }
         syncAssociations()
     }
 
