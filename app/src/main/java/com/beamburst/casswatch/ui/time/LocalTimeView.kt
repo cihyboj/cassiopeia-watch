@@ -131,26 +131,17 @@ fun TimeZoneTextView(modifier: Modifier = Modifier) {
 @Composable
 fun TimeSourceBadge(clockSource: ClockDisplaySource, modifier: Modifier = Modifier) {
     val usingNtp = clockSource.isUsingNtp(android.os.SystemClock.elapsedRealtime())
-    val (label, bg, fg) = if (usingNtp) {
-        Triple(
-            stringResource(R.string.time_source_badge_ntp),
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer,
-        )
-    } else {
-        Triple(
-            stringResource(R.string.time_source_badge_phone),
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
+    val label = stringResource(
+        if (usingNtp) R.string.time_source_badge_ntp
+        else R.string.time_source_badge_phone,
+    )
     AppText(
         text = label,
         style = MaterialTheme.typography.labelSmall,
-        color = fg,
+        color = MaterialTheme.colorScheme.onPrimaryContainer,
         modifier = modifier
             .background(
-                color = bg,
+                color = MaterialTheme.colorScheme.primaryContainer,
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(Spacing.xs),
             )
             .padding(horizontal = Spacing.xs, vertical = 2.dp),

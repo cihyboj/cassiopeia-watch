@@ -9,15 +9,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,7 +41,10 @@ import java.util.Locale
 fun BackupSection(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var lastImportEntryCount by remember { mutableStateOf<Int?>(null) }
+    // rememberSaveable so the dialog survives the activity restart that the SAF picker can
+    // trigger on some devices (the picker briefly puts the host activity into the background
+    // and Android may recreate it before our callback fires).
+    var importSuccessCount by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json"),
@@ -68,8 +73,10 @@ fun BackupSection(modifier: Modifier = Modifier) {
         scope.launch {
             when (val result = BackupImporter.import(context, uri)) {
                 is ImportResult.Ok -> {
-                    lastImportEntryCount = result.entryCount
-                    AppSnackbar(context.getString(R.string.backup_import_success, result.entryCount))
+                    // Success goes through a modal dialog (not a snackbar) because the
+                    // message is long, contains an explicit follow-up action (Restart),
+                    // and must stay on screen until the user acknowledges it.
+                    importSuccessCount = result.entryCount
                 }
                 is ImportResult.Malformed ->
                     AppSnackbar(context.getString(R.string.backup_import_malformed, result.message))
@@ -83,8 +90,26 @@ fun BackupSection(modifier: Modifier = Modifier) {
         }
     }
 
-    LaunchedEffect(Unit) {
-        // No-op; ensures snackbars from a prior recomposition aren't replayed on entry.
+    importSuccessCount?.let { count ->
+        AlertDialog(
+            onDismissRequest = { importSuccessCount = null },
+            title = { AppText(text = stringResource(R.string.backup_import_dialog_title)) },
+            text = {
+                AppText(
+                    text = stringResource(R.string.backup_import_success, count),
+                )
+            },
+            confirmButton = {
+                Button(onClick = { restartApp(context) }) {
+                    AppText(text = stringResource(R.string.backup_restart_now))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { importSuccessCount = null }) {
+                    AppText(text = stringResource(R.string.backup_import_dialog_later))
+                }
+            },
+        )
     }
 
     AppCard(modifier = modifier.fillMaxWidth()) {
@@ -113,16 +138,6 @@ fun BackupSection(modifier: Modifier = Modifier) {
                     onClick = { importLauncher.launch(arrayOf("application/json", "*/*")) },
                 ) {
                     AppText(text = stringResource(R.string.backup_import_button))
-                }
-            }
-            lastImportEntryCount?.let {
-                Row(
-                    modifier = Modifier.padding(top = Spacing.sm).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    Button(onClick = { restartApp(context) }) {
-                        AppText(text = stringResource(R.string.backup_restart_now))
-                    }
                 }
             }
         }

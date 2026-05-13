@@ -285,6 +285,8 @@
     <string name="backup_import_version_mismatch" translatable="false">Unsupported backup version (found %1$d).</string>
     <string name="backup_import_failed" translatable="false">Import failed: %1$s</string>
     <string name="backup_restart_now" translatable="false">Restart now</string>
+    <string name="backup_import_dialog_title" translatable="false">Backup restored</string>
+    <string name="backup_import_dialog_later" translatable="false">Later</string>
 
     <string name="pairing_crash_detected" translatable="false"><![CDATA[
         The app detected a previous crash during pairing. Crash logs have been saved.
