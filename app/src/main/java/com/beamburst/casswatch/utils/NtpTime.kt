@@ -386,9 +386,14 @@ class WatchTimeWriter @Inject constructor(
             ?.takeIf { it > 0L }
             ?: DEFAULT_SEND_LATENCY_ESTIMATE_MS
 
+        // Casio watches apply a CURRENT_TIME write at the watch's next internal 1Hz tick
+        // *after* receipt — empirically that produces a consistent ~1 s lag when we aim at
+        // the next integer second and the packet arrives just past it. Aim two seconds
+        // ahead and fire the packet one full second + RTT before the target, so the
+        // watch's mandatory 1 s adoption delay lines up with our intended NTP boundary.
         val nowBefore = resolveNowMs(watchTime)
-        val target = ((nowBefore / 1000L) + 1L) * 1000L
-        val fireAt = target - estimateMs
+        val target = ((nowBefore / 1000L) + 2L) * 1000L
+        val fireAt = target - 1000L - estimateMs
         val waitMs = fireAt - nowBefore
         if (waitMs > 0L) delay(waitMs)
 
