@@ -56,7 +56,23 @@ data class TimeState(
 data class ClockDisplaySource(
     val ntpTimeEnabled: Boolean = false,
     val ntpOffsetCache: com.beamburst.casswatch.utils.NtpOffsetCache? = null,
-)
+) {
+    /**
+     * Mirrors [com.beamburst.casswatch.ui.time.currentTimeMillisForDisplay] decision logic so
+     * the badge in [LocalTimeView] reflects the source actually being used to render the
+     * clock: NTP is shown only if it's enabled AND there's a fresh-enough cached offset.
+     */
+    fun isUsingNtp(elapsedNowMs: Long): Boolean {
+        if (!ntpTimeEnabled) return false
+        val cache = ntpOffsetCache ?: return false
+        val ageMs = elapsedNowMs - cache.capturedElapsedRealtimeMs
+        return ageMs in 0L..NTP_DISPLAY_CACHE_VALID_MS
+    }
+
+    companion object {
+        const val NTP_DISPLAY_CACHE_VALID_MS = 30L * 60L * 1_000L
+    }
+}
 
 sealed interface TimeAction {
     data object SendTimeToWatch : TimeAction

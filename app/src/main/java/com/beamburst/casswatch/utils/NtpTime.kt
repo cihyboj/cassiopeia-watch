@@ -242,6 +242,16 @@ class WatchTimeWriter @Inject constructor(
          * detect a hung BLE stack and recover before the watch firmware gives up.
          */
         const val PRIME_TIMEOUT_MS = 8_000L
+
+        /**
+         * How long after the watch receives a setTime BLE packet before the encoded value
+         * appears on the display. Empirically the Casio firmware schedules the display
+         * change at the next internal 1 Hz tick after receipt — ~1000 ms when the BLE link
+         * has been idle for several seconds (manual sync), ~800 ms when the link was busy
+         * within the last second (auto sync, immediately after primeCache).
+         */
+        const val WATCH_ADOPTION_DELAY_MS = 1_000L
+        const val WATCH_ADOPTION_DELAY_POST_PRIME_MS = 800L
     }
 
     enum class PrimeOutcome { OK, TIMEOUT, FAILURE }
@@ -275,7 +285,23 @@ class WatchTimeWriter @Inject constructor(
     suspend fun write(api: IGShockAPI, watchTime: WatchTime): TimeWriteResult {
         val address = watchSelector.currentAddress()
         return if (connectionTracker.isCacheWarm(address)) {
-            writeAimedAtSecondBoundary(api, watchTime, address)
+            writeAimedAtSecondBoundary(api, watchTime, address, WATCH_ADOPTION_DELAY_MS)
+        } else {
+            writeColdPath(api, watchTime, address)
+        }
+    }
+
+    /**
+     * Auto-on-reconnect time write. Identical to [write] except the watch's observed adoption
+     * delay is ~200 ms shorter when the setTime command is issued immediately after primeCache
+     * finishes (the BLE link is hot, the watch processes the next packet faster). Pass the
+     * shorter delay so the +2-boundary-aim's "fire one adoption-delay before target" lands the
+     * watch's display update on the NTP boundary instead of ~200 ms early.
+     */
+    suspend fun writeAfterPrime(api: IGShockAPI, watchTime: WatchTime): TimeWriteResult {
+        val address = watchSelector.currentAddress()
+        return if (connectionTracker.isCacheWarm(address)) {
+            writeAimedAtSecondBoundary(api, watchTime, address, WATCH_ADOPTION_DELAY_POST_PRIME_MS)
         } else {
             writeColdPath(api, watchTime, address)
         }
@@ -379,6 +405,7 @@ class WatchTimeWriter @Inject constructor(
         api: IGShockAPI,
         watchTime: WatchTime,
         address: String?,
+        adoptionDelayMs: Long,
     ): TimeWriteResult {
         val cacheWarmAtStart = connectionTracker.isCacheWarm(address)
         val estimateMs = address
@@ -387,13 +414,11 @@ class WatchTimeWriter @Inject constructor(
             ?: DEFAULT_SEND_LATENCY_ESTIMATE_MS
 
         // Casio watches apply a CURRENT_TIME write at the watch's next internal 1Hz tick
-        // *after* receipt — empirically that produces a consistent ~1 s lag when we aim at
-        // the next integer second and the packet arrives just past it. Aim two seconds
-        // ahead and fire the packet one full second + RTT before the target, so the
-        // watch's mandatory 1 s adoption delay lines up with our intended NTP boundary.
+        // *after* receipt. Aim two seconds ahead and fire the packet (adoptionDelay + RTT)
+        // before the target, so the watch's display change lands on the NTP boundary.
         val nowBefore = resolveNowMs(watchTime)
         val target = ((nowBefore / 1000L) + 2L) * 1000L
-        val fireAt = target - 1000L - estimateMs
+        val fireAt = target - adoptionDelayMs - estimateMs
         val waitMs = fireAt - nowBefore
         if (waitMs > 0L) delay(waitMs)
 

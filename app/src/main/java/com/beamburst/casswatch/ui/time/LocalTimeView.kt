@@ -2,7 +2,7 @@ package com.beamburst.casswatch.ui.time
 
 import RealTimeClock
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.beamburst.casswatch.ui.common.AppText
@@ -73,11 +74,12 @@ fun LocalTimeCardContent(
                     modifier = Modifier.align(Alignment.Start)
                 )
 
-                Box {
-                    TimeZoneTextView(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                ) {
+                    TimeZoneTextView()
+                    TimeSourceBadge(clockSource = clockSource)
                 }
             }
 
@@ -123,6 +125,35 @@ fun TimeZoneTextView(modifier: Modifier = Modifier) {
         text = timeZoneId,
         style = MaterialTheme.typography.bodyMedium,
         modifier = modifier
+    )
+}
+
+@Composable
+fun TimeSourceBadge(clockSource: ClockDisplaySource, modifier: Modifier = Modifier) {
+    val usingNtp = clockSource.isUsingNtp(android.os.SystemClock.elapsedRealtime())
+    val (label, bg, fg) = if (usingNtp) {
+        Triple(
+            stringResource(R.string.time_source_badge_ntp),
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+    } else {
+        Triple(
+            stringResource(R.string.time_source_badge_phone),
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+    AppText(
+        text = label,
+        style = MaterialTheme.typography.labelSmall,
+        color = fg,
+        modifier = modifier
+            .background(
+                color = bg,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(Spacing.xs),
+            )
+            .padding(horizontal = Spacing.xs, vertical = 2.dp),
     )
 }
 

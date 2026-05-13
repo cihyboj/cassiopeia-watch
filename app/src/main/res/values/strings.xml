@@ -269,6 +269,8 @@
     <string name="pairing_failed_generic" translatable="false">Pairing failed: %1$s. Please try again.</string>
     <string name="pairing_activity_finishing" translatable="false">Cannot start pairing: Activity is closing. Please try again.</string>
     <string name="pairing_crash_recovery" translatable="false">Recovered from previous pairing crash. You can try pairing again.</string>
+    <string name="time_source_badge_ntp" translatable="false">NTP</string>
+    <string name="time_source_badge_phone" translatable="false">Phone</string>
     <string name="backup_title" translatable="false">Backup</string>
     <string name="backup_caption" translatable="false">Save or restore all app settings, paired watches, alarms, and sync history as a JSON file.</string>
     <string name="backup_export_button" translatable="false">Export…</string>
