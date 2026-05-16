@@ -292,4 +292,24 @@
         The app detected a previous crash during pairing. Crash logs have been saved.
         <p>If this issue persists, please report it on <a href="https://github.com/izivkov/CasioGShockSmartSync/issues">GitHub</a> with your device model and watch model.</p>
     ]]></string>
+
+    <!-- Signal card (inline) -->
+    <string name="hourly_signal_active_days">Active days</string>
+    <string name="hourly_signal_preset_weekdays">Weekdays</string>
+    <string name="hourly_signal_preset_weekend">Weekend</string>
+    <string name="hourly_signal_preset_every_day">Every day</string>
+    <string name="hourly_signal_no_days_hint">Select at least one day to enable</string>
+    <string name="hourly_signal_chimes_from">Chimes %1$s:00 to %2$s:00 · %3$d times per day</string>
+
+    <!-- Timer card (inline) -->
+    <string name="timer_reset">Reset</string>
+    <string name="timer_label_min">min</string>
+    <string name="timer_label_sec">sec</string>
+    <string name="timer_label_hr">hr</string>
+    <string name="timer_preset_5min">5 min</string>
+    <string name="timer_preset_10min">10 min</string>
+    <string name="timer_preset_15min">15 min</string>
+    <string name="timer_preset_25min">25 min</string>
+    <string name="timer_preset_30min">30 min</string>
+    <string name="timer_preset_5959">59:59</string>
 </resources>
