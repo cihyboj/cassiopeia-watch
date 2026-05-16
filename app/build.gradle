@@ -111,6 +111,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences.core)
 
     implementation(libs.androidx.material.icons.core)
+    implementation(libs.androidx.material.icons.extended)
 }
 
 // Allow references to generated code

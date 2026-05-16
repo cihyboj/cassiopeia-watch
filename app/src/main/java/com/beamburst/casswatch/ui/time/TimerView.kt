@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.DateRange
-import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Replay
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -88,7 +88,7 @@ fun TimerCardContent(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Rounded.DateRange,
+                        imageVector = Icons.Rounded.Timer,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onTertiary,
                     )
@@ -100,7 +100,7 @@ fun TimerCardContent(
                 }
                 TextButton(onClick = { onSetTimer(0, 0) }) {
                     Icon(
-                        imageVector = Icons.Rounded.Refresh,
+                        imageVector = Icons.Rounded.Replay,
                         contentDescription = stringResource(R.string.timer_reset),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
