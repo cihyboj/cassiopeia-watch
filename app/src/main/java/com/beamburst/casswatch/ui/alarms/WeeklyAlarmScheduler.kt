@@ -133,6 +133,11 @@ class WeeklyAlarmScheduler @Inject constructor(
     }
 
     private suspend fun runAutoTimeSyncOnReconnect() {
+        // Firmware-initiated syncs (isAutoTimeStarted) are handled by AutoSyncCoordinator,
+        // which primes the cache and calls writeAfterPrime itself. Skip here to avoid
+        // a conflicting concurrent time write.
+        if (api.isAutoTimeStarted()) return
+
         // GShockAPI's CachedIO is cold on a fresh connection — the first setTime takes
         // 2-3s (Mode 1). Subsequent setTimes return in ~5ms (Mode 2). Prime the cache
         // first (no timestamp written, no visible effect on the watch), then the

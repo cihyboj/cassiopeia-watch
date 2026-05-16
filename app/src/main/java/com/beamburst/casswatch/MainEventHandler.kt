@@ -91,6 +91,8 @@ class MainEventHandler(
         if (LocalDataStorage.getAutoSyncOnReconnect(context, address) == true) {
             return
         }
+        // AutoSyncCoordinator.runChain() handles prime+write for firmware-initiated syncs
+        if (repository.isAutoTimeStarted()) return
         val generation = connectionTracker.connectionGeneration(address)
         val key = "$address@$generation"
         synchronized(warmedLock) {

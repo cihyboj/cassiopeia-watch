@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.data.local
 
+import java.time.DayOfWeek
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -24,5 +25,23 @@ class HourlySignalSettingsTest {
         assertEquals("HourlySignalStartHour_AA:BB:CC:DD:EE:FF", "HourlySignalStartHour_$addr")
         assertEquals("HourlySignalEndHour_AA:BB:CC:DD:EE:FF", "HourlySignalEndHour_$addr")
         assertEquals("HourlySignalMigrated_AA:BB:CC:DD:EE:FF", "HourlySignalMigrated_$addr")
+    }
+
+    @Test fun `default days is all seven`() {
+        val d = HourlySignalSettings.Default
+        assertEquals(DayOfWeek.entries.toSet(), d.days)
+    }
+
+    @Test fun `days round-trip through serialization helpers`() {
+        val days = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
+        val serialized = HourlySignalSettings.serializeDaysForTest(days)
+        val parsed = HourlySignalSettings.parseDaysForTest(serialized)
+        assertEquals(days, parsed)
+    }
+
+    @Test fun `empty days serializes and parses as empty set`() {
+        val serialized = HourlySignalSettings.serializeDaysForTest(emptySet())
+        val parsed = HourlySignalSettings.parseDaysForTest(serialized)
+        assertEquals(emptySet<DayOfWeek>(), parsed)
     }
 }

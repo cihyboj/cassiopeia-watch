@@ -80,6 +80,18 @@ object BackupImporter {
         val count = runCatching {
             LocalDataStorage.restoreFromJsonObject(context, entries)
         }.getOrElse { return ImportResult.IoError(it.message ?: "DataStore write failed") }
+
+        // Wipe watch-settings caches so stale backup values are never pushed to the watch.
+        // The app will re-read current settings from the watch on next connection.
+        val watchKeys = buildList {
+            val ks = entries.keys()
+            while (ks.hasNext()) {
+                val k = ks.next()
+                if (k.startsWith("WatchSettings_")) add(k)
+            }
+        }
+        watchKeys.forEach { LocalDataStorage.deleteAsync(context, it) }
+
         return ImportResult.Ok(count)
     }
 }

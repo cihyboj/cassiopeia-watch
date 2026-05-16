@@ -223,7 +223,19 @@ class AlarmViewModel @Inject constructor(
             }
 
             val signalSettings = if (addr != null) {
-                HourlySignalSettings.load(appContext, addr)
+                if (!HourlySignalSettings.isMigrated(appContext, addr)) {
+                    val legacyChime = AlarmSyncStorage.loadAlarms(appContext, addr)
+                        ?.getOrNull(0)?.hasHourlyChime ?: false
+                    val initial = if (legacyChime)
+                        HourlySignalSettings(enabled = true, startHour = 1, endHour = 0)
+                    else
+                        HourlySignalSettings.Default
+                    HourlySignalSettings.save(appContext, addr, initial)
+                    HourlySignalSettings.markMigrated(appContext, addr)
+                    initial
+                } else {
+                    HourlySignalSettings.load(appContext, addr)
+                }
             } else {
                 HourlySignalSettings.Default
             }

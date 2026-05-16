@@ -25,6 +25,7 @@ import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.IGShockAPI
 import org.avmedia.gshockapi.ProgressEvents
 import org.avmedia.gshockapi.WatchInfo
+import timber.log.Timber
 import java.text.DateFormat
 import java.time.Clock
 import java.time.LocalDateTime
@@ -75,8 +76,10 @@ class AutoSyncCoordinator @Inject constructor(
         val recordedActions = actions.orEmpty().toMutableList()
 
         runCatching {
+            runCatching { watchTimeWriter.primeCache(api) }
+                .onFailure { Timber.w(it, "Auto-sync cache prime failed") }
             val watchTime = watchTimeProvider.nowForWatch()
-            val writeResult = watchTimeWriter.write(api, watchTime)
+            val writeResult = watchTimeWriter.writeAfterPrime(api, watchTime)
             kinds += SyncKind.TIME
             recordedTimeMs = writeResult.timeMs
             recordedActions += watchTime.syncHistoryActions("Automatic time write", writeResult)
@@ -125,6 +128,9 @@ class AutoSyncCoordinator @Inject constructor(
         if (success && LocalDataStorage.getTimeAdjustmentNotification(context) && !WatchInfo.alwaysConnected) {
             postSyncNotification()
         }
+        // Prevent CDM from immediately reconnecting after the firmware-initiated sync disconnects,
+        // which would cause a spurious cache-prime timeout in the sync log.
+        api.preventReconnection()
     }
 
     private fun postSyncNotification() {
