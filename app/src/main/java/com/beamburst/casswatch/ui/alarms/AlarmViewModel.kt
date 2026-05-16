@@ -386,10 +386,15 @@ class AlarmViewModel @Inject constructor(
                 saveSignalSettings(updated)
             }
             is HourlySignalAction.SetDays -> {
+                val wasEmpty = _hourlySignal.value.days.isEmpty()
                 val newDays = action.days
                 val updated = _hourlySignal.value.copy(
                     days = newDays,
-                    enabled = if (newDays.isEmpty()) false else _hourlySignal.value.enabled,
+                    enabled = when {
+                        newDays.isEmpty() -> false
+                        wasEmpty && newDays.isNotEmpty() -> true
+                        else -> _hourlySignal.value.enabled
+                    },
                 )
                 _hourlySignal.value = updated
                 saveSignalSettings(updated)

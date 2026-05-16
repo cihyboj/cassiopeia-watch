@@ -36,13 +36,21 @@ import com.beamburst.casswatch.ui.common.AppCard
 import com.beamburst.casswatch.ui.common.AppSwitch
 import com.beamburst.casswatch.ui.common.AppText
 import java.time.DayOfWeek
-import java.time.format.TextStyle
-import java.util.Locale
 import kotlin.math.roundToInt
 
 private val START_HOURS = mapOf(0 to 1, 1 to 7, 2 to 13, 3 to 19)
 private val END_HOURS   = mapOf(1 to 6, 2 to 12, 3 to 18, 4 to 0)
-private val TICK_LABELS = listOf("01", "07", "13", "19", "24")
+private val TICK_LABELS = listOf("00", "06", "12", "18", "24")
+
+private fun DayOfWeek.twoLetterLabel(): String = when (this) {
+    DayOfWeek.MONDAY    -> "Mo"
+    DayOfWeek.TUESDAY   -> "Tu"
+    DayOfWeek.WEDNESDAY -> "We"
+    DayOfWeek.THURSDAY  -> "Th"
+    DayOfWeek.FRIDAY    -> "Fr"
+    DayOfWeek.SATURDAY  -> "Sa"
+    DayOfWeek.SUNDAY    -> "Su"
+}
 
 private fun startHourToPos(h: Int): Float =
     START_HOURS.entries.firstOrNull { it.value == h }?.key?.toFloat() ?: 1f
@@ -111,9 +119,10 @@ fun HourlySignalCardContent(
                 AppSwitch(
                     checked = state.enabled,
                     onCheckedChange = { on ->
-                        if (!on || state.days.isNotEmpty()) {
-                            onAction(HourlySignalAction.SetEnabled(on))
+                        if (on && state.days.isEmpty()) {
+                            onAction(HourlySignalAction.SetDays(DayOfWeek.entries.toSet()))
                         }
+                        onAction(HourlySignalAction.SetEnabled(on))
                     },
                 )
             }
@@ -204,8 +213,7 @@ fun HourlySignalCardContent(
                                     val newDays = if (day in state.days) state.days - day else state.days + day
                                     onAction(HourlySignalAction.SetDays(newDays))
                                 },
-                                enabled = state.enabled,
-                                label = { Text(day.getDisplayName(TextStyle.SHORT, Locale.getDefault())) },
+                                label = { Text(day.twoLetterLabel()) },
                             )
                         }
                     }
@@ -239,7 +247,6 @@ fun HourlySignalCardContent(
                             FilterChip(
                                 selected = state.days == days,
                                 onClick = { onAction(HourlySignalAction.SetDays(days)) },
-                                enabled = state.enabled,
                                 label = { Text(label) },
                             )
                         }
