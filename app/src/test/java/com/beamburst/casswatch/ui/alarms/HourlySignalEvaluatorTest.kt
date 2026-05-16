@@ -4,15 +4,18 @@ import com.beamburst.casswatch.data.local.HourlySignalSettings
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.DayOfWeek
 import java.time.LocalDateTime
 
 class HourlySignalEvaluatorTest {
 
+    private val allDays = DayOfWeek.entries.toSet()
+
     private fun dt(hour: Int, minute: Int = 0) =
         LocalDateTime.of(2026, 5, 3, hour, minute)
 
-    private fun settings(enabled: Boolean, start: Int, end: Int) =
-        HourlySignalSettings(enabled = enabled, startHour = start, endHour = end)
+    private fun settings(enabled: Boolean, start: Int, end: Int, days: Set<DayOfWeek> = allDays) =
+        HourlySignalSettings(enabled = enabled, startHour = start, endHour = end, days = days)
 
     // ── disabled ─────────────────────────────────────────────────────────────
     @Test fun disabledAlwaysReturnsFalse() {
@@ -69,5 +72,25 @@ class HourlySignalEvaluatorTest {
     }
     @Test fun window13_0_autoSync_00_off() {
         assertFalse(HourlySignalEvaluator.shouldChimeAt(dt(0), settings(true, 13, 0)))
+    }
+
+    // ── days of week ─────────────────────────────────────────────────────────
+    @Test fun `enabled signal does not chime on excluded day`() {
+        val weekdays = setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+                             DayOfWeek.THURSDAY, DayOfWeek.FRIDAY)
+        val saturday = LocalDateTime.of(2025, 6, 7, 10, 0) // Saturday
+        assertFalse(HourlySignalEvaluator.shouldChimeAt(saturday, HourlySignalSettings(enabled = true, startHour = 7, endHour = 18, days = weekdays)))
+    }
+
+    @Test fun `enabled signal chimes on included weekday`() {
+        val weekdays = setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+                             DayOfWeek.THURSDAY, DayOfWeek.FRIDAY)
+        val monday = LocalDateTime.of(2025, 6, 2, 10, 0) // Monday
+        assertTrue(HourlySignalEvaluator.shouldChimeAt(monday, HourlySignalSettings(enabled = true, startHour = 7, endHour = 18, days = weekdays)))
+    }
+
+    @Test fun `empty days never chimes even if enabled`() {
+        val s = HourlySignalSettings(enabled = true, startHour = 7, endHour = 18, days = emptySet())
+        assertFalse(HourlySignalEvaluator.shouldChimeAt(dt(10), s))
     }
 }
