@@ -43,3 +43,8 @@ internal fun signalTabSubtitle(state: HourlySignalUiState): String =
     } else {
         "Off"
     }
+
+internal fun chimeCount(startHour: Int, endHour: Int): Int {
+    val end = if (endHour == 0) 24 else endHour
+    return (end - startHour).coerceAtLeast(0)
+}

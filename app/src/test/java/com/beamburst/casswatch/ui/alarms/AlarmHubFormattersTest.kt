@@ -92,4 +92,16 @@ class AlarmHubFormattersTest {
 
         assertEquals("2 ON", alarmTabSubtitle(alarms))
     }
+
+    @Test fun `chimeCount standard window 7 to 18`() {
+        assertEquals(11, chimeCount(7, 18))
+    }
+
+    @Test fun `chimeCount midnight end 19 to 0`() {
+        assertEquals(5, chimeCount(19, 0))
+    }
+
+    @Test fun `chimeCount full day 1 to 0`() {
+        assertEquals(23, chimeCount(1, 0))
+    }
 }
