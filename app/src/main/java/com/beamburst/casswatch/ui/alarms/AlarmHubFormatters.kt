@@ -39,7 +39,8 @@ internal fun timerTabSubtitle(totalSeconds: Int): String {
 
 internal fun signalTabSubtitle(state: HourlySignalUiState): String =
     if (state.enabled) {
-        "%02d-%02d".format(state.startHour, state.endHour)
+        val displayEnd = if (state.endHour == 0) 24 else state.endHour
+        "%02d-%02d".format(state.startHour, displayEnd)
     } else {
         "Off"
     }

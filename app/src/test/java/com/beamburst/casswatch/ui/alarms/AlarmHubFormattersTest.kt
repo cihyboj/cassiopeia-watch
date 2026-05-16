@@ -82,6 +82,11 @@ class AlarmHubFormattersTest {
         )
     }
 
+    @Test fun `signalTabSubtitle shows 24 for midnight end hour`() {
+        val state = HourlySignalUiState(enabled = true, startHour = 19, endHour = 0)
+        assertEquals("19-24", signalTabSubtitle(state))
+    }
+
     @Test
     fun `alarm tab subtitle counts enabled alarms`() {
         val alarms = listOf(
