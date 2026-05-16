@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.time
 
+import android.widget.NumberPicker
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -22,29 +23,31 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.theme.Spacing
 import com.beamburst.casswatch.ui.common.AppButton
 import com.beamburst.casswatch.ui.common.AppCard
 import com.beamburst.casswatch.ui.common.AppText
-import com.beamburst.casswatch.ui.common.WheelPicker
-
-private val MINUTES = (0..59).map { "%02d".format(it) }
-private val SECONDS = (0..59).map { "%02d".format(it) }
+import com.beamburst.casswatch.ui.common.applyWheelTextStyle
 
 private data class Preset(val labelRes: Int, val totalSeconds: Int)
 private val PRESETS = listOf(
-    Preset(R.string.timer_preset_5min, 300),
+    Preset(R.string.timer_preset_5min,  300),
     Preset(R.string.timer_preset_10min, 600),
     Preset(R.string.timer_preset_15min, 900),
+    Preset(R.string.timer_preset_20min, 1200),
     Preset(R.string.timer_preset_25min, 1500),
     Preset(R.string.timer_preset_30min, 1800),
-    Preset(R.string.timer_preset_5959, 3599),
+    Preset(R.string.timer_preset_45min, 2700),
+    Preset(R.string.timer_preset_60min, 3599),
 )
 
 @Composable
@@ -114,18 +117,17 @@ fun TimerCardContent(
 
             Spacer(Modifier.height(Spacing.sm))
 
-            // Scroll drums
+            // Number picker drums
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    WheelPicker(
-                        items = MINUTES,
-                        selectedIndex = minutes,
-                        onIndexSelected = { m -> onSetTimer(m, seconds) },
-                        modifier = Modifier.width(72.dp),
+                    TimerDrumPicker(
+                        value = minutes,
+                        onValueChange = { m -> onSetTimer(m, seconds) },
+                        modifier = Modifier.width(80.dp),
                     )
                     Text(
                         text = stringResource(R.string.timer_label_min),
@@ -139,11 +141,10 @@ fun TimerCardContent(
                     modifier = Modifier.padding(horizontal = Spacing.sm),
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    WheelPicker(
-                        items = SECONDS,
-                        selectedIndex = seconds,
-                        onIndexSelected = { s -> onSetTimer(minutes, s) },
-                        modifier = Modifier.width(72.dp),
+                    TimerDrumPicker(
+                        value = seconds,
+                        onValueChange = { s -> onSetTimer(minutes, s) },
+                        modifier = Modifier.width(80.dp),
                     )
                     Text(
                         text = stringResource(R.string.timer_label_sec),
@@ -174,6 +175,36 @@ fun TimerCardContent(
             }
         }
     }
+}
+
+@Composable
+private fun TimerDrumPicker(
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val displayedValues = remember { (0..59).map { "%02d".format(it) }.toTypedArray() }
+    val selectedColor = MaterialTheme.colorScheme.onSurface.toArgb()
+    val inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f).toArgb()
+
+    AndroidView(
+        factory = { context ->
+            NumberPicker(context).apply {
+                minValue = 0
+                maxValue = 59
+                this.displayedValues = displayedValues
+                this.value = value
+                descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
+                wrapSelectorWheel = true
+                applyWheelTextStyle(selectedColor, inactiveColor, 28f)
+            }
+        },
+        update = { picker ->
+            if (picker.value != value) picker.value = value
+            picker.setOnValueChangedListener { _, _, newVal -> onValueChange(newVal) }
+        },
+        modifier = modifier,
+    )
 }
 
 @Composable

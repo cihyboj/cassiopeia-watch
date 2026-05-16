@@ -312,4 +312,7 @@
     <string name="timer_preset_25min">25 min</string>
     <string name="timer_preset_30min">30 min</string>
     <string name="timer_preset_5959">59:59</string>
+    <string name="timer_preset_20min">20 min</string>
+    <string name="timer_preset_45min">45 min</string>
+    <string name="timer_preset_60min">60 min</string>
 </resources>
