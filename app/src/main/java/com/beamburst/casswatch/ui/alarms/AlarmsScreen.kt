@@ -306,9 +306,9 @@ fun AlarmsScreen(
                             .fillMaxWidth()
                             .padding(horizontal = Spacing.lg),
                         timerSeconds = timerState.timer,
-                        onSetTimer = timerViewModel::setTimer,
-                        onSendTimer = timerViewModel::sendTimerToWatch,
-                        showSendButton = false,
+                        onSetTimer = { minutes, seconds ->
+                            timerViewModel.setTimer(0, minutes, seconds)
+                        },
                     )
                     AlarmHubTab.SIGNAL -> HourlySignalCard(
                         modifier = Modifier.padding(horizontal = Spacing.lg)
