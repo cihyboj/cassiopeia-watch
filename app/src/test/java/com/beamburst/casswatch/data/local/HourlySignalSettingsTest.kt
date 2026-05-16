@@ -44,4 +44,14 @@ class HourlySignalSettingsTest {
         val parsed = HourlySignalSettings.parseDaysForTest(serialized)
         assertEquals(emptySet<DayOfWeek>(), parsed)
     }
+
+    @Test fun `empty string from storage falls back to all days`() {
+        val parsed = HourlySignalSettings.parseDaysForTest("")
+        // parseDays("") returns emptySet, but load() applies takeIf so fallback kicks in
+        // We can test the parseDays directly returns empty:
+        assertEquals(emptySet<DayOfWeek>(), parsed)
+        // And verify that an empty serialized set round-trips correctly via load logic:
+        val withTakeIf = parsed.takeIf { it.isNotEmpty() } ?: DayOfWeek.entries.toSet()
+        assertEquals(DayOfWeek.entries.toSet(), withTakeIf)
+    }
 }

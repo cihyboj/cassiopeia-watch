@@ -32,6 +32,7 @@ data class HourlySignalSettings(
             endHour = LocalDataStorage.get(context, key(KEY_END, addr), "18")?.toIntOrNull() ?: 18,
             days = LocalDataStorage.get(context, key(KEY_DAYS, addr), null)
                 ?.let { parseDays(it) }
+                ?.takeIf { it.isNotEmpty() }
                 ?: DayOfWeek.entries.toSet(),
         )
 
