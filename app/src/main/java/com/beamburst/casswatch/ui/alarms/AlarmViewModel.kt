@@ -71,16 +71,15 @@ data class AlarmDraft(
 
 data class HourlySignalUiState(
     val enabled: Boolean = false,
-    val startHour: Int = 7,
-    val endHour: Int = 18,
-    val showDialog: Boolean = false,
+    val startHour: Int = 7,    // ∈ {1, 7, 13, 19}
+    val endHour: Int = 18,     // ∈ {6, 12, 18, 0}
+    val days: Set<DayOfWeek> = DayOfWeek.entries.toSet(),
 )
 
 sealed class HourlySignalAction {
     data class SetEnabled(val on: Boolean) : HourlySignalAction()
-    data object OpenDialog : HourlySignalAction()
-    data class SaveWindow(val startHour: Int, val endHour: Int) : HourlySignalAction()
-    data object DismissDialog : HourlySignalAction()
+    data class SetWindow(val startHour: Int, val endHour: Int) : HourlySignalAction()
+    data class SetDays(val days: Set<DayOfWeek>) : HourlySignalAction()
 }
 
 fun alarmHash(
@@ -243,6 +242,7 @@ class AlarmViewModel @Inject constructor(
                 enabled   = signalSettings.enabled,
                 startHour = signalSettings.startHour,
                 endHour   = signalSettings.endHour,
+                days      = signalSettings.days,
             )
             refreshSyncRiskState()
     }
@@ -375,40 +375,41 @@ class AlarmViewModel @Inject constructor(
             is HourlySignalAction.SetEnabled -> {
                 val updated = _hourlySignal.value.copy(enabled = action.on)
                 _hourlySignal.value = updated
-                val addr = watchSelector.currentAddress() ?: return
-                HourlySignalSettings.save(
-                    appContext,
-                    addr,
-                    HourlySignalSettings(
-                        enabled   = updated.enabled,
-                        startHour = updated.startHour,
-                        endHour   = updated.endHour,
-                    )
-                )
+                saveSignalSettings(updated)
             }
-            is HourlySignalAction.OpenDialog ->
-                _hourlySignal.value = _hourlySignal.value.copy(showDialog = true)
-            is HourlySignalAction.SaveWindow -> {
+            is HourlySignalAction.SetWindow -> {
                 val updated = _hourlySignal.value.copy(
-                    startHour  = action.startHour,
-                    endHour    = action.endHour,
-                    showDialog = false,
+                    startHour = action.startHour,
+                    endHour = action.endHour,
                 )
                 _hourlySignal.value = updated
-                val addr = watchSelector.currentAddress() ?: return
-                HourlySignalSettings.save(
-                    appContext,
-                    addr,
-                    HourlySignalSettings(
-                        enabled   = updated.enabled,
-                        startHour = updated.startHour,
-                        endHour   = updated.endHour,
-                    )
-                )
+                saveSignalSettings(updated)
             }
-            is HourlySignalAction.DismissDialog ->
-                _hourlySignal.value = _hourlySignal.value.copy(showDialog = false)
+            is HourlySignalAction.SetDays -> {
+                val newDays = action.days
+                val updated = _hourlySignal.value.copy(
+                    days = newDays,
+                    enabled = if (newDays.isEmpty()) false else _hourlySignal.value.enabled,
+                )
+                _hourlySignal.value = updated
+                saveSignalSettings(updated)
+            }
         }
+    }
+
+    private fun saveSignalSettings(state: HourlySignalUiState) {
+        val addr = watchSelector.currentAddress() ?: return
+        HourlySignalSettings.save(
+            appContext,
+            addr,
+            HourlySignalSettings(
+                enabled   = state.enabled,
+                startHour = state.startHour,
+                endHour   = state.endHour,
+                days      = state.days,
+            )
+        )
+        refreshSyncRiskState(isDirtyOverride = true)
     }
 
     fun sendHourlySignalToWatch() = viewModelScope.launch {
