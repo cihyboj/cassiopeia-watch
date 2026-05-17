@@ -1,10 +1,10 @@
 package com.beamburst.casswatch.ui.settings
 
 import com.beamburst.casswatch.ui.common.AppSwitch
+import com.beamburst.casswatch.ui.common.AppText
 import com.beamburst.casswatch.ui.common.AppTextLink
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -78,19 +78,19 @@ fun TimeAdjustment(
                         .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    SettingsLabel(
-                        text = stringResource(
-                            id = R.string.adjustment_time_minutes
-                        ),
-                        modifier = Modifier.padding(end = Spacing.sm)
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        SettingsLabel(text = stringResource(id = R.string.when_to_run))
+                        AppText(
+                            text = stringResource(id = R.string.minutes_after_hour),
+                            style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     InfoButton(
                         infoText = stringResource(
                             id = R.string.adjustment_time_info
                         )
                     )
-
-                    Spacer(modifier = Modifier.weight(1f))
 
                     var showDialog by remember { mutableStateOf(false) }
 
@@ -158,7 +158,7 @@ private fun AutoAdjustmentRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             SettingsLabel(text = stringResource(id = R.string.auto_time_adjustment_master))
-            com.beamburst.casswatch.ui.common.AppText(
+            AppText(
                 text = stringResource(id = R.string.auto_time_adjustment_master_caption),
                 style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                 color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,

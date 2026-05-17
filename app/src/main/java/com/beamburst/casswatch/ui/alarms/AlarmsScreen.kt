@@ -3,23 +3,28 @@ package com.beamburst.casswatch.ui.alarms
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,10 +49,9 @@ import com.beamburst.casswatch.ui.common.AppButton
 import com.beamburst.casswatch.ui.common.AppCard
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.common.AppText
-import com.beamburst.casswatch.ui.common.ButtonData
-import com.beamburst.casswatch.ui.common.ButtonsRow
 import com.beamburst.casswatch.ui.common.ItemView
 import com.beamburst.casswatch.ui.common.ScreenTitle
+import com.beamburst.casswatch.ui.common.SendToWatchActionBar
 import com.beamburst.casswatch.ui.time.TimerCardContent
 import com.beamburst.casswatch.ui.time.TimerViewModel
 import java.time.DayOfWeek
@@ -124,43 +129,18 @@ private fun AlarmHubActionRow(
 ) {
     val isConnected by alarmViewModel.isConnected.collectAsState()
 
-    if (isConnected) {
-        val buttons = buildList {
-            if (activeTab == AlarmHubTab.ALARMS) add(ButtonData(
-                text = stringResource(id = R.string.send_alarms_to_phone),
-                onClick = { alarmViewModel.sendAlarmsToPhone() }
-            ))
-            add(ButtonData(
-                text = stringResource(id = R.string.send_to_watch),
-                onClick = {
-                    when (activeTab) {
-                        AlarmHubTab.ALARMS -> alarmViewModel.sendAlarmsToWatch()
-                        AlarmHubTab.TIMER -> timerViewModel.sendTimerToWatch()
-                        AlarmHubTab.SIGNAL -> alarmViewModel.sendHourlySignalToWatch()
-                    }
-                }
-            ))
-        }
-        ButtonsRow(
-            buttons = buttons,
-            modifier = modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-            rowPadding = Spacing.sm
-        )
-    } else {
-        DisconnectedInfoCard(
-            onSendToPhone = if (activeTab == AlarmHubTab.ALARMS) {
-                { alarmViewModel.sendAlarmsToPhone() }
-            } else {
-                null
-            },
-            modifier = Modifier
-                .then(modifier)
-                .fillMaxWidth()
-                .padding(vertical = Spacing.sm)
-        )
-    }
+    if (!isConnected) return
+
+    SendToWatchActionBar(
+        onClick = {
+            when (activeTab) {
+                AlarmHubTab.ALARMS -> alarmViewModel.sendAlarmsToWatch()
+                AlarmHubTab.TIMER -> timerViewModel.sendTimerToWatch()
+                AlarmHubTab.SIGNAL -> alarmViewModel.sendHourlySignalToWatch()
+            }
+        },
+        modifier = modifier.fillMaxWidth(),
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -179,40 +159,72 @@ private fun AlarmHubTabs(
         AlarmHubTab.SIGNAL to (stringResource(R.string.alarm_hub_signal) to signalSubtitle),
     )
     val count = tabs.size
+    val outerShape = RoundedCornerShape(16.dp)
+    val selectedColor = MaterialTheme.colorScheme.primaryContainer
+    val selectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    val unselectedContentColor = MaterialTheme.colorScheme.onSurface
+    val outlineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.75f)
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
+        shape = outerShape,
         color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, outlineColor),
     ) {
-        SingleChoiceSegmentedButtonRow(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.xs),
+                .height(52.dp)
+                .clip(outerShape),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             tabs.forEachIndexed { index, (tab, labels) ->
-                SegmentedButton(
-                    selected = tab == activeTab,
-                    onClick = { onTabSelected(tab) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = count),
-                    modifier = Modifier.heightIn(min = 52.dp),
-                    label = {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Text(
-                                text = labels.first,
-                                style = MaterialTheme.typography.titleSmall,
-                            )
-                            Text(
-                                text = labels.second,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    },
-                )
+                val selected = tab == activeTab
+                val segmentShape = when (index) {
+                    0 -> RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)
+                    count - 1 -> RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp)
+                    else -> RoundedCornerShape(0.dp)
+                }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(segmentShape)
+                        .background(if (selected) selectedColor else MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable { onTabSelected(tab) }
+                        .padding(horizontal = Spacing.xs, vertical = Spacing.xs),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Text(
+                            text = labels.first,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = if (selected) selectedContentColor else unselectedContentColor,
+                        )
+                        Text(
+                            text = labels.second,
+                            style = MaterialTheme.typography.labelSmall,
+                            color =
+                                if (selected) {
+                                    selectedContentColor.copy(alpha = 0.75f)
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                        )
+                    }
+                }
+                if (index < count - 1) {
+                    VerticalDivider(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(1.dp),
+                        thickness = 1.dp,
+                        color = outlineColor,
+                    )
+                }
             }
         }
     }
@@ -224,6 +236,7 @@ fun AlarmsScreen(
     alarmViewModel: AlarmViewModel = hiltViewModel(),
     timerViewModel: TimerViewModel = hiltViewModel(),
     onNavigateToHistory: () -> Unit = {},
+    onOpenSyncSettings: () -> Unit = {},
 ) {
     val alarms by alarmViewModel.alarms.collectAsState()
     val hourlySignal by alarmViewModel.hourlySignal.collectAsState()
@@ -311,7 +324,8 @@ fun AlarmsScreen(
                         },
                     )
                     AlarmHubTab.SIGNAL -> HourlySignalCard(
-                        modifier = Modifier.padding(horizontal = Spacing.lg)
+                        modifier = Modifier.padding(horizontal = Spacing.lg),
+                        onOpenSyncSettings = onOpenSyncSettings,
                     )
                 }
             }
@@ -346,7 +360,8 @@ private fun AlarmsScreenPreviewContent() {
                 ) {
                     ScreenTitle(
                         text = stringResource(R.string.watch_alarms),
-                        modifier = Modifier
+                        modifier = Modifier,
+                        showStatusBadge = false,
                     )
 
                     AlarmHubTabs(
@@ -392,11 +407,6 @@ private fun AlarmsScreenPreviewContent() {
                         caption = "7-18 active window",
                         modifier = Modifier.padding(horizontal = Spacing.lg),
                     )
-                    PreviewDisconnectedInfoCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
-                    )
                 }
             }
         }
@@ -425,33 +435,6 @@ private fun PreviewHourlySignalCard(
                 text = if (enabled) caption else "Off",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.5f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun PreviewDisconnectedInfoCard(modifier: Modifier = Modifier) {
-    AppCard(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(Spacing.sm)
-        ) {
-            AppText(
-                text = "Watch not connected",
-                style = MaterialTheme.typography.titleMedium
-            )
-            AppText(
-                text = "You can edit alarms here and send them to the watch later.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            AppButton(
-                text = "Send to phone",
-                onClick = {},
-                modifier = Modifier.fillMaxWidth()
             )
         }
     }

@@ -199,8 +199,13 @@ object LocalDataStorage {
             )
         }.getOrNull()
 
-    fun getAutoSyncOnReconnect(context: Context, address: String): Boolean? =
-        get(context, autoSyncOnReconnectKey(address), null)?.toBooleanStrictOrNull()
+    fun getAutoSyncOnReconnect(context: Context, address: String): Boolean? {
+        val key = autoSyncOnReconnectKey(address)
+        if (get(context, key, null)?.toBooleanStrictOrNull() != true) {
+            put(context, key, true.toString())
+        }
+        return true
+    }
 
     suspend fun setAutoSyncOnReconnect(context: Context, address: String, enabled: Boolean) {
         putBoolean(context, autoSyncOnReconnectKey(address), enabled)
@@ -212,10 +217,10 @@ object LocalDataStorage {
         seed: Boolean?,
     ): Boolean {
         val current = getAutoSyncOnReconnect(context, address)
-        if (current != null) return current
-        val initialized = seed ?: false
-        setAutoSyncOnReconnect(context, address, initialized)
-        return initialized
+        if (current != true) {
+            setAutoSyncOnReconnect(context, address, true)
+        }
+        return true
     }
 
     suspend fun setNtpOffsetCache(context: Context, cache: NtpOffsetCache) {

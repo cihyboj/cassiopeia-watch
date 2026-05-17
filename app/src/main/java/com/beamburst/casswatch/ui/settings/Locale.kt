@@ -3,10 +3,8 @@ package com.beamburst.casswatch.ui.settings
 import com.beamburst.casswatch.ui.common.AppText
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -14,7 +12,6 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.theme.Spacing
+import com.beamburst.casswatch.ui.common.AppSegmentedChoiceRow
 import org.avmedia.gshockapi.WatchInfo
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,103 +53,32 @@ fun Locale(
                 .fillMaxWidth()
                 .padding(contentPadding)
         ) {
-            // Time Format Section
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                SettingsLabel(
-                    text = stringResource(
-                        id = R.string.time_format
-                    ),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = Spacing.md)
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically // Aligns children vertically in the center
-                ) {
-                    RadioButton(
-                        selected = timeFormat == SettingsViewModel.Locale.TimeFormat.TWELVE_HOURS,
-                        onClick = {
-                            timeFormat = SettingsViewModel.Locale.TimeFormat.TWELVE_HOURS
-                            localeSetting.timeFormat = timeFormat
-                            onUpdate(
-                                localeSetting.copy(timeFormat = timeFormat)
-                            )
-                        }
-                    )
-                    AppText(
-                        text = stringResource(
-                            id = R.string._12h
-                        )
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.sm))
-                    RadioButton(
-                        selected = timeFormat == SettingsViewModel.Locale.TimeFormat.TWENTY_FOUR_HOURS,
-                        onClick = {
-                            timeFormat = SettingsViewModel.Locale.TimeFormat.TWENTY_FOUR_HOURS
-                            localeSetting.timeFormat = timeFormat
-                            onUpdate(localeSetting.copy(timeFormat = timeFormat))
-                        }
-                    )
-                    AppText(
-                        text = stringResource(
-                            id = R.string._24h
-                        )
-                    )
+            AppSegmentedChoiceRow(
+                title = stringResource(id = R.string.time_format),
+                selected = timeFormat,
+                choices = listOf(
+                    SettingsViewModel.Locale.TimeFormat.TWELVE_HOURS to stringResource(id = R.string._12h),
+                    SettingsViewModel.Locale.TimeFormat.TWENTY_FOUR_HOURS to stringResource(id = R.string._24h),
+                ),
+                onSelected = {
+                    timeFormat = it
+                    onUpdate(localeSetting.copy(timeFormat = it))
                 }
-            }
+            )
 
             if (WatchInfo.hasDateFormat) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    SettingsLabel(
-                        text = stringResource(
-                            id = R.string.date_format
-                        ),
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = Spacing.sm)
-                    )
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically // Aligns children vertically in the center
-                    ) {
-                        RadioButton(
-                            selected = dateFormat == SettingsViewModel.Locale.DateFormat.MONTH_DAY,
-                            onClick = {
-                                dateFormat = SettingsViewModel.Locale.DateFormat.MONTH_DAY
-                                localeSetting.dateFormat = dateFormat
-                                onUpdate(localeSetting.copy(dateFormat = dateFormat))
-                            }
-                        )
-                        AppText(
-                            text = stringResource(
-                                id = R.string.mm_dd
-                            )
-                        )
-
-                        Spacer(modifier = Modifier.width(Spacing.sm))
-
-                        RadioButton(
-                            selected = dateFormat == SettingsViewModel.Locale.DateFormat.DAY_MONTH,
-                            onClick = {
-                                dateFormat = SettingsViewModel.Locale.DateFormat.DAY_MONTH
-                                localeSetting.dateFormat = dateFormat
-                                onUpdate(localeSetting.copy(dateFormat = dateFormat))
-                            }
-                        )
-                        AppText(
-                            text = stringResource(
-                                id = R.string.dd_mm
-                            )
-                        )
+                AppSegmentedChoiceRow(
+                    title = stringResource(id = R.string.date_format),
+                    selected = dateFormat,
+                    choices = listOf(
+                        SettingsViewModel.Locale.DateFormat.MONTH_DAY to stringResource(id = R.string.mm_dd),
+                        SettingsViewModel.Locale.DateFormat.DAY_MONTH to stringResource(id = R.string.dd_mm),
+                    ),
+                    onSelected = {
+                        dateFormat = it
+                        onUpdate(localeSetting.copy(dateFormat = it))
                     }
-                }
+                )
             }
 
             Row(

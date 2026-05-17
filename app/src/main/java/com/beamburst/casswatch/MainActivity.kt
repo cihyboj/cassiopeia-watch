@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit
 import com.beamburst.casswatch.theme.CassiopeiaWatchTheme
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.common.PopupMessageReceiver
+import com.beamburst.casswatch.utils.AppUsageState
 import com.beamburst.casswatch.utils.BluetoothHelper
 import com.beamburst.casswatch.utils.CheckPermissions
 import com.beamburst.casswatch.utils.CrashReportHelper
@@ -97,6 +98,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        AppUsageState.markForeground()
+    }
+
+    override fun onStop() {
+        AppUsageState.markBackground()
+        super.onStop()
     }
 
     /** Setup global exception handler to catch and log all uncaught exceptions */

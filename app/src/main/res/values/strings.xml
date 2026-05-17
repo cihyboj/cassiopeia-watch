@@ -52,7 +52,7 @@
     <string name="alarm_hub_signal">Signal</string>
     <string name="hourly_signal_window_caption">%1$s:00 – %2$s:00</string>
     <string name="hourly_signal_chimes_at">Chimes at %1$s (%2$d chimes / day)</string>
-    <string name="hourly_signal_requires_auto_sync">Requires automatic sync. The watch updates at 0:00, 6:00, 12:00 and 18:00.</string>
+    <string name="hourly_signal_requires_auto_sync">Requires automatic sync. The watch updates at 00:00, 06:00, 12:00 and 18:00.</string>
     <string name="hourly_signal_picker_start">start</string>
     <string name="hourly_signal_picker_end">end</string>
     <string name="set_time_on_watch">Set time on watch</string>
@@ -138,7 +138,7 @@
         <li>This setting sets the number of minutes after the hour when time adjustment occurs. So if you set this value to 25, time adjustment will happen at 12:25AM, 6:25AM, 12:25PM and 6:25PM.</li>
         <li>If you have multiple watches, you can control when to set their time individually.</li>
         ]]></string>
-    <string name="adjustment_time_minutes">When to run\n(minutes after hour)</string>
+    <string name="adjustment_time_minutes">When to run</string>
     <string name="do_not_disturb_dnd">Do Not Disturb (DnD)</string>
     <string name="mirror_phone_s_dnd">Mirror Phone\'s DnD</string>
     <string name="DnD_info_message"><![CDATA[
@@ -187,9 +187,9 @@
     <string name="timer_set">Timer Set</string>
     <string name="press_and_hold_for_3_seconds">Press and\nhold for 3\nseconds</string>
     <string name="short_press_to_run_actions">Short-press\nto run\nActions</string>
-    <string name="g_shock_smart_sync_is_running">G-Shock Smart Sync is Running</string>
+    <string name="g_shock_smart_sync_is_running">Cassiopeia Watch is running</string>
     <string name="preventing_the_app_from_closing">Preventing the app from closing</string>
-    <string name="g_shock_smart_sync_is_not_running">G-Shock Smart Sync is not running.</string>
+    <string name="g_shock_smart_sync_is_not_running">Cassiopeia Watch is not running.</string>
     <string name="health_connect_not_available">\"Health Connect\" not available. Please install it.</string>
     <string name="cover_hold_to_unlock">Hold to unlock</string>
     <string name="cover_connected">Connected</string>
@@ -271,8 +271,9 @@
     <string name="pairing_crash_recovery" translatable="false">Recovered from previous pairing crash. You can try pairing again.</string>
     <string name="time_source_badge_ntp" translatable="false">NTP</string>
     <string name="time_source_badge_phone" translatable="false">Phone</string>
-    <string name="auto_time_adjustment_master">Automatic time adjustment</string>
-    <string name="auto_time_adjustment_master_caption">Watch wakes up four times a day and syncs time with the phone.</string>
+    <string name="auto_time_adjustment_master">Automatic sync</string>
+    <string name="auto_time_adjustment_master_caption">The phone updates the watch a few minutes after 00:00, 06:00, 12:00 and 18:00.</string>
+    <string name="minutes_after_hour" translatable="false">Minutes after hour</string>
     <string name="backup_title" translatable="false">Backup</string>
     <string name="backup_caption" translatable="false">Save or restore all app settings, paired watches, alarms, and sync history as a JSON file.</string>
     <string name="backup_export_button" translatable="false">Export…</string>
@@ -290,7 +291,7 @@
 
     <string name="pairing_crash_detected" translatable="false"><![CDATA[
         The app detected a previous crash during pairing. Crash logs have been saved.
-        <p>If this issue persists, please report it on <a href="https://github.com/izivkov/CasioGShockSmartSync/issues">GitHub</a> with your device model and watch model.</p>
+        <p>If this issue persists, please report it on <a href="https://github.com/cihyboj/cassiopeia-watch/issues">GitHub</a> with your device model and watch model.</p>
     ]]></string>
 
     <!-- Signal card (inline) -->
@@ -300,6 +301,12 @@
     <string name="hourly_signal_preset_every_day">Every day</string>
     <string name="hourly_signal_no_days_hint">Select at least one day to enable</string>
     <string name="hourly_signal_chimes_from">Chimes %1$s:00 to %2$s:00 · %3$d times per day</string>
+    <string name="hourly_signal_auto_sync_info_title" translatable="false">Automatic sync required</string>
+    <string name="hourly_signal_auto_sync_alert_title" translatable="false">Automatic sync is off</string>
+    <string name="hourly_signal_auto_sync_info_body" translatable="false">The phone keeps this signal schedule aligned with the watch.</string>
+    <string name="hourly_signal_auto_sync_dialog_title" translatable="false">Hourly signal sync</string>
+    <string name="hourly_signal_auto_sync_dialog_body" translatable="false">For this schedule, the phone updates the watch a few minutes after 00:00, 06:00, 12:00 and 18:00. You can change the delay in Settings.</string>
+    <string name="open_sync_settings" translatable="false">Open sync settings</string>
 
     <!-- Timer card (inline) -->
     <string name="timer_reset">Reset</string>

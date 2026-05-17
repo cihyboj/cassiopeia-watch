@@ -3,11 +3,11 @@ package com.beamburst.casswatch.ui.settings
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -16,8 +16,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -25,16 +30,37 @@ import com.beamburst.casswatch.BroadcastSpec
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.theme.CassiopeiaWatchTheme
 import com.beamburst.casswatch.theme.Spacing
-import com.beamburst.casswatch.ui.common.AppButton
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.common.AppText
 import com.beamburst.casswatch.ui.common.ScreenTitle
+import com.beamburst.casswatch.ui.common.SendToWatchActionBar
 import com.beamburst.casswatch.utils.NtpTimeSettings
+import kotlinx.coroutines.delay
 import org.avmedia.gshockapi.WatchInfo
+
+enum class SettingsAnchor(val routeValue: String) {
+    Sync("sync"),
+}
 
 @SuppressLint("MutableCollectionMutableState")
 @Composable
-fun SettingsScreen(onNavigateToHistory: () -> Unit = {}) {
+fun SettingsScreen(
+    onNavigateToHistory: () -> Unit = {},
+    anchor: String? = null,
+) {
+    val scrollState = rememberScrollState()
+    var syncOffset by remember { mutableIntStateOf(0) }
+    var highlightSync by remember(anchor) { mutableStateOf(anchor == SettingsAnchor.Sync.routeValue) }
+
+    LaunchedEffect(anchor, syncOffset) {
+        if (anchor == SettingsAnchor.Sync.routeValue && syncOffset > 0) {
+            scrollState.animateScrollTo(syncOffset)
+            highlightSync = true
+            delay(1800)
+            highlightSync = false
+        }
+    }
+
     CassiopeiaWatchTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -43,18 +69,22 @@ fun SettingsScreen(onNavigateToHistory: () -> Unit = {}) {
             Column(modifier = Modifier.fillMaxSize()) {
                 ScreenTitle(
                     stringResource(id = R.string.settings),
-                    Modifier
+                    Modifier,
                 )
 
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .padding(horizontal = Spacing.lg)
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(Spacing.sm)
                 ) {
-                    SettingsList(onNavigateToHistory)
+                    SettingsList(
+                        onNavigateToHistory = onNavigateToHistory,
+                        highlightSync = highlightSync,
+                        onSyncSectionPositioned = { syncOffset = it },
+                    )
                 }
 
                 BottomRow(
@@ -68,7 +98,11 @@ fun SettingsScreen(onNavigateToHistory: () -> Unit = {}) {
 }
 
 @Composable
-fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
+fun SettingsList(
+    onNavigateToHistory: () -> Unit = {},
+    highlightSync: Boolean = false,
+    onSyncSectionPositioned: (Int) -> Unit = {},
+) {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
 
     LaunchedEffect(Unit) {
@@ -174,8 +208,11 @@ fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
         Font(settingsViewModel::onSettingUpdated)
     }
 
-    SettingsSectionTitle(stringResource(R.string.settings_section_sync))
-    AutoSyncRow()
+    SettingsSectionTitle(
+        text = stringResource(R.string.settings_section_sync),
+        highlighted = highlightSync,
+        modifier = Modifier.onGloballyPositioned { onSyncSectionPositioned(it.positionInParent().y.toInt()) },
+    )
     TimeAdjustment(settingsViewModel::onSettingUpdated)
     SyncHistoryRow(onNavigate = onNavigateToHistory)
 
@@ -185,36 +222,34 @@ fun SettingsList(onNavigateToHistory: () -> Unit = {}) {
 }
 
 @Composable
-private fun SettingsSectionTitle(text: String) {
+private fun SettingsSectionTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    highlighted: Boolean = false,
+) {
     AppText(
         text = text,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = Spacing.xs, top = Spacing.md, bottom = Spacing.xxs)
+        modifier = modifier
+            .background(
+                if (highlighted) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                else androidx.compose.ui.graphics.Color.Transparent,
+                shape = MaterialTheme.shapes.small,
+            )
+            .padding(start = Spacing.xs, top = Spacing.md, bottom = Spacing.xxs)
     )
 }
 
 @Composable
 fun BottomRow(modifier: Modifier, settingsViewModel: SettingsViewModel = hiltViewModel()) {
-    Surface(
+    val isConnected by settingsViewModel.isConnected.collectAsState()
+    if (!isConnected) return
+
+    SendToWatchActionBar(
+        onClick = { settingsViewModel.sendToWatch() },
         modifier = modifier,
-        color = MaterialTheme.colorScheme.surface,
-        shape = MaterialTheme.shapes.medium,
-        tonalElevation = Spacing.xxs
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = Spacing.md, end = Spacing.sm, top = Spacing.xs, bottom = Spacing.xs),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End
-        ) {
-            AppButton(
-                onClick = { settingsViewModel.sendToWatch() },
-                text = stringResource(id = R.string.send_to_watch)
-            )
-        }
-    }
+    )
 }
 
 @Preview(showBackground = true)
@@ -233,7 +268,8 @@ private fun SettingsScreenPreviewContent() {
             Column(modifier = Modifier.fillMaxSize()) {
                 ScreenTitle(
                     stringResource(id = R.string.settings),
-                    Modifier
+                    Modifier,
+                    showStatusBadge = false,
                 )
 
                 Column(
@@ -268,27 +304,12 @@ private fun SettingsScreenPreviewContent() {
                     NtpTimePreviewRow()
                 }
 
-                Surface(
+                SendToWatchActionBar(
+                    onClick = {},
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = MaterialTheme.shapes.medium,
-                    tonalElevation = Spacing.xxs
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = Spacing.md, end = Spacing.sm, top = Spacing.xs, bottom = Spacing.xs),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        AppButton(
-                            onClick = {},
-                            text = stringResource(id = R.string.send_to_watch)
-                        )
-                    }
-                }
+                )
             }
         }
     }

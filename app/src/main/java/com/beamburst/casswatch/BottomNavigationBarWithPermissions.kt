@@ -26,10 +26,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import dagger.hilt.android.EntryPointAccessors
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.di.ApplicationContextEntryPoint
@@ -40,6 +42,7 @@ import com.beamburst.casswatch.ui.events.EventsScreen
 import com.beamburst.casswatch.ui.history.SyncHistoryScreen
 import com.beamburst.casswatch.ui.settings.SettingsScreen
 import com.beamburst.casswatch.ui.time.TimeScreen
+import com.beamburst.casswatch.utils.AppUsageState
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -61,7 +64,9 @@ fun BottomNavigationBarWithPermissions(
     val inactivityHandler = remember {
         InactivityHandler(timeout = (3 * 60).seconds) {
             repository.disconnect()
-            AppSnackbar(appContext.getString(R.string.disconnected_due_to_inactivity))
+            if (AppUsageState.shouldShowConnectionSnackbar()) {
+                AppSnackbar(appContext.getString(R.string.disconnected_due_to_inactivity))
+            }
         }
     }
 
@@ -88,6 +93,7 @@ fun BottomNavigationBarWithPermissions(
             while (true) {
                 awaitPointerEventScope {
                     awaitPointerEvent()
+                    AppUsageState.registerInteraction()
                     handler.registerInteraction()
                 }
             }
@@ -107,7 +113,7 @@ fun BottomNavigationBarWithPermissions(
                 BottomNavigationItem().bottomNavigationItems()
                     .forEachIndexed { _, navigationItem ->
                         NavigationBarItem(
-                            selected = navigationItem.route == currentDestination?.route,
+                            selected = navigationItem.route == currentDestination?.route?.substringBefore("?"),
                             label = {
                                 Text(
                                     text = navigationItem.label,
@@ -151,6 +157,15 @@ fun BottomNavigationBarWithPermissions(
                             launchSingleTop = true
                             restoreState = false
                         }
+                    },
+                    onOpenSyncSettings = {
+                        navController.navigate(Screens.Settings.withAnchor("sync")) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = false
+                        }
                     }
                 )
             }
@@ -166,6 +181,26 @@ fun BottomNavigationBarWithPermissions(
             }
             composable(Screens.Settings.route) {
                 SettingsScreen(
+                    onNavigateToHistory = {
+                        navController.navigate(Screens.SyncHistory.route) {
+                            launchSingleTop = true
+                            restoreState = false
+                        }
+                    }
+                )
+            }
+            composable(
+                route = Screens.Settings.routeWithAnchor,
+                arguments = listOf(
+                    navArgument("anchor") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                ),
+            ) { entry ->
+                SettingsScreen(
+                    anchor = entry.arguments?.getString("anchor"),
                     onNavigateToHistory = {
                         navController.navigate(Screens.SyncHistory.route) {
                             launchSingleTop = true

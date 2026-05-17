@@ -148,12 +148,16 @@ class AlarmViewModel @Inject constructor(
     private val _hourlySignal = MutableStateFlow(HourlySignalUiState())
     val hourlySignal: StateFlow<HourlySignalUiState> = _hourlySignal.asStateFlow()
 
+    private val _automaticSyncEnabled = MutableStateFlow(true)
+    val automaticSyncEnabled: StateFlow<Boolean> = _automaticSyncEnabled.asStateFlow()
+
     private val _syncWarnings = MutableStateFlow<Map<Int, String>>(emptyMap())
     val syncWarnings: StateFlow<Map<Int, String>> = _syncWarnings.asStateFlow()
 
     private var exactAlarmPermissionRequested = false
     private val eventSubscriberName = "AlarmViewModel-${System.identityHashCode(this)}"
     private val warningTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    private val initializedHourlySignalAddresses = mutableSetOf<String>()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val lastAlarmSync: StateFlow<SyncEntry?> = watchSelector.selected
@@ -210,41 +214,75 @@ class AlarmViewModel @Inject constructor(
     }
 
     private fun loadLocalStateForAddress(addr: String?) {
-            _viewMode.value = AlarmViewMode.WEEKLY
-            _alarmDays.value = if (addr != null) AlarmSyncStorage.loadDaySelections(appContext, addr) else emptyMap()
-            _firedAts.value = if (addr != null) AlarmSyncStorage.loadFiredAts(appContext, addr) else emptyMap()
-            _isConnected.value = isSelectedWatchConnected(addr)
+        _viewMode.value = AlarmViewMode.WEEKLY
+        _alarmDays.value = if (addr != null) AlarmSyncStorage.loadDaySelections(appContext, addr) else emptyMap()
+        _firedAts.value = if (addr != null) AlarmSyncStorage.loadFiredAts(appContext, addr) else emptyMap()
+        _isConnected.value = isSelectedWatchConnected(addr)
+        refreshAutomaticSyncEnabled(addr)
 
-            if (addr != null) {
-                AlarmSyncStorage.loadAlarms(appContext, addr)?.let {
-                    _alarms.value = it
-                }
+        if (addr != null) {
+            AlarmSyncStorage.loadAlarms(appContext, addr)?.let {
+                _alarms.value = it
             }
+        }
 
-            val signalSettings = if (addr != null) {
-                if (!HourlySignalSettings.isMigrated(appContext, addr)) {
-                    val legacyChime = AlarmSyncStorage.loadAlarms(appContext, addr)
-                        ?.getOrNull(0)?.hasHourlyChime ?: false
-                    val initial = if (legacyChime)
-                        HourlySignalSettings(enabled = true, startHour = 1, endHour = 0)
-                    else
-                        HourlySignalSettings.Default
-                    HourlySignalSettings.save(appContext, addr, initial)
-                    HourlySignalSettings.markMigrated(appContext, addr)
-                    initial
-                } else {
-                    HourlySignalSettings.load(appContext, addr)
-                }
-            } else {
-                HourlySignalSettings.Default
-            }
-            _hourlySignal.value = HourlySignalUiState(
-                enabled   = signalSettings.enabled,
-                startHour = signalSettings.startHour,
-                endHour   = signalSettings.endHour,
-                days      = signalSettings.days,
-            )
-            refreshSyncRiskState()
+        val signalSettings = loadHourlySignalSettings(addr)
+        _hourlySignal.value = HourlySignalUiState(
+            enabled   = signalSettings.enabled,
+            startHour = signalSettings.startHour,
+            endHour   = signalSettings.endHour,
+            days      = signalSettings.days,
+        )
+        refreshSyncRiskState()
+    }
+
+    fun refreshAutomaticSyncEnabled(addr: String? = watchSelector.currentAddress()) {
+        _automaticSyncEnabled.value = addr
+            ?.let { WatchSettingsCache.load(appContext, it)?.timeAdjustment }
+            ?: true
+    }
+
+    private fun loadHourlySignalSettings(addr: String?): HourlySignalSettings {
+        if (addr == null) return HourlySignalSettings.Default
+        if (HourlySignalSettings.hasStoredSettings(appContext, addr)) {
+            initializedHourlySignalAddresses += addr
+            return HourlySignalSettings.load(appContext, addr)
+        }
+
+        if (!HourlySignalSettings.isMigrated(appContext, addr) && AlarmSyncStorage.hasStoredAlarms(appContext, addr)) {
+            val legacyChime = AlarmSyncStorage.loadAlarms(appContext, addr)
+                ?.getOrNull(0)?.hasHourlyChime ?: false
+            val initial = hourlySignalSettingsFromChime(legacyChime)
+            HourlySignalSettings.save(appContext, addr, initial)
+            HourlySignalSettings.markMigrated(appContext, addr)
+            initializedHourlySignalAddresses += addr
+            return initial
+        }
+
+        return HourlySignalSettings.Default
+    }
+
+    private fun hourlySignalSettingsFromChime(chimeOn: Boolean): HourlySignalSettings =
+        if (chimeOn) HourlySignalSettings(enabled = true, startHour = 1, endHour = 0)
+        else HourlySignalSettings.Default
+
+    private fun seedHourlySignalSettingsFromWatch(addr: String?, chimeOn: Boolean) {
+        if (addr == null ||
+            addr in initializedHourlySignalAddresses ||
+            HourlySignalSettings.hasStoredSettings(appContext, addr)
+        ) {
+            return
+        }
+        val initial = hourlySignalSettingsFromChime(chimeOn)
+        HourlySignalSettings.save(appContext, addr, initial)
+        HourlySignalSettings.markMigrated(appContext, addr)
+        initializedHourlySignalAddresses += addr
+        _hourlySignal.value = HourlySignalUiState(
+            enabled = initial.enabled,
+            startHour = initial.startHour,
+            endHour = initial.endHour,
+            days = initial.days,
+        )
     }
 
     override fun onCleared() {
@@ -330,6 +368,7 @@ class AlarmViewModel @Inject constructor(
             } else {
                 alarmsFromWatch
             }
+            seedHourlySignalSettingsFromWatch(addr, newAlarms.getOrNull(0)?.hasHourlyChime ?: false)
             _alarms.value = newAlarms
             if (addr != null) AlarmSyncStorage.saveAlarms(appContext, addr, newAlarms, dirty = false)
             ProgressEvents.onNext("Alarms Loaded")
@@ -414,6 +453,8 @@ class AlarmViewModel @Inject constructor(
                 days      = state.days,
             )
         )
+        HourlySignalSettings.markMigrated(appContext, addr)
+        initializedHourlySignalAddresses += addr
         refreshSyncRiskState(isDirtyOverride = true)
     }
 

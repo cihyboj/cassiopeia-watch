@@ -46,7 +46,8 @@ fun TimeScreen(timeViewModel: TimeViewModel = hiltViewModel()) {
             ) {
                 ScreenTitle(
                     stringResource(id = R.string.home),
-                    Modifier
+                    Modifier,
+                    showStatusBadge = false,
                 )
 
                 LocalTimeView(
@@ -78,7 +79,8 @@ private fun TimeScreenPreviewContent() {
             ) {
                 ScreenTitle(
                     stringResource(id = R.string.home),
-                    Modifier
+                    Modifier,
+                    showStatusBadge = false,
                 )
 
                 LocalTimeCardContent(

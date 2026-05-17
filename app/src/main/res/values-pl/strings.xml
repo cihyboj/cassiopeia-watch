@@ -203,9 +203,9 @@
     <string name="timer_set">Timer ustawiony</string>
     <string name="press_and_hold_for_3_seconds">Przytrzymaj\n3 sekundy</string>
     <string name="short_press_to_run_actions">Krótkie naciśnięcie\naby uruchomić\nAkcje</string>
-    <string name="g_shock_smart_sync_is_running">G-Shock Smart Sync jest uruchomiony</string>
+    <string name="g_shock_smart_sync_is_running">Cassiopeia Watch jest uruchomiony</string>
     <string name="preventing_the_app_from_closing">Zapobieganie zamknięciu aplikacji</string>
-    <string name="g_shock_smart_sync_is_not_running">G-Shock Smart Sync nie jest uruchomiony.</string>
+    <string name="g_shock_smart_sync_is_not_running">Cassiopeia Watch nie jest uruchomiony.</string>
     <string name="health_connect_not_available">"Health Connect" nie jest dostępny. Proszę go zainstalować.</string>
 	<string name="cover_hold_to_unlock">Przytrzymaj aby odblokować</string>
     <string name="cover_connected">Połączono</string>
@@ -279,6 +279,6 @@
     <string name="pairing_crash_recovery">Odzyskano z poprzedniego błędu połączenia. Możesz spróbować ponownie.</string>
     <string name="pairing_crash_detected"><![CDATA[
         Aplikacja wykryła poprzedni błąd podczas połączenia. Logi błędów zostały zapisane.
-        <p>Jeśli ten problem będzie się powtarzać, proszę zgłosić go na <a href="https://github.com/izivkov/CasioGShockSmartSync/issues">GitHub</a> z modelem urządzenia i zegarka.</p>
+        <p>Jeśli ten problem będzie się powtarzać, proszę zgłosić go na <a href="https://github.com/cihyboj/cassiopeia-watch/issues">GitHub</a> z modelem urządzenia i zegarka.</p>
     ]]></string>
 </resources>

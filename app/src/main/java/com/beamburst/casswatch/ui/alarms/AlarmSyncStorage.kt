@@ -59,6 +59,9 @@ object AlarmSyncStorage {
             Alarm(it.hour, it.minute, it.enabled, it.hasHourlyChime, it.name)
         }
 
+    fun hasStoredAlarms(context: Context, addr: String): Boolean =
+        loadStoredAlarms(context, addr) != null
+
     fun isDirty(context: Context, addr: String): Boolean =
         LocalDataStorage.get(context, key(ALARMS_DIRTY_KEY, addr), "false")?.toBoolean() ?: false
 

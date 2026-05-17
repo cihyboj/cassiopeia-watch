@@ -36,6 +36,12 @@ data class HourlySignalSettings(
                 ?: DayOfWeek.entries.toSet(),
         )
 
+        fun hasStoredSettings(context: Context, addr: String): Boolean =
+            LocalDataStorage.get(context, key(KEY_ENABLED, addr), null) != null ||
+                LocalDataStorage.get(context, key(KEY_START, addr), null) != null ||
+                LocalDataStorage.get(context, key(KEY_END, addr), null) != null ||
+                LocalDataStorage.get(context, key(KEY_DAYS, addr), null) != null
+
         fun save(context: Context, addr: String, settings: HourlySignalSettings) {
             LocalDataStorage.put(context, key(KEY_ENABLED, addr), settings.enabled.toString())
             LocalDataStorage.put(context, key(KEY_START, addr), settings.startHour.toString())

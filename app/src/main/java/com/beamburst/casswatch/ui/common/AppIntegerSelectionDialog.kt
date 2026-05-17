@@ -1,7 +1,5 @@
 package com.beamburst.casswatch.ui.common
 
-import android.os.Build
-import android.widget.NumberPicker
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,14 +20,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.beamburst.casswatch.R
 
 @Composable
@@ -115,9 +111,6 @@ fun NumberPickerView(
     val adjustedMinValue = 0
     val adjustedMaxValue = pickerValues.size - 1
     val safeSelectedIndex = selectedIndex.coerceIn(0, adjustedMaxValue)
-    val selectedTextColor = Color.White.toArgb()
-    val inactiveTextColor = Color(0xFFC7CBD1).toArgb()
-
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -125,31 +118,12 @@ fun NumberPickerView(
             .background(color = backgroundColor, shape = RoundedCornerShape(cornerRadius)),
         contentAlignment = Alignment.Center
     ) {
-        AndroidView(
-            factory = { context ->
-                NumberPicker(context).apply {
-                    minValue = adjustedMinValue
-                    maxValue = adjustedMaxValue
-                    value = safeSelectedIndex
-                    displayedValues = pickerValues.map { "$it$unit" }.toTypedArray()
-                    descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
-                    this.wrapSelectorWheel = wrapSelectorWheel
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) this.textSize = textSize.value
-                    applyWheelTextStyle(selectedTextColor, inactiveTextColor, textSize.value)
-
-                    setOnValueChangedListener { _, _, newVal ->
-                        onValueChange(newVal)
-                    }
-                }
-            },
-            update = { picker ->
-                picker.value = safeSelectedIndex
-                picker.minValue = adjustedMinValue
-                picker.maxValue = adjustedMaxValue
-                picker.displayedValues = pickerValues.map { "$it$unit" }.toTypedArray()
-                picker.applyWheelTextStyle(selectedTextColor, inactiveTextColor, textSize.value)
-            }
+        AppWheelPicker(
+            values = pickerValues.map { "$it$unit" },
+            selectedIndex = safeSelectedIndex,
+            onSelectedIndexChange = onValueChange,
+            selectedFontSize = textSize,
+            inactiveFontSize = (textSize.value * 0.78f).sp,
         )
     }
 }

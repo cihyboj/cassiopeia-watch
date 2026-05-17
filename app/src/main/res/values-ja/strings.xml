@@ -154,8 +154,8 @@
     <string name="press_and_hold_for_3_seconds">3秒間\n長押し</string>
     <string name="short_press_to_run_actions">押して\n実行</string>
 
-    <string name="g_shock_smart_sync_is_running">G-Shock Smart Sync が実行中です</string>
-    <string name="g_shock_smart_sync_is_not_running">G-Shock Smart Sync は実行されていません</string>
+    <string name="g_shock_smart_sync_is_running">Cassiopeia Watch が実行中です</string>
+    <string name="g_shock_smart_sync_is_not_running">Cassiopeia Watch は実行されていません</string>
     <string name="preventing_the_app_from_closing">アプリが終了しないようにしています</string>
     <string name="health_connect_not_available">「Health Connect」は利用できません。インストールしてください。</string>
     <string name="cover_hold_to_unlock">長押ししてロック解除</string>

@@ -84,6 +84,14 @@ class TimerViewModel @Inject constructor(
             return@launch
         }
 
+        val cachedTimer = addr
+            ?.let { WatchSnapshot.load(appContext, it) }
+            ?.timer
+        if (cachedTimer != null) {
+            _state.value = TimerState(timer = cachedTimer)
+            return@launch
+        }
+
         runCatching {
             val timer = api.getTimer()
             _state.value = TimerState(timer = timer)

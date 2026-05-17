@@ -2,8 +2,6 @@ package com.beamburst.casswatch.ui.alarms
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,10 +16,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,13 +28,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.verticalScroll
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.theme.Spacing
+import com.beamburst.casswatch.ui.common.AppDayPicker
 import com.beamburst.casswatch.ui.common.AppButton
 import com.beamburst.casswatch.ui.common.AppText
+import com.beamburst.casswatch.ui.common.AppTimeWheelPicker
 import java.time.DayOfWeek
-import java.time.format.TextStyle
-import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlarmEditorSheet(
     draft: AlarmDraft,
@@ -47,11 +44,8 @@ fun AlarmEditorSheet(
 ) {
     var label by remember(draft) { mutableStateOf(draft.name) }
     var selectedDays by remember(draft) { mutableStateOf(draft.days) }
-    val timePickerState = rememberTimePickerState(
-        initialHour = draft.hour,
-        initialMinute = draft.minute,
-        is24Hour = true
-    )
+    var selectedHour by remember(draft) { mutableIntStateOf(draft.hour) }
+    var selectedMinute by remember(draft) { mutableIntStateOf(draft.minute) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -72,7 +66,13 @@ fun AlarmEditorSheet(
 
             Spacer(Modifier.height(Spacing.lg))
 
-            TimePicker(state = timePickerState, modifier = Modifier.fillMaxWidth())
+            AppTimeWheelPicker(
+                hour = selectedHour,
+                minute = selectedMinute,
+                onHourChange = { selectedHour = it },
+                onMinuteChange = { selectedMinute = it },
+                modifier = Modifier.fillMaxWidth(),
+            )
 
             Spacer(Modifier.height(Spacing.md))
 
@@ -91,22 +91,13 @@ fun AlarmEditorSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(Spacing.sm))
-            FlowRow(
+            AppDayPicker(
+                selectedDays = selectedDays,
+                onDayClick = { day ->
+                    selectedDays = if (day in selectedDays) selectedDays - day else selectedDays + day
+                },
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
-            ) {
-                DayOfWeek.entries.forEach { day ->
-                    FilterChip(
-                        selected = day in selectedDays,
-                        onClick = {
-                            selectedDays = if (day in selectedDays) selectedDays - day else selectedDays + day
-                        },
-                        label = {
-                            Text(day.getDisplayName(TextStyle.SHORT, Locale.getDefault()))
-                        }
-                    )
-                }
-            }
+            )
 
             Spacer(Modifier.height(Spacing.xl))
 
@@ -122,7 +113,7 @@ fun AlarmEditorSheet(
                 AppButton(
                     text = stringResource(R.string.alarm_editor_save),
                     onClick = {
-                        onSave(timePickerState.hour, timePickerState.minute, label.trim(), selectedDays)
+                        onSave(selectedHour, selectedMinute, label.trim(), selectedDays)
                     },
                     modifier = Modifier
                 )

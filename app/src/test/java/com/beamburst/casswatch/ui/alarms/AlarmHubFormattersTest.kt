@@ -109,4 +109,45 @@ class AlarmHubFormattersTest {
     @Test fun `chimeCount full day 1 to 0`() {
         assertEquals(23, chimeCount(1, 0))
     }
+
+    @Test
+    fun `auto sync hint hidden for enabled full range and all days`() {
+        assertFalse(
+            showHourlySignalAutoSyncHint(
+                HourlySignalUiState(enabled = true, startHour = 1, endHour = 0)
+            )
+        )
+    }
+
+    @Test
+    fun `auto sync hint shown for enabled partial range`() {
+        assertTrue(
+            showHourlySignalAutoSyncHint(
+                HourlySignalUiState(enabled = true, startHour = 7, endHour = 18)
+            )
+        )
+    }
+
+    @Test
+    fun `auto sync hint shown for enabled full range with partial days`() {
+        assertTrue(
+            showHourlySignalAutoSyncHint(
+                HourlySignalUiState(
+                    enabled = true,
+                    startHour = 1,
+                    endHour = 0,
+                    days = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY),
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `auto sync hint hidden when signal disabled`() {
+        assertFalse(
+            showHourlySignalAutoSyncHint(
+                HourlySignalUiState(enabled = false, startHour = 7, endHour = 18)
+            )
+        )
+    }
 }

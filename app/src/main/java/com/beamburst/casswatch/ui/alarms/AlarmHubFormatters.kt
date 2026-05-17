@@ -45,6 +45,13 @@ internal fun signalTabSubtitle(state: HourlySignalUiState): String =
         "Off"
     }
 
+internal fun showHourlySignalAutoSyncHint(state: HourlySignalUiState): Boolean =
+    state.enabled &&
+        !(state.startHour == 1 &&
+            state.endHour == 0 &&
+            state.days.containsAll(DayOfWeek.entries) &&
+            state.days.size == DayOfWeek.entries.size)
+
 internal fun chimeCount(startHour: Int, endHour: Int): Int {
     val end = if (endHour == 0) 24 else endHour
     return (end - startHour).coerceAtLeast(0)

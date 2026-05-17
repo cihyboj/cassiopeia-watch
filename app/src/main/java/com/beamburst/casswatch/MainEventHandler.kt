@@ -17,6 +17,7 @@ import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.session.WatchSessionUiBridge
 import com.beamburst.casswatch.services.NotificationMonitorService
 import com.beamburst.casswatch.ui.common.AppSnackbar
+import com.beamburst.casswatch.utils.AppUsageState
 import com.beamburst.casswatch.utils.ActivityProvider
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.Utils
@@ -106,6 +107,8 @@ class MainEventHandler(
     }
 
     private fun showWatchConnectedSnackbar() {
+        if (!AppUsageState.shouldShowConnectionSnackbar()) return
+
         val displayName = resolveWatchDisplayNameForSnackbar()
         val message =
             if (displayName.isNotBlank()) {
@@ -158,6 +161,7 @@ class MainEventHandler(
         }
         disconnectedDevice?.name
             ?.takeIf { it.isNotBlank() }
+            ?.takeIf { AppUsageState.shouldShowConnectionSnackbar() }
             ?.let { name -> AppSnackbar("$name disconnected") }
         logConnection(SyncTrigger.CONNECTION_DISCONNECTED, true)
     }

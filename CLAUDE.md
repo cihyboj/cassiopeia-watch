@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**CasioSmartSync** is an unofficial open-source Android app (package `org.avmedia.gshockGoogleSync`) that controls G-Shock, Edifice, and Pro Trek Bluetooth watches without requiring a Casio account. It syncs time, calendar events, and alarms, and allows the watch buttons to trigger phone actions.
+**Cassiopeia Watch** is an unofficial open-source Android app (package `com.beamburst.casswatch`) that controls G-Shock, Edifice, and Pro Trek Bluetooth watches without requiring a Casio account. It syncs time, calendar events, and alarms, and allows the watch buttons to trigger phone actions.
 
 The core BLE protocol is entirely encapsulated in an external library, **GShockAPI** (`com.github.izivkov:GShockAPI` via JitPack). This app never talks to BLE directly — all watch communication goes through `GShockRepository`, which delegates to `GShockAPI` via Kotlin's `by` delegation.
 
@@ -21,7 +21,7 @@ The core BLE protocol is entirely encapsulated in an external library, **GShockA
 ./gradlew test
 
 # Run a single unit test class
-./gradlew test --tests "org.avmedia.gshockGoogleSync.scratchpad.AlarmNameStorageTest"
+./gradlew test --tests "com.beamburst.casswatch.scratchpad.AlarmNameStorageTest"
 
 # Lint check
 ./gradlew lint
@@ -109,7 +109,7 @@ The watch exposes a small scratchpad memory used to persist app-side settings ac
 ### Local Persistence
 
 `LocalDataStorage` wraps **DataStore Preferences** (migrated from SharedPreferences) using a mutex-protected coroutine scope. It stores device addresses, device names, fine time adjustment, and other app settings. The DataStore file lives at:
-`/data/data/org.avmedia.gshockGoogleSync/files/datastore/CASIO_GOOGLE_SYNC_STORAGE.preferences_pb`
+`/data/data/com.beamburst.casswatch/files/datastore/CASIO_GOOGLE_SYNC_STORAGE.preferences_pb`
 
 ### Services
 

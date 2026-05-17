@@ -1,10 +1,7 @@
 package com.beamburst.casswatch.ui.time
 
-import android.widget.NumberPicker
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,17 +23,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.theme.Spacing
 import com.beamburst.casswatch.ui.common.AppButton
 import com.beamburst.casswatch.ui.common.AppCard
 import com.beamburst.casswatch.ui.common.AppText
-import com.beamburst.casswatch.ui.common.applyWheelTextStyle
+import com.beamburst.casswatch.ui.common.AppWheelPicker
 
 private data class Preset(val labelRes: Int, val totalSeconds: Int)
 private val PRESETS = listOf(
@@ -63,7 +59,6 @@ fun TimerView(
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TimerCardContent(
     timerSeconds: Int,
@@ -117,37 +112,44 @@ fun TimerCardContent(
 
             Spacer(Modifier.height(Spacing.sm))
 
-            // Number picker drums
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     TimerDrumPicker(
                         value = minutes,
                         onValueChange = { m -> onSetTimer(m, seconds) },
                         modifier = Modifier.width(80.dp),
                     )
                     Text(
-                        text = stringResource(R.string.timer_label_min),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = ":",
+                        style = MaterialTheme.typography.headlineLarge,
+                        modifier = Modifier.padding(horizontal = Spacing.sm),
                     )
-                }
-                Text(
-                    text = ":",
-                    style = MaterialTheme.typography.headlineLarge,
-                    modifier = Modifier.padding(horizontal = Spacing.sm),
-                )
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     TimerDrumPicker(
                         value = seconds,
                         onValueChange = { s -> onSetTimer(minutes, s) },
                         modifier = Modifier.width(80.dp),
                     )
+                }
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.timer_label_min),
+                        modifier = Modifier.width(80.dp),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.width(Spacing.sm * 2))
                     Text(
                         text = stringResource(R.string.timer_label_sec),
+                        modifier = Modifier.width(80.dp),
+                        textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -157,20 +159,34 @@ fun TimerCardContent(
             Spacer(Modifier.height(Spacing.md))
 
             // Preset chips
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
-            ) {
-                PRESETS.forEach { preset ->
-                    FilterChip(
-                        selected = false,
-                        onClick = {
-                            val m = preset.totalSeconds / 60
-                            val s = preset.totalSeconds % 60
-                            onSetTimer(m, s)
-                        },
-                        label = { Text(stringResource(preset.labelRes)) },
-                    )
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                PRESETS.chunked(4).forEach { rowPresets ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    ) {
+                        rowPresets.forEach { preset ->
+                            FilterChip(
+                                modifier = Modifier.weight(1f),
+                                selected = false,
+                                onClick = {
+                                    val m = preset.totalSeconds / 60
+                                    val s = preset.totalSeconds % 60
+                                    onSetTimer(m, s)
+                                },
+                                label = {
+                                    Text(
+                                        text = stringResource(preset.labelRes),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.Center,
+                                    )
+                                },
+                            )
+                        }
+                        repeat(4 - rowPresets.size) {
+                            Spacer(Modifier.weight(1f))
+                        }
+                    }
                 }
             }
         }
@@ -183,26 +199,11 @@ private fun TimerDrumPicker(
     onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val displayedValues = remember { (0..59).map { "%02d".format(it) }.toTypedArray() }
-    val selectedColor = MaterialTheme.colorScheme.onSurface.toArgb()
-    val inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f).toArgb()
-
-    AndroidView(
-        factory = { context ->
-            NumberPicker(context).apply {
-                minValue = 0
-                maxValue = 59
-                this.displayedValues = displayedValues
-                this.value = value
-                descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
-                wrapSelectorWheel = true
-                applyWheelTextStyle(selectedColor, inactiveColor, 28f)
-            }
-        },
-        update = { picker ->
-            if (picker.value != value) picker.value = value
-            picker.setOnValueChangedListener { _, _, newVal -> onValueChange(newVal) }
-        },
+    val displayedValues = remember { (0..59).map { "%02d".format(it) } }
+    AppWheelPicker(
+        values = displayedValues,
+        selectedIndex = value,
+        onSelectedIndexChange = onValueChange,
         modifier = modifier,
     )
 }

@@ -155,9 +155,9 @@
     <string name="timer_set">Temporitzador configurat</string>
     <string name="press_and_hold_for_3_seconds">Prem i mantén\npremut durant 3\nsegons</string>
     <string name="short_press_to_run_actions">Pressió curta\nper executar\naccions</string>
-    <string name="g_shock_smart_sync_is_running">G-Shock Smart Sync està actiu</string>
+    <string name="g_shock_smart_sync_is_running">Cassiopeia Watch està actiu</string>
     <string name="preventing_the_app_from_closing">S\'està evitant el tancament de l\'aplicació</string>
-    <string name="g_shock_smart_sync_is_not_running">G-Shock Smart Sync no està actiu.</string>
+    <string name="g_shock_smart_sync_is_not_running">Cassiopeia Watch no està actiu.</string>
     <string name="health_connect_not_available">\"Health Connect\" no està disponible. Si us plau, instal·la\'l.</string>
     <string name="cover_hold_to_unlock">Mantén premut per desbloquejar</string>
     <string name="cover_connected">Connectat</string>

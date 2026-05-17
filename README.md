@@ -1,17 +1,18 @@
-# Casio G-Shock Smart Sync
+# Cassiopeia Watch
 
 <p align="center">
-  <img src="images/gshock-smart-sync.jpg" alt="G-Shock Smart Sync Logo" width="600">
+  <img src="images/gshock-smart-sync.jpg" alt="Cassiopeia Watch logo" width="600">
 </p>
 
-[![F-Droid](https://img.shields.io/badge/F--Droid-Available-brightgreen)](https://f-droid.org/en/packages/org.avmedia.gshockGoogleSync/)
-[![GitHub](https://img.shields.io/badge/GitHub-Source-blue)](https://github.com/izivkov/CasioGShockSmartSync)
-[![Version](https://img.shields.io/badge/version-25.7-blue)](https://github.com/izivkov/CasioGShockSmartSync/releases)
+[![GitHub](https://img.shields.io/badge/GitHub-Source-blue)](https://github.com/cihyboj/cassiopeia-watch)
+[![Version](https://img.shields.io/badge/version-25.7-blue)](https://github.com/cihyboj/cassiopeia-watch/releases)
 [![Connection Speed](https://img.shields.io/badge/Connection-Fast-green)](#)
 
-**G-Shock Smart Sync** is an unofficial, open-source Android app for G-Shock, Edifice, and Pro Trek watches. It allows you to control your watch, sync data, and configure settings **without a Casio ID**.
+**Cassiopeia Watch** is an unofficial, open-source Android app for G-Shock, Edifice, and Pro Trek watches. It allows you to control your watch, sync data, and configure settings **without a Casio ID**.
 
 It offers a faster, privacy-focused, and more powerful alternative to the official Casio app.
+
+Cassiopeia Watch is not affiliated with, endorsed by, or sponsored by Casio Computer Co., Ltd.
 
 ---
 
@@ -142,8 +143,9 @@ Configure app and watch preferences.
 
 ## Installation
 
-- **F-Droid**: [Download here](https://f-droid.org/en/packages/org.avmedia.gshockGoogleSync/)
-- **GitHub**: [Download APK from Releases](https://github.com/izivkov/CasioGShockSmartSync/releases/)
+- **GitHub**: [Download APK from Releases](https://github.com/cihyboj/cassiopeia-watch/releases/)
+
+Cassiopeia Watch is not currently published on F-Droid under the `com.beamburst.casswatch` package. The older F-Droid package `org.avmedia.gshockGoogleSync` belongs to the upstream project history and should not be used as the current fork install source.
 
 ## Contributing
 
@@ -158,10 +160,14 @@ We welcome contributions!
 | [**GShockAPI**](https://github.com/izivkov/GShockAPI) | The core Android library that **this app is built on**. It encapsulates all low-level Bluetooth communication and watch protocol logic (time sync, alarms, reminders, DST, etc.) into a clean Kotlin API. This project consumes it as a direct dependency via `implementation(libs.gshockapi)`. You can also use it independently to **build your own G-Shock Android app**. |
 | [**G-Shock Time Server**](https://github.com/izivkov/GShockTimeServer) | A Python script that acts as a headless time server, automatically syncing the time on G-Shock watches over Bluetooth — ideal for Raspberry Pi or other always-on Linux devices. |
 | [**G-Shock API for ESP32**](https://github.com/izivkov/gshock-api-esp32) | A MicroPython firmware that turns a low-cost ESP32 microcontroller (with optional touch LCD display) into a standalone, always-on G-Shock time server — no phone or PC required. Watches connect automatically up to four times a day, or on-demand via a button press. |
-| [**G-Shock Smart Sync Webapp**](https://github.com/izivkov/gshock-smart-sync-webapp) | Is an experimental, web-based app that provides G-Shock watch synchronization from a browser, enabling time sync, alarms, reminders, and remote control via Web Bluetooth — no Android required. |
+| [**Browser-based G-Shock sync app**](https://github.com/izivkov/gshock-smart-sync-webapp) | Is an experimental, web-based app that provides G-Shock watch synchronization from a browser, enabling time sync, alarms, reminders, and remote control via Web Bluetooth — no Android required. |
+
+## Attribution
+
+Cassiopeia Watch is a fork of the upstream [CasioGShockSmartSync](https://github.com/izivkov/CasioGShockSmartSync) project by Ivo Zivkov. See `NOTICE` for attribution details.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the Apache License 2.0 - see the LICENSE file for details.

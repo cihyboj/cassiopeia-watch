@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,14 +18,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.beamburst.casswatch.ui.common.AppCard
+import com.beamburst.casswatch.ui.common.AlarmWeekdayStrip
 import com.beamburst.casswatch.theme.Spacing
 import java.time.DayOfWeek
-import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
@@ -96,7 +92,11 @@ fun AlarmItem(
                     }
                 }
                 if (strip) {
-                    WeekdayTextRow(selectedDays = selectedDays, enabled = isEnabled)
+                    AlarmWeekdayStrip(
+                        selectedDays = selectedDays,
+                        enabled = isEnabled,
+                        modifier = Modifier.weight(1f),
+                    )
                 } else {
                     AppText(
                         text = alarmRepeatLabel(selectedDays),
@@ -125,36 +125,4 @@ private fun AlarmSyncWarningText(syncWarning: String?) {
             bottom = Spacing.md
         )
     )
-}
-
-@Composable
-private fun WeekdayTextRow(
-    selectedDays: Set<DayOfWeek>,
-    enabled: Boolean
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(1.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        DayOfWeek.entries.forEach { day ->
-            val isSelected = day in selectedDays
-            val baseColor = if (isSelected) {
-                MaterialTheme.colorScheme.onTertiary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            }
-            Text(
-                text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                color = when {
-                    enabled -> baseColor
-                    isSelected -> baseColor.copy(alpha = 0.8f)
-                    else -> baseColor.copy(alpha = 0.45f)
-                },
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Normal,
-                    textDecoration = if (isSelected) TextDecoration.Underline else TextDecoration.None
-                )
-            )
-        }
-    }
 }

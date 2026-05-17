@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.R
@@ -123,10 +124,14 @@ constructor(
     private val _autoSyncOnReconnect = MutableStateFlow(AutoSyncOnReconnectUiState())
     val autoSyncOnReconnect: StateFlow<AutoSyncOnReconnectUiState> = _autoSyncOnReconnect.asStateFlow()
 
+    private val _isConnected = MutableStateFlow(false)
+    val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
+
     init {
         initializeSettings()
         loadNtpTimeSettings()
         observeSelectedWatchSettings()
+        observeConnectionState()
         loadPressCards()
     }
 
@@ -150,6 +155,16 @@ constructor(
         viewModelScope.launch(Dispatchers.Default) {
             watchSelector.selected.collect { addr ->
                 loadSettingsForAddress(addr)
+            }
+        }
+    }
+
+    private fun observeConnectionState() {
+        viewModelScope.launch(Dispatchers.Default) {
+            combine(watchSelector.selected, connectionTracker.states) { addr, _ ->
+                isSelectedWatchConnected(addr)
+            }.collect { connected ->
+                _isConnected.value = connected
             }
         }
     }
@@ -188,10 +203,10 @@ constructor(
     }
 
     fun setAutoSyncOnReconnect(enabled: Boolean) {
-        _autoSyncOnReconnect.value = AutoSyncOnReconnectUiState(enabled = enabled)
+        _autoSyncOnReconnect.value = AutoSyncOnReconnectUiState(enabled = true)
         val addr = watchSelector.currentAddress() ?: return
         viewModelScope.launch {
-            LocalDataStorage.setAutoSyncOnReconnect(appContext, addr, enabled)
+            LocalDataStorage.setAutoSyncOnReconnect(appContext, addr, true)
         }
     }
 

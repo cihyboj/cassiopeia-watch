@@ -13,5 +13,5 @@ dependencyResolutionManagement {
         maven { url = "https://jitpack.io" }
     }
 }
-rootProject.name = "Casio GShock Smart Sync"
+rootProject.name = "Cassiopeia Watch"
 include ':app'

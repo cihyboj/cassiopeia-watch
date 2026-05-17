@@ -16,7 +16,7 @@ class NotificationProvider @Inject constructor(
 ) {
     data class NotificationConfig(
         val channelId: String = CHANNEL_ID,
-        val channelName: String = "G-Shock Smart Sync",
+        val channelName: String = "Cassiopeia Watch",
         val channelDescription: String = "This channel provides notifications for the Cassiopeia Watch App",
         val importance: Int = NotificationManager.IMPORTANCE_DEFAULT,
         val notificationId: Int = 1
@@ -78,6 +78,7 @@ class NotificationProvider @Inject constructor(
             .setAutoCancel(true)
 
     companion object {
+        // Legacy channel ID kept so existing installs retain notification-channel settings.
         private const val CHANNEL_ID = "G_SHOCK_SMART_SYNC_CHANNEL"
     }
 }
