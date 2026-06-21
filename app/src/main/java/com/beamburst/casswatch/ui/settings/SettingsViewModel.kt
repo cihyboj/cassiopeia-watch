@@ -203,10 +203,10 @@ constructor(
     }
 
     fun setAutoSyncOnReconnect(enabled: Boolean) {
-        _autoSyncOnReconnect.value = AutoSyncOnReconnectUiState(enabled = true)
+        _autoSyncOnReconnect.value = AutoSyncOnReconnectUiState(enabled = enabled)
         val addr = watchSelector.currentAddress() ?: return
         viewModelScope.launch {
-            LocalDataStorage.setAutoSyncOnReconnect(appContext, addr, true)
+            LocalDataStorage.setAutoSyncOnReconnect(appContext, addr, enabled)
         }
     }
 
@@ -275,7 +275,7 @@ constructor(
         }
     }
 
-    private fun markCurrentSettingsDirty() {
+    private suspend fun markCurrentSettingsDirty() {
         val addr = watchSelector.currentAddress() ?: return
         WatchSettingsCache.save(appContext, addr, buildApiSettings())
     }

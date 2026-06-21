@@ -13,6 +13,7 @@ import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.local.WatchConnectionTracker
+import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.session.WatchSessionUiBridge
 import com.beamburst.casswatch.services.NotificationMonitorService
@@ -89,7 +90,12 @@ class MainEventHandler(
         // will issue a (logged, user-visible) time write moments later that also warms the
         // cache. Running a second concurrent setTime over the same BLE link wastes work and
         // can confuse the watch firmware (inconsistent "OK" display, slower first call).
-        if (LocalDataStorage.getAutoSyncOnReconnect(context, address) == true) {
+        val watchSettings = WatchSettingsCache.load(context, address)
+        val autoSyncOnReconnect = LocalDataStorage.resolveAutoSyncOnReconnect(
+            stored = LocalDataStorage.getAutoSyncOnReconnect(context, address),
+            seed = watchSettings?.timeAdjustment,
+        )
+        if (autoSyncOnReconnect || WatchSettingsCache.isDirty(context, address)) {
             return
         }
         // AutoSyncCoordinator.runChain() handles prime+write for firmware-initiated syncs
