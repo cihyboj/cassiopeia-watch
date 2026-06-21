@@ -110,7 +110,7 @@ class DeviceAssociationManager @Inject constructor(
                     .map { Utils.sanitizeMacAddress(it.address) }
                     .firstOrNull { it.isNotBlank() }
                     ?.let {
-                        LocalDataStorage.put(
+                        LocalDataStorage.putAsync(
                             context,
                             "LastDeviceAddress",
                             it
@@ -133,40 +133,36 @@ class DeviceAssociationManager @Inject constructor(
 
             val cdm = context.getSystemService(android.companion.CompanionDeviceManager::class.java)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                cdm.myAssociations.forEach { associationInfo ->
-                    val macAddress = associationInfo.deviceMacAddress
-                        ?.toString()
-                        ?.let { Utils.sanitizeMacAddress(it) }
-                        ?.takeIf { it.isNotBlank() }
-                        ?: return@forEach
-                    manageDevicePresence(cdm, associationInfo, macAddress, macAddress in finalActiveAddresses)
-                }
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                // API 31-32: only string-based API available
-                @Suppress("DEPRECATION")
-                val systemMacs = cdm.associations
-                    .map { Utils.sanitizeMacAddress(it) }
-                    .filter { it.isNotBlank() }
-                    .toSet()
-
-                systemMacs.forEach { mac ->
-                    val shouldObserve = mac in finalActiveAddresses
-                    try {
-                        if (shouldObserve) {
-                            repository.startObservingDevicePresence(context, mac)
-                            Timber.d("CDM presence started (legacy) for $mac")
-                        } else {
-                            @Suppress("DEPRECATION")
-                            cdm.stopObservingDevicePresence(mac)
-                            Timber.d("CDM presence stopped (legacy) for $mac")
-                        }
-                    } catch (e: Exception) {
-                        if (shouldObserve) Timber.e(e, "Legacy presence failed for $mac")
+            when (DevicePresenceObservationPolicy.modeForSdk(Build.VERSION.SDK_INT)) {
+                DevicePresenceObservationMode.REQUEST_BASED -> {
+                    cdm.myAssociations.forEach { associationInfo ->
+                        val macAddress = associationInfo.deviceMacAddress
+                            ?.toString()
+                            ?.let { Utils.sanitizeMacAddress(it) }
+                            ?.takeIf { it.isNotBlank() }
+                            ?: return@forEach
+                        manageRequestBasedDevicePresence(
+                            cdm = cdm,
+                            associationInfo = associationInfo,
+                            macAddress = macAddress,
+                            shouldObserve = macAddress in finalActiveAddresses,
+                        )
                     }
                 }
-            } else {
-                Timber.i("CDM presence observation not available on API ${Build.VERSION.SDK_INT}, relying on fallback scan")
+
+                DevicePresenceObservationMode.ADDRESS_BASED -> {
+                    addressBasedAssociationMacs(cdm).forEach { mac ->
+                        manageAddressBasedDevicePresence(
+                            cdm = cdm,
+                            macAddress = mac,
+                            shouldObserve = mac in finalActiveAddresses,
+                        )
+                    }
+                }
+
+                DevicePresenceObservationMode.FALLBACK_ONLY -> {
+                    Timber.i("CDM presence observation not available on API ${Build.VERSION.SDK_INT}, relying on fallback scan")
+                }
             }
 
             // Start fallback scan for all active addresses (runs on all API levels)
@@ -175,14 +171,13 @@ class DeviceAssociationManager @Inject constructor(
     }
 
     @SuppressLint("NewApi")
-    private fun manageDevicePresence(
+    private fun manageRequestBasedDevicePresence(
         cdm: android.companion.CompanionDeviceManager,
         associationInfo: android.companion.AssociationInfo,
         macAddress: String,
         shouldObserve: Boolean
     ) {
         try {
-            // Preferred: associationId-based (API 33+, works on GrapheneOS)
             val request = android.companion.ObservingDevicePresenceRequest.Builder()
                 .setAssociationId(associationInfo.id)
                 .build()
@@ -195,22 +190,49 @@ class DeviceAssociationManager @Inject constructor(
                 Timber.d("CDM presence stopped for $macAddress")
             }
         } catch (e: Throwable) {
-            // Handle ROMs like LineageOS/crDroid that might report API 33 but lack the new method
-            if (e is NoSuchMethodError || e is Exception) {
-                Timber.w("Modern CDM method failed, falling back to address-based for $macAddress")
-                try {
-                    if (shouldObserve) {
-                        repository.startObservingDevicePresence(context, macAddress)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        cdm.stopObservingDevicePresence(macAddress)
-                    }
-                } catch (e2: Exception) {
-                    if (shouldObserve) Timber.e(e2, "Address-based CDM failed for $macAddress")
+            Timber.e(e, "Request-based CDM presence failed for $macAddress; fallback scan remains active")
+        }
+    }
+
+    @SuppressLint("NewApi")
+    private fun addressBasedAssociationMacs(
+        cdm: android.companion.CompanionDeviceManager,
+    ): Set<String> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            cdm.myAssociations
+                .mapNotNull { associationInfo ->
+                    associationInfo.deviceMacAddress
+                        ?.toString()
+                        ?.let { Utils.sanitizeMacAddress(it) }
+                        ?.takeIf { address -> address.isNotBlank() }
                 }
+                .toSet()
+        } else {
+            @Suppress("DEPRECATION")
+            cdm.associations
+                .map { Utils.sanitizeMacAddress(it) }
+                .filter { it.isNotBlank() }
+                .toSet()
+        }
+    }
+
+    @SuppressLint("NewApi")
+    private fun manageAddressBasedDevicePresence(
+        cdm: android.companion.CompanionDeviceManager,
+        macAddress: String,
+        shouldObserve: Boolean,
+    ) {
+        try {
+            if (shouldObserve) {
+                repository.startObservingDevicePresence(context, macAddress)
+                Timber.d("CDM presence started (address-based) for $macAddress")
             } else {
-                throw e
+                @Suppress("DEPRECATION")
+                cdm.stopObservingDevicePresence(macAddress)
+                Timber.d("CDM presence stopped (address-based) for $macAddress")
             }
+        } catch (e: Exception) {
+            Timber.e(e, "Address-based CDM presence failed for $macAddress; fallback scan remains active")
         }
     }
 

@@ -67,11 +67,13 @@ fun PairedWatchList(
     val scope = rememberCoroutineScope()
     val showPreparing by preConnectionViewModel.showPreparing.collectAsState()
     val timeoutJob = remember { mutableStateOf<Job?>(null) }
+    val handledPairingAddresses = remember { mutableSetOf<String>() }
     var forgetTarget by remember { mutableStateOf<PairedWatch?>(null) }
 
-    val handleSuccessfulPairing = { device: BluetoothDevice ->
+    val handleSuccessfulPairing: (BluetoothDevice) -> Unit = pairing@{ device ->
         timeoutJob.value?.cancel()
         val address = Utils.sanitizeMacAddress(device.address)
+        if (address.isBlank() || !handledPairingAddresses.add(address)) return@pairing
         val name = device.name ?: ""
         preConnectionViewModel.setDevice(address, name)
         viewModel.select(address)
@@ -173,6 +175,7 @@ fun PairedWatchList(
 
             AddWatchButton(
                 onClick = {
+                    handledPairingAddresses.clear()
                     preConnectionViewModel.associateWithUi(
                         context,
                         object : ICDPDelegate {

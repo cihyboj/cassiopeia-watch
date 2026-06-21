@@ -65,7 +65,7 @@ class GShockCompanionDeviceService : CompanionDeviceService() {
     }
 
     @SuppressLint("NewApi")
-    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresApi(36)
     override fun onDevicePresenceEvent(event: DevicePresenceEvent) {
         super.onDevicePresenceEvent(event)
 
