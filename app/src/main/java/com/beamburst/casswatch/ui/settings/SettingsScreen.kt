@@ -1,6 +1,7 @@
 package com.beamburst.casswatch.ui.settings
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,6 +48,7 @@ enum class SettingsAnchor(val routeValue: String) {
 fun SettingsScreen(
     onNavigateToHistory: () -> Unit = {},
     anchor: String? = null,
+    onDebugHeaderTap: (() -> Unit)? = null,
 ) {
     val scrollState = rememberScrollState()
     var syncOffset by remember { mutableIntStateOf(0) }
@@ -69,7 +71,7 @@ fun SettingsScreen(
             Column(modifier = Modifier.fillMaxSize()) {
                 ScreenTitle(
                     stringResource(id = R.string.settings),
-                    Modifier,
+                    onDebugHeaderTap?.let { Modifier.clickable(onClick = it) } ?: Modifier,
                 )
 
                 Column(
