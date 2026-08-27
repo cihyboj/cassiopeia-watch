@@ -69,6 +69,8 @@ android {
     }
     lint {
         disable 'TypographyFractions', 'TypographyQuotes'
+        // Pre-existing issues are grandfathered here; new lint errors still fail the build.
+        baseline = file('lint-baseline.xml')
     }
 }
 

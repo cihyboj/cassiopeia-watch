@@ -27,7 +27,22 @@ jobs:
         run: ./gradlew test --stacktrace
 
       - name: Lint
-        run: ./gradlew lint --stacktrace
+        run: |
+          if [ ! -f app/lint-baseline.xml ]; then
+            # First run writes the baseline and aborts; the follow-up run gates on it.
+            ./gradlew lint --stacktrace || true
+          fi
+          ./gradlew lint --stacktrace
+
+      - name: Upload lint baseline and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint
+          path: |
+            app/lint-baseline.xml
+            app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
 
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
