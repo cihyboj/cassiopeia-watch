@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,6 +35,20 @@ jobs:
             ./gradlew lint --stacktrace || true
           fi
           ./gradlew lint --stacktrace
+
+      - name: Commit newly generated lint baseline
+        if: github.event_name == 'push'
+        run: |
+          # Until the baseline is committed, it is regenerated per-run and cannot catch
+          # NEW lint errors — so persist it to the branch the first time it appears.
+          if [ -f app/lint-baseline.xml ] && ! git ls-files --error-unmatch app/lint-baseline.xml >/dev/null 2>&1; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add app/lint-baseline.xml
+            git commit -m "Add generated lint baseline [skip ci]"
+            git pull --rebase origin "${GITHUB_REF_NAME}" || true
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
 
       - name: Upload lint baseline and report
         if: always()
