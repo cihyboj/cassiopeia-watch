@@ -2,9 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <permission
-        android:name="com.beamburst.casswatch.RECEIVE_BOOT_COMPLETED"
-        android:protectionLevel="signature" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Location Permissions. FINE is required for BLE scan results on Android 10-11
          (API 29-30); from Android 12 the BLUETOOTH_SCAN permission takes over. -->
@@ -110,8 +108,7 @@
         <receiver
             android:name=".services.BootReceiver"
             android:enabled="true"
-            android:exported="true"
-            android:permission="com.beamburst.casswatch.RECEIVE_BOOT_COMPLETED">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>

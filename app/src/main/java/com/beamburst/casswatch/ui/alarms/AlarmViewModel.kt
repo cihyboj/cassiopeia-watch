@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.alarms
 
+import com.beamburst.casswatch.utils.WatchSyncActivity
 import android.content.Context
 import android.content.Intent
 import android.provider.AlarmClock
@@ -516,6 +517,7 @@ class AlarmViewModel @Inject constructor(
     }
 
     fun sendAlarmsToWatch() = viewModelScope.launch {
+        WatchSyncActivity.track {
         val addr = watchSelector.currentAddress()
         if (!api.isConnected()) {
             AppSnackbar(appContext.getString(R.string.watch_not_connected))
@@ -593,6 +595,7 @@ class AlarmViewModel @Inject constructor(
             AppSnackbar(appContext.getString(R.string.alarms_set_to_watch))
         } else {
             ProgressEvents.onNext("Error", result.exceptionOrNull()?.message ?: "")
+        }
         }
     }
 

@@ -1,7 +1,6 @@
 package com.beamburst.casswatch.services
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.beamburst.casswatch.utils.AppScopes
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,43 +8,47 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
 
+/**
+ * Fires [onInactivity] after [timeout] with no registered interaction, unless [isBusy]
+ * reports an operation in flight — then the check is deferred instead of pulling the
+ * BLE link out from under a running sync.
+ */
 class InactivityHandler(
     private val timeout: Duration,
-    private val onInactivity: () -> Unit
+    private val isBusy: () -> Boolean = { false },
+    private val onInactivity: () -> Unit,
 ) {
-    private data class InactivityState(
-        val lastInteractionTime: Long = System.currentTimeMillis(),
-        val monitoringJob: Job? = null
-    )
+    private val lastInteractionTime = MutableStateFlow(System.currentTimeMillis())
 
-    private val state = MutableStateFlow(InactivityState())
+    private var monitoringJob: Job? = null
 
     fun registerInteraction() {
-        state.value = state.value.copy(lastInteractionTime = System.currentTimeMillis())
+        lastInteractionTime.value = System.currentTimeMillis()
     }
 
     fun startMonitoring() {
-        val newJob = createMonitoringJob()
-        state.value = state.value.copy(monitoringJob = newJob)
+        monitoringJob?.cancel()
+        monitoringJob = AppScopes.main.launch {
+            lastInteractionTime.collectLatest { lastInteraction ->
+                delay(timeout.inWholeMilliseconds)
+                checkInactivity(lastInteraction)
+            }
+        }
     }
 
     fun stopMonitoring() {
-        state.value.monitoringJob?.cancel()
-        state.value = state.value.copy(monitoringJob = null)
+        monitoringJob?.cancel()
+        monitoringJob = null
     }
 
-    private fun createMonitoringJob(): Job =
-        CoroutineScope(Dispatchers.Main).launch {
-            state.collectLatest { currentState ->
-                delay(timeout.inWholeMilliseconds)
-                checkInactivity(currentState.lastInteractionTime)
-            }
-        }
-
     private fun checkInactivity(lastInteraction: Long) {
-        if (isInactive(lastInteraction)) {
-            onInactivity()
+        if (!isInactive(lastInteraction)) return
+        if (isBusy()) {
+            // A sync is running; treat it as activity and re-arm the timer.
+            registerInteraction()
+            return
         }
+        onInactivity()
     }
 
     private fun isInactive(lastInteraction: Long): Boolean =

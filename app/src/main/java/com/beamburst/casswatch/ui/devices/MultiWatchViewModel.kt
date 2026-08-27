@@ -15,6 +15,7 @@ import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
 import com.beamburst.casswatch.data.local.WatchSnapshot
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.pairing.DeviceAssociationManager
+import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.Utils
 import com.beamburst.casswatch.utils.SyncHistoryLogger
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -47,6 +49,7 @@ class MultiWatchViewModel @Inject constructor(
     private val syncHistoryStore: SyncHistoryStore,
     private val syncHistoryLogger: SyncHistoryLogger,
     private val deviceAssociationManager: DeviceAssociationManager,
+    private val connectCoordinator: WatchConnectCoordinator,
     @param:ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
@@ -55,7 +58,12 @@ class MultiWatchViewModel @Inject constructor(
     val paired: StateFlow<List<PairedWatch>> =
         combine(selector.selected, tracker.states, refreshTick) { selected, states, _ ->
             loadPairedWatches(selected, states)
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        }
+            // loadPairedWatches does binder + DataStore I/O and re-runs on every
+            // connection-state change; keep it off the main thread and idle when
+            // nothing observes it.
+            .flowOn(Dispatchers.IO)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun refresh() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -95,7 +103,9 @@ class MultiWatchViewModel @Inject constructor(
                 previouslySelected?.let { tracker.mark(it, ConnectionState.DISCONNECTED) }
                 if (repository.isConnected()) repository.disconnect()
                 tracker.mark(normalizedAddress, ConnectionState.CONNECTING)
-                repository.waitForConnection(normalizedAddress)
+                if (!connectCoordinator.connect(normalizedAddress)) {
+                    error("Connection attempt timed out")
+                }
                 tracker.mark(normalizedAddress, ConnectionState.CONNECTED)
                 syncHistoryLogger.record(
                     trigger = SyncTrigger.CONNECTION_CONNECTED,

@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.time
 
+import com.beamburst.casswatch.utils.WatchSyncActivity
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -178,6 +179,7 @@ class TimeViewModel @Inject constructor(
         when (action) {
             TimeAction.SendTimeToWatch -> {
                 viewModelScope.launch {
+                    WatchSyncActivity.track {
                     if (!api.isConnected()) {
                         AppSnackbar(appContext.getString(R.string.watch_not_connected))
                         return@launch
@@ -214,6 +216,7 @@ class TimeViewModel @Inject constructor(
                         refreshState()
                     } else {
                         AppSnackbar(result.exceptionOrNull()?.message ?: "Api Error")
+                    }
                     }
                 }
             }

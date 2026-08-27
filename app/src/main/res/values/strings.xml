@@ -204,6 +204,9 @@
     <string name="disconnected_info_title">Watch not connected</string>
     <string name="disconnected_info_body">Connect your watch to send or receive alarms. You can still send current alarms to your phone clock.</string>
     <string name="no_clock_app_found">No clock app found to receive the alarm</string>
+    <string name="companion_channel_name">Watch connection</string>
+    <string name="companion_notification_title">Watch connecting</string>
+    <string name="companion_notification_text">Keeping the connection alive…</string>
     <string name="exact_alarm_dialog_title">Phone-side safety net</string>
     <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>

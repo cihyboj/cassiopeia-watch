@@ -8,6 +8,11 @@ import android.content.pm.PackageManager
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import com.beamburst.casswatch.data.repository.GShockRepository
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,8 +38,22 @@ class NotificationMonitorService : NotificationListenerService() {
         val eventActions: List<EventAction> = emptyList()
     )
 
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface NotificationMonitorEntryPoint {
+        fun repository(): GShockRepository
+    }
+
     private val _state = MutableStateFlow(ServiceState())
     private val state: StateFlow<ServiceState> = _state.asStateFlow()
+
+    // Per-instance id: the system recreates this service (startService toggles the
+    // component), and a shared constant id would let the OLD instance's onDestroy tear
+    // down the NEW instance's subscription.
+    private val subscriberId = "$EVENT_SUBSCRIBER_ID-${System.identityHashCode(this)}"
+
+    /** postTime of the last forwarded notification per key, to debounce re-posts. */
+    private val lastForwardedAt = HashMap<String, Long>()
 
     init {
         initializeEventActions()
@@ -50,7 +69,7 @@ class NotificationMonitorService : NotificationListenerService() {
     }
 
     private fun subscribeToEvents() {
-        ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, state.value.eventActions.toTypedArray())
+        ProgressEvents.runEventActions(subscriberId, state.value.eventActions.toTypedArray())
     }
 
     private fun updateRunningState(running: Boolean) {
@@ -60,15 +79,28 @@ class NotificationMonitorService : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         Timber.i("Notification listener service connected")
+        // The system can recreate this listener while the watch is already connected;
+        // waiting for the next WatchInitializationCompleted would silently drop
+        // notifications until the next reconnect.
+        runCatching {
+            val repository = EntryPointAccessors.fromApplication(
+                applicationContext,
+                NotificationMonitorEntryPoint::class.java,
+            ).repository()
+            if (repository.isConnected() && repository.supportsAppNotifications()) {
+                updateRunningState(true)
+            }
+        }.onFailure { Timber.w(it, "Could not query connection state on listener connect") }
     }
 
     override fun onDestroy() {
-        ProgressEvents.subscriber.stop(EVENT_SUBSCRIBER_ID)
+        ProgressEvents.subscriber.stop(subscriberId)
         super.onDestroy()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         if (!state.value.isRunning) return
+        if (!shouldForward(sbn)) return
 
         processNotification(sbn)
             .onSuccess { notificationInfo ->
@@ -81,6 +113,24 @@ class NotificationMonitorService : NotificationListenerService() {
             .onFailure { error ->
                 Timber.e(error, "Error processing notification")
             }
+    }
+
+    private fun shouldForward(sbn: StatusBarNotification): Boolean {
+        // Never forward our own notifications (find-phone, foreground service, sync info) —
+        // each forward is a BLE write and would echo back through this listener.
+        if (sbn.packageName == packageName) return false
+        // Ongoing/persistent notifications (media players, navigation, downloads) re-post
+        // continuously and aren't discrete events worth buzzing the watch for.
+        if (sbn.isOngoing) return false
+        if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return false
+
+        // Debounce updates to the same notification key.
+        val now = sbn.postTime
+        val last = lastForwardedAt[sbn.key]
+        if (last != null && now - last < FORWARD_DEBOUNCE_MS) return false
+        if (lastForwardedAt.size > 200) lastForwardedAt.clear()
+        lastForwardedAt[sbn.key] = now
+        return true
     }
 
     private fun processNotification(sbn: StatusBarNotification): Result<NotificationInfo> =
@@ -141,7 +191,7 @@ class NotificationMonitorService : NotificationListenerService() {
 
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "NotificationMonitorService"
-        private var isRunning = false
+        private const val FORWARD_DEBOUNCE_MS = 10_000L
 
         private fun isNotificationGranted(context: Context): Boolean {
             val packageName = context.packageName

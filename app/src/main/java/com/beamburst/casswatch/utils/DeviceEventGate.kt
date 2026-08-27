@@ -37,8 +37,11 @@ object DeviceEventGate {
         val key = address to eventType
         val now = System.currentTimeMillis()
 
-        val lastEmitted = lastEmittedTime[key] ?: 0L
-        if (now - lastEmitted < DEDUP_WINDOW_MS) {
+        // Dedup CDM only against CDM. Comparing against lastEmittedTime would let a
+        // BLE fallback hit suppress a genuine CDM event — the opposite of CDM priority,
+        // and it would lose the foreground-service promotion only the CDM path performs.
+        val lastCdm = cdmLastFiredTime[key] ?: 0L
+        if (now - lastCdm < DEDUP_WINDOW_MS) {
             Timber.d("DeviceEventGate: suppressing duplicate CDM $eventType for $address")
             return false
         }

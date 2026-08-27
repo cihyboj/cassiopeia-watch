@@ -14,6 +14,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.utils.CrashReportHelper
 import com.beamburst.casswatch.utils.LocalDataStorage
@@ -29,7 +30,12 @@ class DeviceAssociationManager @Inject constructor(
     private val repository: GShockRepository
 ) {
     var pendingCrashLog by mutableStateOf<String?>(null)
+
+    @Volatile
     private var activeScanAddresses: Set<String>? = null
+
+    /** syncAssociations() is invoked from init, pairing, forget, and boot; serialize runs. */
+    private val syncMutex = kotlinx.coroutines.sync.Mutex()
 
     suspend fun init() {
         recoverFromPairingCrash()
@@ -92,6 +98,7 @@ class DeviceAssociationManager @Inject constructor(
     @SuppressLint("NewApi")
     fun syncAssociations() {
         AppScopes.io.launch {
+            syncMutex.withLock {
             // 1. Get the list of associations the system knows about
             val systemAssociations = repository.getAssociationsWithNames(context)
 
@@ -129,7 +136,7 @@ class DeviceAssociationManager @Inject constructor(
             if (!isLocationEnabled()) {
                 Timber.w("Location Services disabled — notifying user.")
                 ProgressEvents.onNext("LocationServicesDisabled")
-                return@launch
+                return@withLock
             }
 
             val cdm = context.getSystemService(android.companion.CompanionDeviceManager::class.java)
@@ -172,6 +179,7 @@ class DeviceAssociationManager @Inject constructor(
 
             // Start fallback scan for all active addresses (runs on all API levels)
             startFallbackScan(finalActiveAddresses.toList())
+            }
         }
     }
 

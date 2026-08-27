@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.alarms
 
+import com.beamburst.casswatch.utils.WatchSyncActivity
 import com.beamburst.casswatch.utils.AppScopes
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -52,7 +53,7 @@ class WeeklyAlarmScheduler @Inject constructor(
 
     fun ensureInitialized() = Unit
 
-    suspend fun applyTodaySchedule() {
+    suspend fun applyTodaySchedule() = WatchSyncActivity.track {
         val addr = watchSelector.currentAddress() ?: return
         val autoTimeSyncEnabled = LocalDataStorage.getOrInitializeAutoSyncOnReconnect(
             context = context,

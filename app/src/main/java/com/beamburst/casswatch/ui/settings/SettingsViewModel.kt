@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.settings
 
+import com.beamburst.casswatch.utils.WatchSyncActivity
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -562,6 +563,7 @@ constructor(
     }
 
     fun setTimeNow() = viewModelScope.launch {
+        WatchSyncActivity.track {
         if (!api.isConnected()) {
             AppSnackbar(appContext.getString(R.string.watch_not_connected))
             return@launch
@@ -599,12 +601,14 @@ constructor(
         } else {
             AppSnackbar(result.exceptionOrNull()?.message ?: appContext.getString(R.string.watch_not_connected))
         }
+        }
     }
 
     fun sendToWatch() {
         val settings = buildApiSettings()
 
         viewModelScope.launch {
+            WatchSyncActivity.track {
             val result = runCatching {
                 if (!api.isConnected()) {
                     AppSnackbar(appContext.getString(R.string.watch_not_connected))
@@ -625,6 +629,7 @@ constructor(
                 details = SyncDetails.Empty.copy(actions = listOf("Watch settings sent")),
             )
             result.onFailure { e -> AppSnackbar(e.message ?: "Api Error") }
+            }
         }
     }
 

@@ -67,7 +67,9 @@ class GShockCompanionDeviceService : CompanionDeviceService() {
     @SuppressLint("NewApi")
     @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     override fun onDevicePresenceEvent(event: DevicePresenceEvent) {
-        super.onDevicePresenceEvent(event)
+        // Deliberately NOT calling super: the platform default forwards BLE_APPEARED /
+        // BLE_DISAPPEARED to the AssociationInfo overloads above, which would dispatch
+        // every event twice and burn the DeviceEventGate dedup window on self-duplicates.
 
         val companionDeviceManager = getSystemService(CompanionDeviceManager::class.java)
         val associationInfo =
@@ -98,6 +100,11 @@ class GShockCompanionDeviceService : CompanionDeviceService() {
 
         if (type == "DeviceAppeared") {
             startForegroundServicePromotion()
+        } else if (type == "DeviceDisappeared") {
+            // Drop the "keeping connection alive" foreground state once the watch is gone;
+            // otherwise the notification outlives the connection indefinitely.
+            runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
+                .onFailure { Timber.w(it, "stopForeground failed") }
         }
         ProgressEvents.onNext(type, sanitized)
     }
@@ -106,15 +113,15 @@ class GShockCompanionDeviceService : CompanionDeviceService() {
         val channelId = "gshock_companion_channel"
         val channel = NotificationChannel(
             channelId,
-            "Device Connection",
+            getString(R.string.companion_channel_name),
             NotificationManager.IMPORTANCE_LOW
         )
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(channel)
 
             val notification = NotificationCompat.Builder(this, channelId)
-                .setContentTitle("Watch Connecting")
-                .setContentText("Keeping connection alive...")
+                .setContentTitle(getString(R.string.companion_notification_title))
+                .setContentText(getString(R.string.companion_notification_text))
                 .setSmallIcon(R.drawable.ic_watch_later_black_24dp)
                 .build()
 

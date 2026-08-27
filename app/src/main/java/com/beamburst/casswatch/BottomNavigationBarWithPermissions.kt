@@ -43,6 +43,7 @@ import com.beamburst.casswatch.ui.history.SyncHistoryScreen
 import com.beamburst.casswatch.ui.settings.SettingsScreen
 import com.beamburst.casswatch.ui.time.TimeScreen
 import com.beamburst.casswatch.utils.AppUsageState
+import com.beamburst.casswatch.utils.WatchSyncActivity
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -62,10 +63,18 @@ fun BottomNavigationBarWithPermissions(
     }
 
     val inactivityHandler = remember {
-        InactivityHandler(timeout = (3 * 60).seconds) {
-            repository.disconnect()
-            if (AppUsageState.shouldShowConnectionSnackbar()) {
-                AppSnackbar(appContext.getString(R.string.disconnected_due_to_inactivity))
+        InactivityHandler(
+            timeout = (3 * 60).seconds,
+            isBusy = { WatchSyncActivity.busyOrRecentlyActive(graceMs = 15_000) },
+        ) {
+            if (repository.isConnected()) {
+                // Stop the presence monitor from immediately reconnecting, which would
+                // otherwise loop disconnect -> DeviceAppeared -> reconnect every 3 minutes.
+                repository.preventReconnection()
+                repository.disconnect()
+                if (AppUsageState.shouldShowConnectionSnackbar()) {
+                    AppSnackbar(appContext.getString(R.string.disconnected_due_to_inactivity))
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.events
 
+import com.beamburst.casswatch.utils.WatchSyncActivity
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -108,6 +109,7 @@ class EventViewModel @Inject constructor(
 
     fun sendEventsToWatch() {
         viewModelScope.launch {
+            WatchSyncActivity.track {
             val sanitizedEvents = _events.value.map { event ->
                 event.copy(title = event.title.sanitizeEventTitle())
             }
@@ -131,6 +133,7 @@ class EventViewModel @Inject constructor(
                 AppSnackbar(appContext.getString(R.string.reminders_sent_to_watch))
             } else {
                 AppSnackbar("Error: ${result.exceptionOrNull()?.message ?: ""}")
+            }
             }
         }
     }

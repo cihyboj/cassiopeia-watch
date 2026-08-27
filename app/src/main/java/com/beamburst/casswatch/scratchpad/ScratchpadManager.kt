@@ -1,6 +1,9 @@
 package com.beamburst.casswatch.scratchpad
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.avmedia.gshockapi.IGShockAPI
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,6 +23,9 @@ class ScratchpadManager @Inject constructor(
 ) {
     private val clients = mutableListOf<ScratchpadClient>()
     private var masterBuffer: ByteArray = ByteArray(0)
+
+    /** load() and save() are reachable concurrently from event-driven coroutines. */
+    private val ioMutex = Mutex()
 
     /**
      * Clients call this method to register themselves with the manager.
@@ -72,11 +78,17 @@ class ScratchpadManager @Inject constructor(
     /**
      * Loads data from the watch and distributes it to all registered clients.
      */
-    internal suspend fun load() {
-        if (masterBuffer.isEmpty()) return
+    internal suspend fun load() = ioMutex.withLock {
+        if (masterBuffer.isEmpty()) return@withLock
         val data = api.getScratchpadData(0, masterBuffer.size)
         if (data.size != masterBuffer.size) {
-            return
+            // Clients keep their defaults; a later save() would overwrite the watch with
+            // them, so make the mismatch visible instead of failing silently.
+            Timber.w(
+                "Scratchpad read returned %d bytes, expected %d — keeping client defaults",
+                data.size, masterBuffer.size,
+            )
+            return@withLock
         }
         masterBuffer = data
 
@@ -93,8 +105,8 @@ class ScratchpadManager @Inject constructor(
     /**
      * Gathers data from all clients and saves the combined buffer to the watch.
      */
-    internal suspend fun save() {
-        if (masterBuffer.isEmpty()) return
+    internal suspend fun save() = ioMutex.withLock {
+        if (masterBuffer.isEmpty()) return@withLock
         clients.forEach { client ->
             val offset = client.getStorageOffset()
             val clientBuffer = client.getBuffer()

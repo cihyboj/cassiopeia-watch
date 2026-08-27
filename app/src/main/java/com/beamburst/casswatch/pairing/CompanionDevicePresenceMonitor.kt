@@ -15,7 +15,8 @@ import javax.inject.Singleton
 @Singleton
 class CompanionDevicePresenceMonitor @Inject constructor(
     // 1. Inject the repository directly in the constructor
-    private val repository: GShockRepository
+    private val repository: GShockRepository,
+    private val connectCoordinator: WatchConnectCoordinator,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "CompanionDevicePresenceMonitor"
@@ -38,10 +39,9 @@ class CompanionDevicePresenceMonitor @Inject constructor(
 
             monitorScope.launch {
                 try {
-                    // Now 'repository' is guaranteed to be initialized
                     if (!repository.isConnected()) {
                         Timber.i("$addressValid waitForConnection")
-                        repository.waitForConnection(addressValid)
+                        connectCoordinator.connect(addressValid)
                     } else {
                         Timber.i("Device already connected. Skipping wait.")
                     }

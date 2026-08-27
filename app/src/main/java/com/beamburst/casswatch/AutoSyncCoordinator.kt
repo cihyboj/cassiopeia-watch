@@ -1,5 +1,6 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.utils.WatchSyncActivity
 import com.beamburst.casswatch.utils.AppScopes
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -67,7 +68,7 @@ class AutoSyncCoordinator @Inject constructor(
     suspend fun runChain(
         trigger: SyncTrigger = SyncTrigger.AUTO,
         actions: List<String>? = null,
-    ) {
+    ) = WatchSyncActivity.track {
         val kinds = mutableSetOf<SyncKind>()
         var success = true
         var error: String? = null
