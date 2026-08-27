@@ -1,9 +1,3 @@
-/*
- * Created by Ivo Zivkov (izivkov@gmail.com) on 2022-04-07, 10:24 a.m.
- * Copyright (c) 2022 . All rights reserved.
- * Last modified 2022-04-07, 10:24 a.m.
- */
-
 package com.beamburst.casswatch.ui.events
 
 import android.content.Context

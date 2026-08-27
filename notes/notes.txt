@@ -33,7 +33,7 @@ Char. read
 00002a07-0000-1000-8000-00805f9b34fb
 
 Location of DataStore data file:
-/data/data/org.avmedia.gshockGoogleSync/files/datastore/CASIO_GOOGLE_SYNC_STORAGE.preferences_pb
+/data/data/com.beamburst.casswatch/files/datastore/CASIO_GOOGLE_SYNC_STORAGE.preferences_pb
 
 Issue found here:
 https://issuetracker.google.com/issues/242755161

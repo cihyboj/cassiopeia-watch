@@ -137,9 +137,9 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="timer_set">Időzítő beállítva.</string>
     <string name="press_and_hold_for_3_seconds">Kapcsolódás:\nTartsa nyomva\n3 másodpercig</string>
     <string name="short_press_to_run_actions">Ezzel a\ngombbal lehet\nfeladatot futtatni</string>
-    <string name="g_shock_smart_sync_is_running">Cassiopeia Watch fut.</string>
+    <string name="app_is_running">Cassiopeia Watch fut.</string>
     <string name="preventing_the_app_from_closing">…akadályozza az alkalmazás bezárását.</string>
-    <string name="g_shock_smart_sync_is_not_running">Cassiopeia Watch nem fut.</string>
+    <string name="app_is_not_running">Cassiopeia Watch nem fut.</string>
 
     <string name="health_connect_not_available">"Health Connect" nem elérhető. Kérem, telepítse.</string>
     <string name="cover_hold_to_unlock">Feloldáshoz tartsa lenyomva</string>

@@ -1,9 +1,3 @@
-/*
- * Created by Ivo Zivkov (izivkov@gmail.com) on 2022-03-30, 9:09 a.m.
- * Copyright (c) 2022 . All rights reserved.
- * Last modified 2022-03-30, 9:09 a.m.
- */
-
 package com.beamburst.casswatch.services
 
 import kotlinx.coroutines.CoroutineScope

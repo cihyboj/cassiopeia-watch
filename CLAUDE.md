@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Cassiopeia Watch** is an unofficial open-source Android app (package `com.beamburst.casswatch`) that controls G-Shock, Edifice, and Pro Trek Bluetooth watches without requiring a Casio account. It syncs time, calendar events, and alarms, and allows the watch buttons to trigger phone actions.
 
-The core BLE protocol is entirely encapsulated in an external library, **GShockAPI** (`com.github.izivkov:GShockAPI` via JitPack). This app never talks to BLE directly — all watch communication goes through `GShockRepository`, which delegates to `GShockAPI` via Kotlin's `by` delegation.
+The core BLE protocol is entirely encapsulated in an external library, **GShockAPI** (`com.github.cihyboj:GShockAPI` via JitPack, a maintained fork of the upstream GShockAPI library). This app never talks to BLE directly — all watch communication goes through `GShockRepository`, which delegates to `GShockAPI` via Kotlin's `by` delegation.
 
 ## Build Commands
 
@@ -137,4 +137,4 @@ The watch exposes a small scratchpad memory used to persist app-side settings ac
 - Adhan2 for Islamic prayer time calculation
 - RRule for calendar recurrence rule parsing
 - Timber for logging
-- GShockAPI 1.4.70 (external library, source at github.com/izivkov/GShockAPI)
+- GShockAPI (external library, `com.github.cihyboj:GShockAPI` via JitPack, pinned by commit in `gradle/libs.versions.toml`)

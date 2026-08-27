@@ -1,9 +1,3 @@
-/*
- * Created by Ivo Zivkov (izivkov@gmail.com) on 2022-04-03, 6:13 p.m.
- * Copyright (c) 2022 . All rights reserved.
- * Last modified 2022-04-03, 6:13 p.m.
- */
-
 package com.beamburst.casswatch.ui.events
 
 import android.annotation.SuppressLint

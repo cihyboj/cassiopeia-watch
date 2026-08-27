@@ -1,7 +1,7 @@
 # Cassiopeia Watch
 
 <p align="center">
-  <img src="images/gshock-smart-sync.jpg" alt="Cassiopeia Watch logo" width="600">
+  <img src="images/cassiopeia-watch.png" alt="Cassiopeia Watch logo" width="300">
 </p>
 
 [![GitHub](https://img.shields.io/badge/GitHub-Source-blue)](https://github.com/cihyboj/cassiopeia-watch)
@@ -21,7 +21,7 @@ Cassiopeia Watch is not affiliated with, endorsed by, or sponsored by Casio Comp
 - **No Account Required**: Skip the Casio ID login entirely.
 - **Calendar Sync**: Push your calendar events (Google, Samsung, etc.) to your watch as reminders.
 - **Auto Timezone**: Automatically adjusts watch time when you travel.
-- **Remote Control**: Use your watch buttons to take photos, control music, or launch voice assistants.
+- **Button Actions**: Use your watch buttons to find your phone or trigger automation apps on it.
 - **Alarm Sync**: Configure watch alarms easily from your phone.
 - **Phone Finder**: Trigger a loud alarm on your phone to find it.
 
@@ -56,8 +56,6 @@ Here is a guide to the main screens of the application.
 
 ### 1. Connection Screen
 
-<img src="images/mainscreen-b5600.png" width="200" align="right" style="margin-left: 20px;">
-
 This is the first screen you see. It handles the Bluetooth connection to your watch.
 
 - **Status**: Shows generic connection status.
@@ -70,8 +68,6 @@ The app communicates directly with the watch via BLE. Connection is typically mu
 
 ### 2. Time Setting
 
-<img src="images/TimeScreen.png" width="200" align="right" style="margin-left: 20px;">
-
 Manage your watch's timekeeping effortlessly.
 
 - **Local Time**: Displays the current time from your phone.
@@ -82,8 +78,6 @@ Manage your watch's timekeeping effortlessly.
 <br clear="all"/>
 
 ### 3. Alarms
-
-<img src="images/AlarmsScreen.png" width="200" align="right" style="margin-left: 20px;">
 
 Read and configure the alarms stored on your watch.
 
@@ -97,8 +91,6 @@ Read and configure the alarms stored on your watch.
 
 ### 4. Events (Calendar Sync)
 
-<img src="images/EventsScreen.png" width="200" align="right" style="margin-left: 20px;">
-
 Sync your Android calendars to your watch!
 
 - **Upcoming Events**: Lists future events from your phone's calendars.
@@ -109,28 +101,17 @@ The watch will display these as reminders with the date and title.
 
 <br clear="all"/>
 
-### 5. Actions (Remote Control)
+### 5. Button Actions
 
-<img src="images/ActionsScreen.png" width="200" align="right" style="margin-left: 20px;">
+Assign actions to button presses on the watch.
 
-Turn your watch into a remote control. Assign actions to button presses on the watch.
-
-- **Available Actions**:
-  - **Find Phone**: Make your phone ring loudly.
-  - **Take Photo**: Snap a picture with your phone's camera.
-  - **Flashlight**: Turn on your phone's flashlight.
-  - **Next Track**: Skip music tracks on your phone.
-  - **Voice Assist**: Launch Google Assistant.
-  - **Set Prayer Alarms**: Set the watch's 5 alarms to Islamic Prayer Times
-- **How to use**: Short-press the lower-right button on the watch (when in Time mode) to trigger the selected action.
-
-*Note*: The **Take Photo** action requires the app to be in the foreground. If the app is in the background, the action will not work.
+- **Find Phone**: Make your phone ring loudly so you can locate it.
+- **Automation Broadcasts**: Short and long presses can send configurable broadcasts to your phone, so automation apps (e.g. Tasker) can react to your watch buttons.
+- **How to use**: Press the lower-right button on the watch (when in Time mode) to trigger the configured action.
 
 <br clear="all"/>
 
 ### 6. Settings
-
-<img src="images/Settings.png" width="200" align="right" style="margin-left: 20px;">
 
 Configure app and watch preferences.
 
@@ -145,7 +126,7 @@ Configure app and watch preferences.
 
 - **GitHub**: [Download APK from Releases](https://github.com/cihyboj/cassiopeia-watch/releases/)
 
-Cassiopeia Watch is not currently published on F-Droid under the `com.beamburst.casswatch` package. The older F-Droid package `org.avmedia.gshockGoogleSync` belongs to the upstream project history and should not be used as the current fork install source.
+Cassiopeia Watch is not currently published on F-Droid; the GitHub release above is the only official install source for the `com.beamburst.casswatch` package.
 
 ## Contributing
 
@@ -157,10 +138,7 @@ We welcome contributions!
 
 | Project | Description |
 |:---|:---|
-| [**GShockAPI**](https://github.com/izivkov/GShockAPI) | The core Android library that **this app is built on**. It encapsulates all low-level Bluetooth communication and watch protocol logic (time sync, alarms, reminders, DST, etc.) into a clean Kotlin API. This project consumes it as a direct dependency via `implementation(libs.gshockapi)`. You can also use it independently to **build your own G-Shock Android app**. |
-| [**G-Shock Time Server**](https://github.com/izivkov/GShockTimeServer) | A Python script that acts as a headless time server, automatically syncing the time on G-Shock watches over Bluetooth — ideal for Raspberry Pi or other always-on Linux devices. |
-| [**G-Shock API for ESP32**](https://github.com/izivkov/gshock-api-esp32) | A MicroPython firmware that turns a low-cost ESP32 microcontroller (with optional touch LCD display) into a standalone, always-on G-Shock time server — no phone or PC required. Watches connect automatically up to four times a day, or on-demand via a button press. |
-| [**Browser-based G-Shock sync app**](https://github.com/izivkov/gshock-smart-sync-webapp) | Is an experimental, web-based app that provides G-Shock watch synchronization from a browser, enabling time sync, alarms, reminders, and remote control via Web Bluetooth — no Android required. |
+| [**GShockAPI**](https://github.com/cihyboj/GShockAPI) | The core Android library that **this app is built on** (a maintained fork of the upstream GShockAPI library). It encapsulates all low-level Bluetooth communication and watch protocol logic (time sync, alarms, reminders, DST, etc.) into a clean Kotlin API. This project consumes it as a direct dependency via `implementation(libs.gshockapi)`. |
 
 ## Attribution
 

@@ -1,4 +1,4 @@
-# Release Notes - Casio G-Shock Smart Sync v40.8 — April 24, 2026
+# Release Notes - Cassiopeia Watch v40.8 — April 24, 2026
 
 ## ✨ Highlights
 
@@ -79,7 +79,7 @@ Added the new `events_sent_to_watch` string resource with translations for all 1
 
 ---
 
-# Release Notes - Casio G-Shock Smart Sync v25.4
+# Release Notes - Cassiopeia Watch v25.4
 
 We are excited to announce version 25.4! This release focuses on perfecting the "Phone Finder" experience with improved lift-detection sensitivity and device-aware ringing logic.
 
@@ -109,4 +109,4 @@ We are excited to announce version 25.4! This release focuses on perfecting the 
 *   **Minimum OS**: Android 8.0 (API 26)
 *   **Target OS**: Android 16 (API 36)
 
-Thank you for using Casio G-Shock Smart Sync!
+Thank you for using Cassiopeia Watch!
