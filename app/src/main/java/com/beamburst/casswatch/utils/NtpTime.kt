@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.SystemClock
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.IOException
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -15,6 +16,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
@@ -210,7 +212,11 @@ class WatchTimeProvider @Inject constructor(
     }
 
     private suspend fun refreshNtpOffset(server: String, timeoutMillis: Int): NtpOffsetCache {
-        val result = sntpClient.sample(server, timeoutMillis)
+        // soTimeout only bounds the socket read; DNS resolution inside sample() is
+        // otherwise unbounded and could hang "Send time to watch" far past its budget.
+        val result = withTimeout(timeoutMillis * 2L + 1_000L) {
+            sntpClient.sample(server, timeoutMillis)
+        }
         val cache = NtpOffsetCache(
             server = server,
             offsetMs = result.offsetMs,
@@ -493,8 +499,27 @@ class SntpClient @Inject constructor() {
             val responseTime = System.currentTimeMillis()
             val responseElapsed = SystemClock.elapsedRealtime()
             val data = response.data
+
+            // Validate the response before trusting it (mirrors AOSP SntpClient): a
+            // Kiss-o'-Death packet, wrong mode, or zeroed transmit timestamp would
+            // otherwise produce a wildly wrong offset that gets written to the watch
+            // and cached for 30 minutes.
+            val leap = (data[0].toInt() shr 6) and 0x3
+            val mode = data[0].toInt() and 0x7
+            val stratum = data[1].toInt() and 0xff
+            if (leap == NTP_LEAP_NOSYNC) throw IOException("NTP server not synchronized (leap=3)")
+            if (mode != NTP_MODE_SERVER && mode != NTP_MODE_BROADCAST) {
+                throw IOException("Unexpected NTP mode: $mode")
+            }
+            if (stratum == NTP_STRATUM_DEATH || stratum > NTP_STRATUM_MAX) {
+                throw IOException("Unacceptable NTP stratum: $stratum")
+            }
+
             val receiveTime = readTimestamp(data, RECEIVE_TIME_OFFSET)
             val transmitTime = readTimestamp(data, TRANSMIT_TIME_OFFSET)
+            if (transmitTime == -NTP_TO_UNIX_EPOCH_SECONDS * 1000L || transmitTime == 0L) {
+                throw IOException("Zero NTP transmit timestamp")
+            }
             val offset = calculateOffset(
                 requestTime = requestTime,
                 receiveTime = receiveTime,
@@ -515,6 +540,11 @@ class SntpClient @Inject constructor() {
         private const val NTP_PACKET_SIZE = 48
         private const val DEFAULT_TIMEOUT_MILLIS = 3_000
         private const val NTP_MODE_CLIENT = 3
+        private const val NTP_MODE_SERVER = 4
+        private const val NTP_MODE_BROADCAST = 5
+        private const val NTP_LEAP_NOSYNC = 3
+        private const val NTP_STRATUM_DEATH = 0
+        private const val NTP_STRATUM_MAX = 15
         private const val NTP_VERSION = 4 shl 3
         private const val RECEIVE_TIME_OFFSET = 32
         private const val TRANSMIT_TIME_OFFSET = 40
