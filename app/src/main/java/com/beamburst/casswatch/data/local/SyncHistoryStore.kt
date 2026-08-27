@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 import javax.inject.Inject
@@ -18,16 +20,22 @@ class SyncHistoryStore @Inject constructor(
 ) {
     private val _changes = MutableStateFlow(0L)
 
+    /** append() is a read-modify-write; several appends land within the same second at
+     * connect time (connection log, cache prime, alarm reconcile). */
+    private val appendMutex = Mutex()
+
     fun load(deviceAddress: String): List<SyncEntry> {
         val raw = LocalDataStorage.get(context, key(deviceAddress), null) ?: return emptyList()
         return parseSyncHistory(raw)
     }
 
     suspend fun append(entry: SyncEntry) {
-        val current = load(entry.deviceAddress).toMutableList()
-        current.add(0, entry)
-        while (current.size > CAPACITY) current.removeAt(current.lastIndex)
-        LocalDataStorage.putAsync(context, key(entry.deviceAddress), serializeSyncHistory(current))
+        appendMutex.withLock {
+            val current = load(entry.deviceAddress).toMutableList()
+            current.add(0, entry)
+            while (current.size > CAPACITY) current.removeAt(current.lastIndex)
+            LocalDataStorage.putAsync(context, key(entry.deviceAddress), serializeSyncHistory(current))
+        }
         _changes.value = System.currentTimeMillis()
     }
 

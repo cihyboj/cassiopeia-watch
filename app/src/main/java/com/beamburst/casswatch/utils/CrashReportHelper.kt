@@ -48,8 +48,13 @@ object CrashReportHelper {
             append("Last Device Name: ${LocalDataStorage.get(context, "LastDeviceName", "")}\n")
         }
 
-        // Set crash flag for recovery
-        LocalDataStorage.put(context, PAIRING_CRASH_FLAG, "true")
+        // Set crash flag for recovery. Written synchronously: the process is about to die,
+        // so a fire-and-forget write would usually be lost.
+        runCatching {
+            kotlinx.coroutines.runBlocking {
+                LocalDataStorage.putAsync(context, PAIRING_CRASH_FLAG, "true")
+            }
+        }
 
         logCrash(context, throwable, info)
     }

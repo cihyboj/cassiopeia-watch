@@ -157,7 +157,6 @@ class MainEventHandler(
 
         repository.disconnect()
         screenManager.showError(message)
-        screenManager.showPreConnectionScreen()
     }
 
     @SuppressLint("MissingPermission") // BLUETOOTH_CONNECT is declared in the manifest
@@ -170,7 +169,7 @@ class MainEventHandler(
         disconnectedDevice?.name
             ?.takeIf { it.isNotBlank() }
             ?.takeIf { AppUsageState.shouldShowConnectionSnackbar() }
-            ?.let { name -> AppSnackbar("$name disconnected") }
+            ?.let { name -> AppSnackbar(context.getString(R.string.watch_disconnected_snackbar, name)) }
         logConnection(SyncTrigger.CONNECTION_DISCONNECTED, true)
     }
 
@@ -208,12 +207,12 @@ class MainEventHandler(
             }
 
             AlertDialog.Builder(activity)
-                .setTitle("Location Services Required")
-                .setMessage("Android requires Location Services to be enabled for Bluetooth scanning. This app does not use your location — it is an Android system requirement.")
-                .setPositiveButton("Open Settings") { _, _ ->
+                .setTitle(context.getString(R.string.location_services_required_title))
+                .setMessage(context.getString(R.string.location_services_required_body))
+                .setPositiveButton(context.getString(R.string.open_settings)) { _, _ ->
                     activity.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                 }
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(context.getString(R.string.cancel), null)
                 .setCancelable(false)
                 .show()
         }

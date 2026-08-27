@@ -53,7 +53,8 @@ class WeeklyAlarmScheduler @Inject constructor(
 
     fun ensureInitialized() = Unit
 
-    suspend fun applyTodaySchedule() = WatchSyncActivity.track {
+    suspend fun applyTodaySchedule() {
+        WatchSyncActivity.track {
         val addr = watchSelector.currentAddress() ?: return
         val autoTimeSyncEnabled = LocalDataStorage.getOrInitializeAutoSyncOnReconnect(
             context = context,
@@ -131,6 +132,7 @@ class WeeklyAlarmScheduler @Inject constructor(
             if (AlarmSyncStorage.isDirty(context, addr)) {
                 AlarmSyncStorage.saveAlarms(context, addr, desiredAlarms, dirty = false, firedAts = firedAts)
             }
+        }
         }
     }
 

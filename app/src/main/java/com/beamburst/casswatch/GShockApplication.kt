@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import dagger.hilt.android.HiltAndroidApp
@@ -30,6 +32,7 @@ import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.common.CrashLogDialog
 import com.beamburst.casswatch.ui.others.CoverScreen
 import com.beamburst.casswatch.utils.ActivityProvider
+import com.beamburst.casswatch.utils.CrashReportHelper
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import com.beamburst.casswatch.utils.WatchTimeProvider
 import com.beamburst.casswatch.utils.WatchTimeWriter
@@ -38,10 +41,8 @@ import javax.inject.Inject
 
 enum class AppScreen {
     INITIAL,
-    PRE_CONNECTION,
     CONTENT_SELECTOR,
     MAIN_NAVIGATION,
-    ERROR
 }
 
 @HiltAndroidApp
@@ -104,6 +105,10 @@ class GShockApplication : Application(), IScreenManager {
     @SuppressLint("NewApi")
     override fun onCreate() {
         super.onCreate()
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
+        installGlobalExceptionHandler()
         MultiWatchMigrator.migrateIfNeeded(this)
         ActivityProvider.initialize(this)
         eventHandler =
@@ -119,14 +124,50 @@ class GShockApplication : Application(), IScreenManager {
                 connectionTracker = connectionTracker,
             )
         eventHandler.setupEventSubscription()
+    }
 
-        if (BuildConfig.DEBUG) {
-            Timber.plant(Timber.DebugTree())
-            Timber.d("Timber planted for Debug") // If you see this, Timber is working
-        } else {
-            // Optional: Plant a tree that only logs Errors to a crash reporter like Firebase
-            // Timber.plant(ReleaseTree())
+    /**
+     * Installed once from the Application (not the Activity): an Activity-installed handler
+     * leaks the Activity into a process-wide static and chains a new handler on every
+     * recreation.
+     */
+    private fun installGlobalExceptionHandler() {
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            try {
+                Timber.e(throwable, "Uncaught exception on thread: ${thread.name}")
+                if (isPairingRelated(throwable)) {
+                    // Sets the pairing-crash flag so DeviceAssociationManager can run its
+                    // recovery path and surface the log on next launch.
+                    CrashReportHelper.logPairingCrash(this, throwable)
+                } else {
+                    CrashReportHelper.logCrash(
+                        this,
+                        throwable,
+                        "Uncaught exception on thread: ${thread.name}"
+                    )
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to log crash")
+            } finally {
+                defaultHandler?.uncaughtException(thread, throwable)
+            }
         }
+    }
+
+    private fun isPairingRelated(throwable: Throwable): Boolean {
+        var cause: Throwable? = throwable
+        while (cause != null) {
+            if (cause.stackTrace.any {
+                    it.className.contains(".pairing.") ||
+                        it.className.contains("CompanionDevice")
+                }
+            ) {
+                return true
+            }
+            cause = cause.cause
+        }
+        return false
     }
 
 
@@ -149,16 +190,8 @@ class GShockApplication : Application(), IScreenManager {
 
     override fun showError(message: String) {
         errorMessage = message
-        currentScreen = AppScreen.ERROR
+        currentScreen = AppScreen.MAIN_NAVIGATION
         AppSnackbar(message)
-    }
-
-    @Composable
-    fun Run(contentPadding: PaddingValues) {
-        StartScreen(contentPadding) { BottomNavigationBarWithPermissions(repository = repository) }
-        LaunchedEffect(key1 = System.currentTimeMillis()) {
-            deviceAssociationManager.checkPairedDevicesOrNotify()
-        }
     }
 
     @Composable
@@ -177,38 +210,27 @@ class GShockApplication : Application(), IScreenManager {
 
     @Composable
     fun AppContainer(contentPadding: PaddingValues) {
-        when (currentScreen) {
-            AppScreen.INITIAL -> Run(contentPadding)
-            AppScreen.PRE_CONNECTION ->
-                StartScreen(contentPadding) {
-                    BottomNavigationBarWithPermissions(repository = repository)
-                }
-            AppScreen.CONTENT_SELECTOR ->
-                StartScreen(contentPadding) {
-                    ContentSelector(
-                        repository = repository,
-                        onUnlocked = { goToNavigationScreen() }
-                    )
-                }
-            AppScreen.MAIN_NAVIGATION ->
-                StartScreen(contentPadding) {
-                    BottomNavigationBarWithPermissions(repository = repository)
-                }
-            AppScreen.ERROR ->
-                StartScreen(contentPadding) {
-                    BottomNavigationBarWithPermissions(repository = repository)
-                }
-        }
-    }
-
-    @Composable
-    private fun ContentSelector(repository: GShockRepository, onUnlocked: () -> Unit) {
-        when {
-            repository.isAlwaysConnectedConnectionPressed() ->
-                CoverScreen(onUnlock = onUnlocked, isConnected = repository.isConnected())
-            else ->
+        StartScreen(contentPadding) {
+            // A single BottomNavigationBarWithPermissions call site: screen transitions
+            // previously rendered it from five different branches, so every transition
+            // rebuilt the whole nav subtree (losing the selected tab and restarting the
+            // inactivity timer).
+            val showCover = currentScreen == AppScreen.CONTENT_SELECTOR &&
+                repository.isAlwaysConnectedConnectionPressed()
+            if (showCover) {
+                // Recompose the cover's connection indicator when tracked state changes;
+                // repository.isConnected() alone is not observable.
+                val trackerStates by connectionTracker.states.collectAsState()
+                val isConnected = remember(trackerStates) { repository.isConnected() }
+                CoverScreen(onUnlock = { goToNavigationScreen() }, isConnected = isConnected)
+            } else {
                 BottomNavigationBarWithPermissions(repository = repository)
+            }
+        }
+        if (currentScreen == AppScreen.INITIAL) {
+            LaunchedEffect(Unit) {
+                deviceAssociationManager.checkPairedDevicesOrNotify()
+            }
         }
     }
-
 }

@@ -231,9 +231,12 @@ class NotificationMonitorService : NotificationListenerService() {
         }
 
         private fun openNotificationListenerSettings(context: Context) {
-            val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
+            val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+            // Stripped-down ROMs may not resolve this settings screen, and Android 10+
+            // blocks background activity starts — neither should crash us.
+            runCatching { context.startActivity(intent) }
+                .onFailure { Timber.w(it, "Could not open notification listener settings") }
         }
 
         fun createAppNotification(info: NotificationInfo): AppNotification {

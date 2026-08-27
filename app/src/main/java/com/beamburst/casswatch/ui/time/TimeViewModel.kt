@@ -123,7 +123,7 @@ class TimeViewModel @Inject constructor(
     private val linkLossUiHoldActive = AtomicBoolean(false)
 
     /**
-     * [Utils.AppHashCode] from an `init` block often resolves to the same key as other subscribers
+     * a stack-trace-derived hash from an `init` block often resolves to the same key as other subscribers
      * (e.g. `"<init>"`.hashCode()), so ProgressEvents can overwrite this subscription — then
      * [Disconnect] never reaches the Time tab. Match [AlarmViewModel]'s unique subscriber id.
      */
@@ -215,7 +215,7 @@ class TimeViewModel @Inject constructor(
                         AppSnackbar(appContext.getString(R.string.time_set))
                         refreshState()
                     } else {
-                        AppSnackbar(result.exceptionOrNull()?.message ?: "Api Error")
+                        AppSnackbar(result.exceptionOrNull()?.message ?: appContext.getString(R.string.api_error))
                     }
                     }
                 }
@@ -248,7 +248,7 @@ class TimeViewModel @Inject constructor(
                     isConnected = true
                 )
             }.onFailure {
-                AppSnackbar("Api Error")
+                AppSnackbar(appContext.getString(R.string.api_error))
                 val connected = runCatching { api.isConnected() }.getOrDefault(false)
                 _state.value = _state.value.copy(
                     watchName = resolveWatchName(),
@@ -304,7 +304,7 @@ class TimeViewModel @Inject constructor(
                 )
                 linkLossUiHoldActive.set(false)
             }.onFailure {
-                AppSnackbar("Api Error")
+                AppSnackbar(appContext.getString(R.string.api_error))
                 val safeName = resolveWatchName()
                 val connected = runCatching { api.isConnected() }.getOrDefault(false)
                 _state.value = _state.value.copy(

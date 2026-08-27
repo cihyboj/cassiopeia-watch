@@ -8,12 +8,20 @@ import java.time.ZoneId
 
 object EventsModel {
     const val MAX_REMINDERS = 5
-    private var _events = ArrayList<Event>()
-    val events: ArrayList<Event>
-        get() = _events
 
-    fun refresh(newEvents: ArrayList<Event>) {
-        _events = newEvents
+    // Written by EventViewModel, AutoSyncCoordinator, WatchButtonDispatcher, and the
+    // calendar ContentObserver from different threads; read while iterating in
+    // api.setEvents(). Synchronize and hand out copies so a concurrent refresh cannot
+    // corrupt an in-flight send.
+    private var _events = ArrayList<Event>()
+
+    val events: ArrayList<Event>
+        @Synchronized
+        get() = ArrayList(_events)
+
+    @Synchronized
+    fun refresh(newEvents: List<Event>) {
+        _events = ArrayList(newEvents)
     }
 
     fun createEventDate(timeMs: Long, zone: ZoneId): EventDate {

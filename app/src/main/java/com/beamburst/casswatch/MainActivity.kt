@@ -24,8 +24,6 @@ import com.beamburst.casswatch.ui.common.PopupMessageReceiver
 import com.beamburst.casswatch.utils.AppUsageState
 import com.beamburst.casswatch.utils.BluetoothHelper
 import com.beamburst.casswatch.utils.CheckPermissions
-import com.beamburst.casswatch.utils.CrashReportHelper
-import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -35,9 +33,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Setup global exception handler to catch crashes
-        setupGlobalExceptionHandler()
 
         enableEdgeToEdge()
 
@@ -110,27 +105,4 @@ class MainActivity : ComponentActivity() {
         super.onStop()
     }
 
-    /** Setup global exception handler to catch and log all uncaught exceptions */
-    private fun setupGlobalExceptionHandler() {
-        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
-
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            try {
-                Timber.e(throwable, "Uncaught exception on thread: ${thread.name}")
-                CrashReportHelper.logCrash(
-                        this,
-                        throwable,
-                        "Uncaught exception on thread: ${thread.name}"
-                )
-            } catch (e: Exception) {
-                // If crash logging fails, at least log to Timber
-                Timber.e(e, "Failed to log crash")
-            } finally {
-                // Call the default handler to let the system handle the crash
-                defaultHandler?.uncaughtException(thread, throwable)
-            }
-        }
-
-        Timber.i("Global exception handler installed")
-    }
 }

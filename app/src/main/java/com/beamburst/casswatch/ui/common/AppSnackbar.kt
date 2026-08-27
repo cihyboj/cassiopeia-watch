@@ -32,12 +32,17 @@ fun PopupMessageReceiver(duration: SnackbarDuration = SnackbarDuration.Short) {
         val eventActions =
                 arrayOf(
                         EventAction("SnackbarMessage") {
-                            scope.launch {
-                                val message = ProgressEvents.getPayload("SnackbarMessage") as String
-                                snackbarHostState.showSnackbar(
-                                        message = message,
-                                        duration = duration
-                                )
+                            // Read the payload BEFORE launching: two rapid messages would
+                            // otherwise both read the latest payload (one shown twice, one
+                            // lost). Safe-cast — a null/non-String payload must not throw.
+                            val message = ProgressEvents.getPayload("SnackbarMessage") as? String
+                            if (message != null) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                            message = message,
+                                            duration = duration
+                                    )
+                                }
                             }
                         },
                 )

@@ -158,6 +158,9 @@ constructor(
         return result
     }
 
+    // Per-instance: two live instances with a shared id would unsubscribe each other.
+    private val subscriberId = "$EVENT_SUBSCRIBER_ID-${System.identityHashCode(this)}"
+
     private fun createSubscription() {
         val eventActions = arrayOf(
             EventAction(EVENT_DEVICE_NAME) {
@@ -180,11 +183,11 @@ constructor(
                 // Handle no devices if necessary
             }
         )
-        ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, eventActions)
+        ProgressEvents.runEventActions(subscriberId, eventActions)
     }
 
     override fun onCleared() {
-        ProgressEvents.subscriber.stop(EVENT_SUBSCRIBER_ID)
+        ProgressEvents.subscriber.stop(subscriberId)
         super.onCleared()
     }
 

@@ -59,9 +59,6 @@ android {
         compose = true
         buildConfig = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = '1.5.0'
-    }
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
@@ -99,7 +96,6 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.rrule)
     implementation (libs.timber)
-    implementation(libs.sunrisesunsetcalculator)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.hilt.navigation.fragment)
     implementation(libs.androidx.lifecycle.service)

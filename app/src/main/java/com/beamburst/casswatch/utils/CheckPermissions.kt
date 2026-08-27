@@ -21,8 +21,7 @@ import androidx.core.content.ContextCompat
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.ui.common.AppButton
 import com.beamburst.casswatch.ui.common.AppSnackbar
-import java.util.Timer
-import kotlin.concurrent.schedule
+import kotlinx.coroutines.delay
 
 @Composable
 fun CheckPermissions(onPermissionsGranted: @Composable () -> Unit) {
@@ -94,17 +93,17 @@ fun CheckPermissions(onPermissionsGranted: @Composable () -> Unit) {
     if (showRationaleDialog) {
         AlertDialog(
             onDismissRequest = { /* Do nothing */ },
-            title = { Text(text = "Permissions Required") },
-            text = { Text("This app needs location and Bluetooth permissions to function properly.") },
+            title = { Text(text = stringResource(R.string.permissions_required_title)) },
+            text = { Text(stringResource(R.string.permissions_required_body)) },
             confirmButton = {
                 AppButton(
-                    "Retry",
+                    stringResource(R.string.retry),
                     onClick = {
                         launcher.launch(initialPermissions)
                     })
             },
             dismissButton = {
-                AppButton("Exit", onClick = {
+                AppButton(stringResource(R.string.exit), onClick = {
                     activity.finish()  // Exit if user doesn't want to grant permissions
                 })
             }
@@ -112,13 +111,16 @@ fun CheckPermissions(onPermissionsGranted: @Composable () -> Unit) {
     }
 
     if (permanentlyDenied) {
-
-        AppSnackbar(
-            stringResource(
-                R.string.permissions_are_permanently_denied_please_enable_them_in_the_app_settings
-            )
+        val message = stringResource(
+            R.string.permissions_are_permanently_denied_please_enable_them_in_the_app_settings
         )
-        Timer("SettingUp", false).schedule(6000) { activity.finish() }
+        // Side effects belong in LaunchedEffect: the previous Timer-in-composition spawned
+        // a new thread on every recomposition and called finish() off the main thread.
+        LaunchedEffect(Unit) {
+            AppSnackbar(message)
+            delay(6000)
+            activity.finish()
+        }
     }
 }
 

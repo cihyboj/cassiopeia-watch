@@ -97,7 +97,7 @@ class TimerViewModel @Inject constructor(
             _state.value = TimerState(timer = timer)
             saveTimer(timer)
         }.onFailure {
-            AppSnackbar("Api Error")
+            AppSnackbar(appContext.getString(R.string.api_error))
         }
     }
 

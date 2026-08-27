@@ -609,12 +609,13 @@ constructor(
 
         viewModelScope.launch {
             WatchSyncActivity.track {
+            if (!api.isConnected()) {
+                // Return before syncLogger.record: the old early-return inside runCatching
+                // logged a MANUAL_SEND_SETTINGS *success* without sending anything.
+                AppSnackbar(appContext.getString(R.string.watch_not_connected))
+                return@launch
+            }
             val result = runCatching {
-                if (!api.isConnected()) {
-                    AppSnackbar(appContext.getString(R.string.watch_not_connected))
-                    return@runCatching
-                }
-
                 api.setSettings(settings)
                 watchSelector.currentAddress()?.let { addr ->
                     WatchSettingsCache.saveClean(appContext, addr, settings)

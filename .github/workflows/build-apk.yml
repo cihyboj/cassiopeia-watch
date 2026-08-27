@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -21,17 +21,18 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Decode and save keystore
+      - name: Decode and verify keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+          # Fail fast on a missing/corrupt keystore or wrong password; without this the
+          # build silently produces an UNSIGNED apk and uploads it to the release.
+          keytool -list \
+            -keystore app/release.keystore \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -alias "${{ secrets.KEY_ALIAS }}" > /dev/null
 
-      - name: Check keystore file
-        run: |
-          ls -l app/release.keystore
-          file app/release.keystore
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v2
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build APK
         run: ./gradlew assembleRelease
@@ -40,8 +41,13 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
+      - name: Verify APK is signed
+        run: |
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BUILD_TOOLS/apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk
+
       - name: Create Release and Upload APK
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: app/build/outputs/apk/release/app-release.apk
           generate_release_notes: true

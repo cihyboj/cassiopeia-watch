@@ -1,5 +1,7 @@
 package com.beamburst.casswatch.ui.common
 
+import com.beamburst.casswatch.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -34,7 +36,7 @@ fun CrashLogDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Dismiss")
+                Text(stringResource(R.string.dismiss))
             }
         }
     )

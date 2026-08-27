@@ -1,5 +1,6 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.R
 import com.beamburst.casswatch.utils.WatchSyncActivity
 import com.beamburst.casswatch.utils.AppScopes
 import android.content.Context
@@ -68,7 +69,8 @@ class AutoSyncCoordinator @Inject constructor(
     suspend fun runChain(
         trigger: SyncTrigger = SyncTrigger.AUTO,
         actions: List<String>? = null,
-    ) = WatchSyncActivity.track {
+    ) {
+        WatchSyncActivity.track {
         val kinds = mutableSetOf<SyncKind>()
         var success = true
         var error: String? = null
@@ -133,11 +135,12 @@ class AutoSyncCoordinator @Inject constructor(
         // Prevent CDM from immediately reconnecting after the firmware-initiated sync disconnects,
         // which would cause a spurious cache-prime timeout in the sync log.
         api.preventReconnection()
+        }
     }
 
     private fun postSyncNotification() {
         val dateStr = DateFormat.getDateTimeInstance().format(Date(Clock.systemDefaultZone().millis()))
-        val text = "Time set at $dateStr for ${WatchInfo.name} watch"
+        val text = context.getString(R.string.time_set_notification, dateStr, WatchInfo.name)
         notificationProvider.createNotification(
             NotificationProvider.NotificationContent(title = "Cassiopeia Watch", text = text)
         )

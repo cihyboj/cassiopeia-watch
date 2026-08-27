@@ -8,6 +8,7 @@ import com.philjay.WeekdayNum
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.avmedia.gshockapi.EventDate
 import org.avmedia.gshockapi.RepeatPeriod
+import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -40,7 +41,14 @@ class RRuleValues @Inject constructor(
     ): Values = when {
         rrule.isNullOrEmpty() -> Values()
         !validateRule(rrule) -> Values(incompatible = true)
-        else -> parseRRule(rruleUntilFix(rrule), startDate, zone)
+        else ->
+            // An RRULE shape the parser cannot handle (exotic UNTIL formats, vendor
+            // extensions) must mark the single event incompatible, not kill the sync.
+            runCatching { parseRRule(rruleUntilFix(rrule), startDate, zone) }
+                .getOrElse {
+                    Timber.w(it, "Unparsable RRULE, marking event incompatible: %s", rrule)
+                    Values(incompatible = true)
+                }
     }
 
     private fun parseRRule(rrule: String, startDate: EventDate, zone: ZoneId): Values {

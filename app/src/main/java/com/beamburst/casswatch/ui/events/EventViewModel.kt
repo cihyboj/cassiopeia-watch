@@ -38,6 +38,10 @@ class EventViewModel @Inject constructor(
         private const val EVENT_SUBSCRIBER_ID = "EventViewModel.listenForUpdateRequest"
     }
 
+    // Per-instance: on configuration change the new instance subscribes under the shared
+    // name and the old instance's onCleared would then kill the new subscription.
+    private val subscriberId = "$EVENT_SUBSCRIBER_ID-${System.identityHashCode(this)}"
+
     private val _events = MutableStateFlow<List<Event>>(emptyList())
     val events: StateFlow<List<Event>> = _events
 
@@ -71,18 +75,20 @@ class EventViewModel @Inject constructor(
             EventAction("CalendarUpdated") {
                 Timber.d("CalendarUpdated, events: ${EventsModel.events.size}")
                 @Suppress("UNCHECKED_CAST")
-                _events.value = ProgressEvents.getPayload("CalendarUpdated") as List<Event>
+                (ProgressEvents.getPayload("CalendarUpdated") as? List<Event>)?.let {
+                    _events.value = it
+                }
             },
         )
 
         ProgressEvents.runEventActions(
-            EVENT_SUBSCRIBER_ID,
+            subscriberId,
             eventActions
         )
     }
 
     override fun onCleared() {
-        ProgressEvents.subscriber.stop(EVENT_SUBSCRIBER_ID)
+        ProgressEvents.subscriber.stop(subscriberId)
         super.onCleared()
     }
 
@@ -110,7 +116,8 @@ class EventViewModel @Inject constructor(
     fun sendEventsToWatch() {
         viewModelScope.launch {
             WatchSyncActivity.track {
-            val sanitizedEvents = _events.value.map { event ->
+            // The watch holds at most MAX_REMINDERS reminders; don't send more.
+            val sanitizedEvents = _events.value.take(EventsModel.MAX_REMINDERS).map { event ->
                 event.copy(title = event.title.sanitizeEventTitle())
             }
             val result = runCatching {
