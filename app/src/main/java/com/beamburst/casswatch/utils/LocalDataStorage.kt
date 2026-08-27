@@ -21,7 +21,7 @@ object LocalDataStorage {
 
     // Kept for upgrade compatibility so existing users retain persisted preferences.
     private const val STORAGE_NAME = "CASIO_GOOGLE_SYNC_STORAGE"
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = AppScopes.io
     private val mutex = Mutex()
 
     // Use a DataStore delegate in context
@@ -147,7 +147,7 @@ object LocalDataStorage {
     }
 
     fun getFineTimeAdjustment(context: Context): Int {
-        return get(context, "fineTimeAdjustment", "0")?.toInt() ?: 0
+        return get(context, "fineTimeAdjustment", "0")?.toIntOrNull() ?: 0
     }
 
     suspend fun setFineTimeAdjustment(context: Context, fineTimeAdjustment: Int) {
@@ -199,28 +199,31 @@ object LocalDataStorage {
             )
         }.getOrNull()
 
+    /** Returns the stored per-watch auto-sync-on-reconnect flag, or null when unset. */
     fun getAutoSyncOnReconnect(context: Context, address: String): Boolean? {
-        val key = autoSyncOnReconnectKey(address)
-        if (get(context, key, null)?.toBooleanStrictOrNull() != true) {
-            put(context, key, true.toString())
-        }
-        return true
+        return get(context, autoSyncOnReconnectKey(address), null)?.toBooleanStrictOrNull()
     }
 
     suspend fun setAutoSyncOnReconnect(context: Context, address: String, enabled: Boolean) {
         putBoolean(context, autoSyncOnReconnectKey(address), enabled)
     }
 
+    /**
+     * Returns the stored flag; when unset, persists and returns [seed] (defaulting to
+     * enabled) so a watch's first connection establishes an explicit value.
+     */
     suspend fun getOrInitializeAutoSyncOnReconnect(
         context: Context,
         address: String,
         seed: Boolean?,
     ): Boolean {
         val current = getAutoSyncOnReconnect(context, address)
-        if (current != true) {
-            setAutoSyncOnReconnect(context, address, true)
+        if (current != null) {
+            return current
         }
-        return true
+        val initial = seed ?: true
+        setAutoSyncOnReconnect(context, address, initial)
+        return initial
     }
 
     suspend fun setNtpOffsetCache(context: Context, cache: NtpOffsetCache) {

@@ -48,6 +48,7 @@ import com.beamburst.casswatch.utils.syncHistoryActions
 import org.avmedia.gshockapi.Settings
 import org.avmedia.gshockapi.WatchInfo
 import org.json.JSONObject
+import timber.log.Timber
 import java.time.LocalDateTime
 
 abstract class Setting(val name: String) {
@@ -139,22 +140,24 @@ constructor(
         updateSettingsAndMap(defaultSettings())
     }
 
-    private fun defaultSettings(): ArrayList<Setting> =
-            filter(
-                    arrayListOf(
-                            Locale(),
-                            OperationSound(),
-                            Light(),
-                            PowerSavingMode(),
-                            Font(),
-                            TimeAdjustment(appContext),
-                    )
+    private fun allSettings(): ArrayList<Setting> =
+            arrayListOf(
+                    Locale(),
+                    OperationSound(),
+                    Light(),
+                    PowerSavingMode(),
+                    Font(),
+                    TimeAdjustment(appContext),
             )
+
+    private fun defaultSettings(): ArrayList<Setting> = filter(allSettings())
 
     private fun observeSelectedWatchSettings() {
         viewModelScope.launch(Dispatchers.Default) {
             watchSelector.selected.collect { addr ->
-                loadSettingsForAddress(addr)
+                runCatching {
+                    loadSettingsForAddress(addr)
+                }.onFailure { Timber.w(it, "Failed to load settings for %s", addr) }
             }
         }
     }
@@ -203,10 +206,10 @@ constructor(
     }
 
     fun setAutoSyncOnReconnect(enabled: Boolean) {
-        _autoSyncOnReconnect.value = AutoSyncOnReconnectUiState(enabled = true)
+        _autoSyncOnReconnect.value = AutoSyncOnReconnectUiState(enabled = enabled)
         val addr = watchSelector.currentAddress() ?: return
         viewModelScope.launch {
-            LocalDataStorage.setAutoSyncOnReconnect(appContext, addr, true)
+            LocalDataStorage.setAutoSyncOnReconnect(appContext, addr, enabled)
         }
     }
 
@@ -242,7 +245,18 @@ constructor(
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Setting> getSetting(type: Class<T>): T {
-        return state.value.settingsMap[type] as T
+        (state.value.settingsMap[type] as? T)?.let { return it }
+        Timber.w("Setting %s missing from state; using a default instance", type.simpleName)
+        return allSettings().first { it::class.java == type } as T
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T : Setting> settingOrNull(type: Class<T>): T? {
+        val setting = state.value.settingsMap[type] as? T
+        if (setting == null) {
+            Timber.w("Setting %s not present in state; skipping update", type.simpleName)
+        }
+        return setting
     }
 
     /**
@@ -386,46 +400,46 @@ constructor(
 
     private fun handlePowerSavingMode(value: Any, updatedObjects: MutableSet<Setting>) {
         if (WatchInfo.hasPowerSavingMode) {
-            val setting = state.value.settingsMap[PowerSavingMode::class.java] as PowerSavingMode
+            val setting = settingOrNull(PowerSavingMode::class.java) ?: return
             setting.powerSavingMode = value == true
             updatedObjects.add(setting)
         }
     }
 
     private fun handleTimeAdjustment(value: Any, updatedObjects: MutableSet<Setting>) {
-        val setting = state.value.settingsMap[TimeAdjustment::class.java] as TimeAdjustment
+        val setting = settingOrNull(TimeAdjustment::class.java) ?: return
         setting.timeAdjustment = value == true
         updatedObjects.add(setting)
     }
 
     private fun handleAdjustmentTimeMinutes(value: Any, updatedObjects: MutableSet<Setting>) {
         if (!WatchInfo.alwaysConnected) {
-            val setting = state.value.settingsMap[TimeAdjustment::class.java] as TimeAdjustment
-            setting.adjustmentTimeMinutes = value as Int
+            val setting = settingOrNull(TimeAdjustment::class.java) ?: return
+            setting.adjustmentTimeMinutes = (value as? Number)?.toInt() ?: return
             updatedObjects.add(setting)
         }
     }
 
     private fun handleButtonTone(value: Any, updatedObjects: MutableSet<Setting>) {
-        val setting = state.value.settingsMap[OperationSound::class.java] as OperationSound
+        val setting = settingOrNull(OperationSound::class.java) ?: return
         setting.sound = value == true
         updatedObjects.add(setting)
     }
 
     private fun handleButtonVibration(value: Any, updatedObjects: MutableSet<Setting>) {
-        val setting = state.value.settingsMap[OperationSound::class.java] as OperationSound
+        val setting = settingOrNull(OperationSound::class.java) ?: return
         setting.vibrate = value == true
         updatedObjects.add(setting)
     }
 
     private fun handleAutoLight(value: Any, updatedObjects: MutableSet<Setting>) {
-        val setting = state.value.settingsMap[Light::class.java] as Light
+        val setting = settingOrNull(Light::class.java) ?: return
         setting.autoLight = value == true
         updatedObjects.add(setting)
     }
 
     private fun handleLightDuration(value: Any, updatedObjects: MutableSet<Setting>) {
-        val setting = state.value.settingsMap[Light::class.java] as Light
+        val setting = settingOrNull(Light::class.java) ?: return
         setting.duration =
                 if (value == Light.LightDuration.ONE_POINT_FIVE_SECONDS.value) {
                     Light.LightDuration.ONE_POINT_FIVE_SECONDS
@@ -436,7 +450,7 @@ constructor(
     }
 
     private fun handleTimeFormat(value: Any, updatedObjects: MutableSet<Setting>) {
-        val setting = state.value.settingsMap[Locale::class.java] as Locale
+        val setting = settingOrNull(Locale::class.java) ?: return
         setting.timeFormat =
                 if (value == Locale.TimeFormat.TWELVE_HOURS.value) {
                     Locale.TimeFormat.TWELVE_HOURS
@@ -447,7 +461,7 @@ constructor(
     }
 
     private fun handleDateFormat(value: Any, updatedObjects: MutableSet<Setting>) {
-        val setting = state.value.settingsMap[Locale::class.java] as Locale
+        val setting = settingOrNull(Locale::class.java) ?: return
         setting.dateFormat =
                 if (value == Locale.DateFormat.MONTH_DAY.value) {
                     Locale.DateFormat.MONTH_DAY
@@ -458,7 +472,7 @@ constructor(
     }
 
     private fun handleLanguage(value: Any, updatedObjects: MutableSet<Setting>) {
-        val setting = state.value.settingsMap[Locale::class.java] as Locale
+        val setting = settingOrNull(Locale::class.java) ?: return
         setting.dayOfWeekLanguage =
                 when (value) {
                     Locale.DayOfWeekLanguage.ENGLISH.englishName -> Locale.DayOfWeekLanguage.ENGLISH
@@ -474,7 +488,7 @@ constructor(
 
     private fun handleFont(value: Any, updatedObjects: MutableSet<Setting>) {
         if (WatchInfo.hasMultipleFonts) {
-            val setting = state.value.settingsMap[Font::class.java] as Font
+            val setting = settingOrNull(Font::class.java) ?: return
             setting.font =
                     if (value == Font.FontType.CLASSIC.value) {
                         Font.FontType.CLASSIC
@@ -617,12 +631,12 @@ constructor(
     private fun buildApiSettings(): Settings {
         val settings = Settings()
 
-        val localeSetting: Locale = state.value.settingsMap[Locale::class.java] as Locale
+        val localeSetting: Locale = getSetting(Locale::class.java)
         settings.language = localeSetting.dayOfWeekLanguage.englishName
         settings.timeFormat = localeSetting.timeFormat.value
         settings.dateFormat = localeSetting.dateFormat.value
 
-        val lightSetting: Light = state.value.settingsMap[Light::class.java] as Light
+        val lightSetting: Light = getSetting(Light::class.java)
         settings.autoLight = lightSetting.autoLight
         settings.lightDuration = lightSetting.duration.value
 
@@ -630,13 +644,11 @@ constructor(
             settings.powerSavingMode = it.powerSavingMode
         }
 
-        val buttonTone: OperationSound =
-                state.value.settingsMap[OperationSound::class.java] as OperationSound
+        val buttonTone: OperationSound = getSetting(OperationSound::class.java)
         settings.buttonTone = buttonTone.sound
         settings.keyVibration = buttonTone.vibrate
 
-        val timeAdjustment: TimeAdjustment =
-                state.value.settingsMap[TimeAdjustment::class.java] as TimeAdjustment
+        val timeAdjustment: TimeAdjustment = getSetting(TimeAdjustment::class.java)
         settings.timeAdjustment = timeAdjustment.timeAdjustment
         settings.adjustmentTimeMinutes = timeAdjustment.adjustmentTimeMinutes
 

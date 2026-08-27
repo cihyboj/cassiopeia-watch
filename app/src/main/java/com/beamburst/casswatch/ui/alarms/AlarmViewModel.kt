@@ -25,6 +25,7 @@ import com.beamburst.casswatch.scratchpad.AlarmNameStorage
 import org.avmedia.gshockapi.Alarm
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
+import timber.log.Timber
 import org.avmedia.gshockapi.WatchInfo
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import java.time.DayOfWeek
@@ -293,7 +294,8 @@ class AlarmViewModel @Inject constructor(
     private fun startFireTimeTick() = viewModelScope.launch {
         while (true) {
             delay(60_000)
-            tickFireOnceAlarms()
+            runCatching { tickFireOnceAlarms() }
+                .onFailure { Timber.w(it, "Fire-once alarm tick failed") }
         }
     }
 
@@ -531,7 +533,14 @@ class AlarmViewModel @Inject constructor(
             }
         }
 
-        alarmNameStorage.save()
+        // save() is a BLE write; a throw here must be reported like any other sync failure
+        // instead of crashing the coroutine.
+        runCatching { alarmNameStorage.save() }
+            .onFailure {
+                Timber.w(it, "Saving alarm names to watch failed")
+                ProgressEvents.onNext("Error", it.message ?: "")
+                return@launch
+            }
         if (addr != null) AlarmSyncStorage.saveAlarms(appContext, addr, desiredAlarms, dirty = true, firedAts = currentFiredAts)
 
         val alarmsToSend = AlarmSchedulePlanner.applyWeeklySchedule(
@@ -653,7 +662,13 @@ class AlarmViewModel @Inject constructor(
                     }
 
                     api.preventReconnection()
-                    appContext.startActivity(intent)
+                    // Some ROMs ship no clock app that handles ACTION_SET_ALARM.
+                    runCatching { appContext.startActivity(intent) }
+                        .onFailure {
+                            Timber.w(it, "No activity found to set phone alarm")
+                            AppSnackbar(appContext.getString(R.string.no_clock_app_found))
+                            return@launch
+                        }
                     delay(1000L)
                 }
         }

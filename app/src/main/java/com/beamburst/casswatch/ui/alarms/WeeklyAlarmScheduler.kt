@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.alarms
 
+import com.beamburst.casswatch.utils.AppScopes
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -43,7 +44,7 @@ class WeeklyAlarmScheduler @Inject constructor(
             EVENT_SUBSCRIBER_ID,
             arrayOf(
                 EventAction("WatchInitializationCompleted") {
-                    CoroutineScope(Dispatchers.IO).launch { applyTodaySchedule() }
+                    AppScopes.io.launch { applyTodaySchedule() }
                 }
             )
         )

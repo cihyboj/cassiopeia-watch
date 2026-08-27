@@ -6,8 +6,12 @@
         android:name="com.beamburst.casswatch.RECEIVE_BOOT_COMPLETED"
         android:protectionLevel="signature" />
 
-    <!-- Location Permissions -->
+    <!-- Location Permissions. FINE is required for BLE scan results on Android 10-11
+         (API 29-30); from Android 12 the BLUETOOTH_SCAN permission takes over. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30" />
 
     <!-- Bluetooth Permissions -->
     <uses-permission
@@ -43,7 +47,6 @@
         tools:ignore="ScopedStorage" />
 
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
-    <uses-permission android:name="com.android.alarm.permission.DISMISS_ALARM" />
 
     <!-- General Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -52,7 +55,6 @@
 
     <!-- Foreground Service Permissions -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
 
     <!-- Features -->
@@ -66,13 +68,6 @@
         android:name="android.hardware.telephony"
         android:required="false" />
 
-
-    <uses-feature
-        android:name="android.hardware.sensor.accelerometer"
-        android:required="true" />
-    <uses-feature
-        android:name="android.hardware.sensor.proximity"
-        android:required="true" />
 
     <application
         android:name=".GShockApplication"

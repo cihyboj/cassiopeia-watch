@@ -1,5 +1,6 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.utils.AppScopes
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
@@ -50,18 +51,24 @@ class MainEventHandler(
 
     fun setupEventSubscription() {
         val eventActions = arrayOf(
-            EventAction("ConnectionSetupComplete") { logConnection(SyncTrigger.CONNECTION_CONNECTED, true) },
-            EventAction("WatchInitializationCompleted") { handleWatchInitialization() },
-            EventAction("ConnectionFailed") { handleConnectionFailure() },
-            EventAction("Error") { handleError() },
-            EventAction("WaitForConnection") { handleWaitForConnection() },
-            EventAction("Disconnect") { handleDisconnect() },
+            EventAction("ConnectionSetupComplete") { safely("ConnectionSetupComplete") { logConnection(SyncTrigger.CONNECTION_CONNECTED, true) } },
+            EventAction("WatchInitializationCompleted") { safely("WatchInitializationCompleted") { handleWatchInitialization() } },
+            EventAction("ConnectionFailed") { safely("ConnectionFailed") { handleConnectionFailure() } },
+            EventAction("Error") { safely("Error") { handleError() } },
+            EventAction("WaitForConnection") { safely("WaitForConnection") { handleWaitForConnection() } },
+            EventAction("Disconnect") { safely("Disconnect") { handleDisconnect() } },
             EventAction("HomeTimeUpdated") {},
-            EventAction("AppNotification") { handleAppNotification() },
-            EventAction("LocationServicesDisabled") { handleLocationServicesDisabled() }
+            EventAction("AppNotification") { safely("AppNotification") { handleAppNotification() } },
+            EventAction("LocationServicesDisabled") { safely("LocationServicesDisabled") { handleLocationServicesDisabled() } }
         )
 
         ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, eventActions)
+    }
+
+    /** Event handlers run on the shared ProgressEvents dispatch thread; a throw there must
+     * never take down the process or the event pipeline for other subscribers. */
+    private inline fun safely(name: String, block: () -> Unit) {
+        runCatching(block).onFailure { Timber.e(it, "Event handler %s failed", name) }
     }
 
     private fun handleWatchInitialization() {
@@ -85,11 +92,12 @@ class MainEventHandler(
      */
     private fun dispatchCacheWarm() {
         val address = watchSelector.currentAddress() ?: return
-        // If the user has Auto-sync-on-reconnect enabled for this watch, WeeklyAlarmScheduler
-        // will issue a (logged, user-visible) time write moments later that also warms the
-        // cache. Running a second concurrent setTime over the same BLE link wastes work and
-        // can confuse the watch firmware (inconsistent "OK" display, slower first call).
-        if (LocalDataStorage.getAutoSyncOnReconnect(context, address) == true) {
+        // If the user has Auto-sync-on-reconnect enabled for this watch (the default when
+        // unset), WeeklyAlarmScheduler will issue a (logged, user-visible) time write moments
+        // later that also warms the cache. Running a second concurrent setTime over the same
+        // BLE link wastes work and can confuse the watch firmware (inconsistent "OK" display,
+        // slower first call).
+        if (LocalDataStorage.getAutoSyncOnReconnect(context, address) != false) {
             return
         }
         // AutoSyncCoordinator.runChain() handles prime+write for firmware-initiated syncs
@@ -99,7 +107,7 @@ class MainEventHandler(
         synchronized(warmedLock) {
             if (!warmedDispatchedFor.add(key)) return
         }
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScopes.io.launch {
             runCatching {
                 watchTimeWriter.primeCache(repository)
             }.onFailure { Timber.w(it, "Cache-warm dispatch failed") }
@@ -167,7 +175,7 @@ class MainEventHandler(
     }
 
     private fun logConnection(trigger: SyncTrigger, success: Boolean, error: String? = null) {
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScopes.io.launch {
             syncLogger.record(
                 trigger = trigger,
                 kinds = setOf(SyncKind.CONNECTION),
@@ -187,13 +195,13 @@ class MainEventHandler(
         }
 
     private fun handleWaitForConnection() {
-        CoroutineScope(Dispatchers.Default).launch {
+        AppScopes.default.launch {
             context.deviceAssociationManager.checkPairedDevicesOrNotify()
         }
     }
 
     private fun handleLocationServicesDisabled() {
-        CoroutineScope(Dispatchers.Main).launch {
+        AppScopes.main.launch {
             val activity = ActivityProvider.getCurrentActivity() ?: run {
                 Timber.e("No activity available to show location services dialog")
                 return@launch

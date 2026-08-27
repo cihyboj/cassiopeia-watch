@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.pairing
 
+import com.beamburst.casswatch.utils.AppScopes
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -90,7 +91,7 @@ class DeviceAssociationManager @Inject constructor(
 
     @SuppressLint("NewApi")
     fun syncAssociations() {
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScopes.io.launch {
             // 1. Get the list of associations the system knows about
             val systemAssociations = repository.getAssociationsWithNames(context)
 

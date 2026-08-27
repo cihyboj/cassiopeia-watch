@@ -8,11 +8,15 @@ import android.database.ContentObserver
 import android.database.Cursor
 import android.net.Uri
 import android.os.Handler
+import android.os.Looper
 import android.provider.CalendarContract
+import com.beamburst.casswatch.utils.AppScopes
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.launch
 import org.avmedia.gshockapi.Event
 import org.avmedia.gshockapi.EventDate
 import org.avmedia.gshockapi.ProgressEvents
+import timber.log.Timber
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Calendar
@@ -46,10 +50,9 @@ class CalendarEvents @Inject constructor(
         )
 
         calendarObserver.register(cr, uri)
-        cursor?.let {
+        cursor?.use {
             processCursor(it, events)
         }
-        cursor?.close()
 
         return events
     }
@@ -83,7 +86,7 @@ class CalendarEvents @Inject constructor(
             set(Calendar.MILLISECOND, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MINUTE, 0)
-            set(Calendar.HOUR, 0)
+            set(Calendar.HOUR_OF_DAY, 0)
         }
 
         return """
@@ -106,7 +109,11 @@ class CalendarEvents @Inject constructor(
 
             if (eventId !in seenEventIds && eventStart > System.currentTimeMillis()) {
                 seenEventIds.add(eventId)
-                processEvent(cursor, events)
+                // One malformed calendar row (null DTSTART, unparsable RRULE, ...) must not
+                // abort the whole sync.
+                runCatching {
+                    processEvent(cursor, events)
+                }.onFailure { Timber.w(it, "Skipping malformed calendar event %d", eventId) }
             }
         }
     }
@@ -115,10 +122,11 @@ class CalendarEvents @Inject constructor(
     private fun processEvent(cursor: Cursor, events: ArrayList<Event>) {
 
         val titleIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.TITLE)
-        val title: String? = if (titleIndex >= 0) cursor.getString(titleIndex) else "(No title)"
+        // TITLE can be NULL in the calendar provider (untitled events are common).
+        val title: String = cursor.getString(titleIndex) ?: "(No title)"
 
         val dateStartIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.DTSTART)
-        val dateStart: String? = if (dateStartIndex >= 0) cursor.getString(dateStartIndex) else null
+        val dateStart: String? = cursor.getString(dateStartIndex)
 
         val rruleIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.RRULE)
         val rrule: String? = if (rruleIndex >= 0) cursor.getString(rruleIndex) else null
@@ -128,7 +136,8 @@ class CalendarEvents @Inject constructor(
 
         val zone = if (allDay == "1") ZoneId.of("UTC") else ZoneId.systemDefault()
 
-        val startDate = EventsModel.createEventDate(dateStart!!.toLong(), zone)
+        val startMillis = dateStart?.toLongOrNull() ?: return // no usable start time
+        val startDate = EventsModel.createEventDate(startMillis, zone)
         var endDate = startDate
 
         val (localEndDate, incompatible, daysOfWeek, repeatPeriod) = rRuleValues.getValues(
@@ -147,7 +156,7 @@ class CalendarEvents @Inject constructor(
         val enabled = events.size < EventsModel.MAX_REMINDERS
         events.add(
             Event(
-                title as String,
+                title,
                 startDate,
                 endDate,
                 repeatPeriod,
@@ -161,10 +170,15 @@ class CalendarEvents @Inject constructor(
     inner class CalendarObserver {
         private var registered = false
 
-        @Suppress("DEPRECATION")
-        private val calendarObserver = object : ContentObserver(Handler()) {
+        private val calendarObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {
-                ProgressEvents.onNext("CalendarUpdated", getEvents(appContext))
+                // The query is too heavy for the main thread, and a provider hiccup here
+                // must not crash the app.
+                AppScopes.io.launch {
+                    runCatching {
+                        ProgressEvents.onNext("CalendarUpdated", getEvents(appContext))
+                    }.onFailure { Timber.w(it, "Calendar change refresh failed") }
+                }
             }
         }
 

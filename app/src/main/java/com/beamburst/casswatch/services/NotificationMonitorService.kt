@@ -194,7 +194,7 @@ class NotificationMonitorService : NotificationListenerService() {
 
                 return String.format(
                     java.util.Locale.US,
-                    "%04d%02d%02dT%02d%02d%2d",
+                    "%04d%02d%02dT%02d%02d%02d",
                     calendar.get(java.util.Calendar.YEAR),
                     calendar.get(java.util.Calendar.MONTH) + 1,
                     calendar.get(java.util.Calendar.DAY_OF_MONTH),

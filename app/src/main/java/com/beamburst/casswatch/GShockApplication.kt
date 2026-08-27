@@ -1,5 +1,6 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.utils.AppScopes
 import android.annotation.SuppressLint
 import android.app.Application
 import androidx.compose.foundation.layout.Box
@@ -94,7 +95,7 @@ class GShockApplication : Application(), IScreenManager {
         Timber.i("Initializing GShockApplication")
         weeklyAlarmScheduler.ensureInitialized()
         watchTimeProvider.refreshNtpInBackground()
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScopes.io.launch {
             deviceAssociationManager.init()
         }
     }

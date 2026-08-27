@@ -151,7 +151,7 @@ class WatchTimeProvider @Inject constructor(
     private val sntpClient: SntpClient,
     private val watchSelector: CurrentWatchSelector,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = AppScopes.io
 
     suspend fun nowForWatch(): WatchTime {
         val fineAdjustment = LocalDataStorage.getFineTimeAdjustment(context).toLong()

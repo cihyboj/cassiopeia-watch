@@ -37,14 +37,19 @@ object PhoneFinder {
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
             ?: return
 
-        val manager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        audioManager = manager
-        savedVolume = manager.getStreamVolume(AudioManager.STREAM_ALARM)
-        val maxVolume = manager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-        val targetVolume = ((maxVolume * volumePercent.coerceIn(0, 100)) / 100f).toInt().coerceIn(1, maxVolume)
-        manager.setStreamVolume(AudioManager.STREAM_ALARM, targetVolume, 0)
-
         runCatching {
+            val manager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audioManager = manager
+            savedVolume = manager.getStreamVolume(AudioManager.STREAM_ALARM)
+            val maxVolume = manager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+            val targetVolume = ((maxVolume * volumePercent.coerceIn(0, 100)) / 100f).toInt().coerceIn(1, maxVolume)
+            // Throws SecurityException when Do Not Disturb is active and the app lacks
+            // notification-policy access; keep ringing at the current volume in that case.
+            runCatching { manager.setStreamVolume(AudioManager.STREAM_ALARM, targetVolume, 0) }
+                .onFailure {
+                    savedVolume = null
+                    Timber.w(it, "Could not raise alarm volume (DND?)")
+                }
             player = MediaPlayer().apply {
                 setDataSource(context, uri)
                 @Suppress("DEPRECATION")

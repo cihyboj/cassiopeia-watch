@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.services
 
+import com.beamburst.casswatch.utils.AppScopes
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import com.beamburst.casswatch.data.repository.GShockRepository
@@ -42,8 +43,8 @@ class DeviceManager @Inject constructor(
     )
 
     private fun handleDeviceNameEvent() {
-        ProgressEvents.getPayload("DeviceName").toString()
-            .takeIf { it.isNotEmpty() }
+        ProgressEvents.getPayload("DeviceName")?.toString()
+            ?.takeIf { it.isNotEmpty() }
             ?.let { deviceName ->
                 when {
                     deviceName.isEmpty() -> LocalDataStorage.delete(appContext, "LastDeviceName")
@@ -61,8 +62,8 @@ class DeviceManager @Inject constructor(
     }
 
     private fun handleDeviceAddressEvent() {
-        ProgressEvents.getPayload("DeviceAddress").toString()
-            .takeIf { it.isNotEmpty() }
+        ProgressEvents.getPayload("DeviceAddress")?.toString()
+            ?.takeIf { it.isNotEmpty() }
             ?.let { deviceAddress ->
                 when {
                     deviceAddress.isEmpty() -> LocalDataStorage.delete(
@@ -84,7 +85,7 @@ class DeviceManager @Inject constructor(
     private fun updateDeviceAddress(address: String) {
         val normalizedAddress = Utils.sanitizeMacAddress(address)
         LocalDataStorage.put(appContext, "LastDeviceAddress", normalizedAddress)
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScopes.io.launch {
             LocalDataStorage.addDeviceAddress(appContext, normalizedAddress)
         }
     }

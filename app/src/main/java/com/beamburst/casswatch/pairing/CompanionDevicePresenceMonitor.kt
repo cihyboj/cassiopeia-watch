@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.pairing
 
+import com.beamburst.casswatch.utils.AppScopes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,7 +22,7 @@ class CompanionDevicePresenceMonitor @Inject constructor(
     }
 
     // Use a class-level scope to manage coroutines safely
-    private val monitorScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val monitorScope = AppScopes.io
 
     private val eventActions = arrayOf(
         EventAction("DeviceAppeared") {

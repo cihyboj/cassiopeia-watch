@@ -41,6 +41,11 @@ fun CheckPermissions(onPermissionsGranted: @Composable () -> Unit) {
                 add(Manifest.permission.REQUEST_COMPANION_PROFILE_WATCH)
             } else {
                 add(Manifest.permission.ACCESS_COARSE_LOCATION)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    // Android 10-11 deliver BLE scan results only with FINE location;
+                    // with COARSE alone the fallback scan silently never fires.
+                    add(Manifest.permission.ACCESS_FINE_LOCATION)
+                }
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 add(Manifest.permission.POST_NOTIFICATIONS)
@@ -60,8 +65,8 @@ fun CheckPermissions(onPermissionsGranted: @Composable () -> Unit) {
         contract = ActivityResultContracts.RequestMultiplePermissions(),
         onResult = { permissions ->
             permissionsGranted = permissions.values.all { it }
-            showRationaleDialog = permissions.values.any {
-                !it && activity.shouldShowRequestPermissionRationale(initialPermissions[0])
+            showRationaleDialog = permissions.any { (permission, granted) ->
+                !granted && activity.shouldShowRequestPermissionRationale(permission)
             }
             permanentlyDenied = !permissionsGranted && !showRationaleDialog
         }

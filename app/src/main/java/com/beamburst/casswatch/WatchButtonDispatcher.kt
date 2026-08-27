@@ -1,5 +1,6 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.utils.AppScopes
 import android.content.Context
 import com.beamburst.casswatch.data.local.PressCardRepository
 import com.beamburst.casswatch.data.local.SyncDetails
@@ -38,7 +39,7 @@ class WatchButtonDispatcher @Inject constructor(
         private const val EVENT_SUBSCRIBER_ID = "WatchButtonDispatcher"
     }
 
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = AppScopes.io
 
     init {
         ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, arrayOf(

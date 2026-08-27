@@ -56,7 +56,9 @@ object AlarmSyncStorage {
 
     fun loadAlarms(context: Context, addr: String): List<Alarm>? =
         loadStoredAlarms(context, addr)?.map {
-            Alarm(it.hour, it.minute, it.enabled, it.hasHourlyChime, it.name)
+            // Coerce out-of-range values (corrupt storage, edited backup import) so
+            // downstream LocalTime.of() calls cannot throw.
+            Alarm(it.hour.coerceIn(0, 23), it.minute.coerceIn(0, 59), it.enabled, it.hasHourlyChime, it.name)
         }
 
     fun hasStoredAlarms(context: Context, addr: String): Boolean =
