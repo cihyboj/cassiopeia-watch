@@ -1,0 +1,4151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.12.3" type="baseline" client="gradle" dependencies="false" name="AGP (8.12.3)" variant="all" version="8.12.3">
+
+    <issue
+        id="DiscouragedPrivateApi"
+        message="Reflective access to mInputText, which is not part of the public SDK and therefore likely to change in future Android releases"
+        errorLine1="        val inputField = NumberPicker::class.java.getDeclaredField(&quot;mInputText&quot;)"
+        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/beamburst/casswatch/ui/common/NumberPickerStyling.kt"
+            line="25"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="OldTargetApi"
+        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
+        errorLine1="        targetSdk = 36"
+        errorLine2="        ~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="16"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="FullBackupContent"
+        message="`crash_logs/` is not in an included path"
+        errorLine1="    &lt;exclude domain=&quot;file&quot; path=&quot;crash_logs/&quot; />"
+        errorLine2="                                 ~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/backup_rules.xml"
+            line="5"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="FullBackupContent"
+        message="`crash_logs/` is not in an included path"
+        errorLine1="        &lt;exclude domain=&quot;file&quot; path=&quot;crash_logs/&quot; />"
+        errorLine2="                                     ~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/data_extraction_rules.xml"
+            line="10"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="FullBackupContent"
+        message="`crash_logs/` is not in an included path"
+        errorLine1="        &lt;exclude domain=&quot;file&quot; path=&quot;crash_logs/&quot; />"
+        errorLine2="                                     ~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/data_extraction_rules.xml"
+            line="14"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of Gradle than 8.14.3 is available: 8.14.5"
+        errorLine1="distributionUrl=https\://services.gradle.org/distributions/gradle-8.14.3-bin.zip"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/wrapper/gradle-wrapper.properties"
+            line="3"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of com.android.application than 8.12.3 is available: 9.3.2"
+        errorLine1="agp = &quot;8.12.3&quot;"
+        errorLine2="      ~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="2"
+            column="7"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.core:core-ktx than 1.18.0 is available: 1.19.0"
+        errorLine1="coreKtx = &quot;1.18.0&quot;"
+        errorLine2="          ~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="4"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.appcompat:appcompat than 1.7.1 is available: 1.8.0"
+        errorLine1="appcompat = &quot;1.7.1&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="8"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.constraintlayout:constraintlayout than 2.2.1 is available: 2.2.2"
+        errorLine1="constraintlayout = &quot;2.2.1&quot;"
+        errorLine2="                   ~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="9"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-livedata-ktx than 2.10.0 is available: 2.11.0"
+        errorLine1="lifecycleLivedataKtx = &quot;2.10.0&quot;"
+        errorLine2="                       ~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="10"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-viewmodel-ktx than 2.10.0 is available: 2.11.0"
+        errorLine1="lifecycleViewmodelKtx = &quot;2.10.0&quot;"
+        errorLine2="                        ~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="11"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.navigation:navigation-fragment-ktx than 2.9.7 is available: 2.10.0"
+        errorLine1="navigationFragmentKtx = &quot;2.9.7&quot;"
+        errorLine2="                        ~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="13"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.navigation:navigation-ui-ktx than 2.9.7 is available: 2.10.0"
+        errorLine1="navigationUiKtx = &quot;2.9.7&quot;"
+        errorLine2="                  ~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="14"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.hilt:hilt-compiler than 1.3.0 is available: 1.4.0"
+        errorLine1="hiltCompiler = &quot;1.3.0&quot;"
+        errorLine2="               ~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="17"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.hilt:hilt-navigation-fragment than 1.3.0 is available: 1.4.0"
+        errorLine1="hiltCompiler = &quot;1.3.0&quot;"
+        errorLine2="               ~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="17"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.hilt:hilt-navigation-compose than 1.3.0 is available: 1.4.0"
+        errorLine1="hiltNavigationCompose = &quot;1.3.0&quot;"
+        errorLine2="                        ~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="21"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-service than 2.10.0 is available: 2.11.0"
+        errorLine1="lifecycle = &quot;2.10.0&quot;"
+        errorLine2="            ~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="23"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.ui:ui than 1.10.6 is available: 1.12.0"
+        errorLine1="compose-ui = &quot;1.10.6&quot;"
+        errorLine2="             ~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="25"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.ui:ui-tooling than 1.10.6 is available: 1.12.0"
+        errorLine1="compose-ui = &quot;1.10.6&quot;"
+        errorLine2="             ~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="25"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.ui:ui-tooling-preview than 1.10.6 is available: 1.12.0"
+        errorLine1="compose-ui = &quot;1.10.6&quot;"
+        errorLine2="             ~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="25"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.constraintlayout:constraintlayout-compose than 1.1.1 is available: 1.1.2"
+        errorLine1="constraintlayout-compose = &quot;1.1.1&quot;"
+        errorLine2="                           ~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="26"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.json:json than 20231013 is available: 20260814"
+        errorLine1="    testImplementation(&quot;org.json:json:20231013&quot;)"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="89"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.android than 2.2.0 is available: 2.4.10"
+        errorLine1="kotlin = &quot;2.2.0&quot;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="3"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.kapt than 2.2.0 is available: 2.4.10"
+        errorLine1="kotlin = &quot;2.2.0&quot;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="3"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.plugin.compose than 2.2.0 is available: 2.4.10"
+        errorLine1="kotlin = &quot;2.2.0&quot;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="3"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.dagger.hilt.android than 2.57.2 is available: 2.60.1"
+        errorLine1="hiltAndroid = &quot;2.57.2&quot;"
+        errorLine2="              ~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="16"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.dagger:hilt-android than 2.57.2 is available: 2.60.1"
+        errorLine1="hiltAndroid = &quot;2.57.2&quot;"
+        errorLine2="              ~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="16"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.dagger:hilt-compiler than 2.57.2 is available: 2.60.1"
+        errorLine1="hiltAndroid = &quot;2.57.2&quot;"
+        errorLine2="              ~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="16"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.code.gson:gson than 2.13.2 is available: 2.14.0"
+        errorLine1="gson = &quot;2.13.2&quot;"
+        errorLine2="       ~~~~~~~~">
+        <location
+            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            line="18"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                    AppSnackbar(context.getString(R.string.backup_export_success, count))"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/beamburst/casswatch/ui/settings/BackupSection.kt"
+            line="56"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                        context.getString("
+        errorLine2="                        ^">
+        <location
+            file="src/main/java/com/beamburst/casswatch/ui/settings/BackupSection.kt"
+            line="60"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                    AppSnackbar(context.getString(R.string.backup_import_malformed, result.message))"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/beamburst/casswatch/ui/settings/BackupSection.kt"
+            line="82"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                        context.getString(R.string.backup_import_version_mismatch, result.found),"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/beamburst/casswatch/ui/settings/BackupSection.kt"
+            line="85"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                    AppSnackbar(context.getString(R.string.backup_import_failed, result.message))"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/beamburst/casswatch/ui/settings/BackupSection.kt"
+            line="88"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="        cachedPrefix = { context.getString(R.string.cached_prefix, it) },"
+        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/beamburst/casswatch/ui/devices/WatchRow.kt"
+            line="122"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/beamburst/casswatch/ui/alarms/DisconnectedInfoCard.kt"
+            line="21"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier,"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/beamburst/casswatch/ui/time/LocalTimeView.kt"
+            line="108"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;alarm_sync_risk_before_auto_sync&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;alarm_sync_risk_before_auto_sync&quot;>Sync watch before %1$s for this alarm to ring.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="14"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;alarm_sync_risk_auto_off&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;alarm_sync_risk_auto_off&quot;>Automatic sync is off. Sync watch before %1$s for this alarm to ring.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="15"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;alarm_hub_signal&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;alarm_hub_signal&quot;>Signal&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="52"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;hourly_signal_sent_to_watch&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;hourly_signal_sent_to_watch&quot;>Hourly signal sent to watch&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="178"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;no_clock_app_found&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;no_clock_app_found&quot;>No clock app found to receive the alarm&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="206"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;companion_channel_name&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;companion_channel_name&quot;>Watch connection&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="207"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;companion_notification_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;companion_notification_title&quot;>Watch connecting&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="208"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;companion_notification_text&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;companion_notification_text&quot;>Keeping the connection alive…&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="209"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;location_services_required_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;location_services_required_title&quot;>Location Services Required&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="210"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;location_services_required_body&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;location_services_required_body&quot;>Android requires Location Services to be enabled for Bluetooth scanning. This app does not use your location — it is an Android system requirement.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="211"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;open_settings&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;open_settings&quot;>Open Settings&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="212"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;watch_disconnected_snackbar&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;watch_disconnected_snackbar&quot;>%1$s disconnected&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="213"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;permissions_required_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;permissions_required_title&quot;>Permissions Required&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="214"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;permissions_required_body&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;permissions_required_body&quot;>This app needs location and Bluetooth permissions to function properly.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="215"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;retry&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;retry&quot;>Retry&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="216"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;exit&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;exit&quot;>Exit&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="217"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;api_error&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;api_error&quot;>Api Error&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="218"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;dismiss&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;dismiss&quot;>Dismiss&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="219"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;time_set_notification&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;time_set_notification&quot;>Time set at %1$s for %2$s watch&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="220"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;settings_section_actions&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;settings_section_actions&quot;>Actions&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="251"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;auto_sync_on_reconnect&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;auto_sync_on_reconnect&quot;>Auto-sync on reconnect&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="254"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;auto_sync_on_reconnect_caption&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;auto_sync_on_reconnect_caption&quot;>When watch reconnects, sync time (and use NTP if enabled).&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="255"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;auto_time_adjustment_master&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;auto_time_adjustment_master&quot;>Automatic sync&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="289"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;auto_time_adjustment_master_caption&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;auto_time_adjustment_master_caption&quot;>The phone updates the watch a few minutes after 00:00, 06:00, 12:00 and 18:00.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="290"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;hourly_signal_active_days&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;hourly_signal_active_days&quot;>Active days&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="313"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;hourly_signal_preset_weekdays&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;hourly_signal_preset_weekdays&quot;>Weekdays&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="314"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;hourly_signal_preset_weekend&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;hourly_signal_preset_weekend&quot;>Weekend&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="315"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;hourly_signal_preset_every_day&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;hourly_signal_preset_every_day&quot;>Every day&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="316"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;hourly_signal_no_days_hint&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;hourly_signal_no_days_hint&quot;>Select at least one day to enable&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="317"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;hourly_signal_chimes_from&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;hourly_signal_chimes_from&quot;>Chimes %1$s:00 to %2$s:00 · %3$d times per day&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="318"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_reset&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_reset&quot;>Reset&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="327"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_label_min&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_label_min&quot;>min&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="328"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_label_sec&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_label_sec&quot;>sec&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="329"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_label_hr&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_label_hr&quot;>hr&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="330"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_preset_5min&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_preset_5min&quot;>5 min&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="331"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_preset_10min&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_preset_10min&quot;>10 min&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="332"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_preset_15min&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_preset_15min&quot;>15 min&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="333"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_preset_25min&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_preset_25min&quot;>25 min&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="334"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_preset_30min&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_preset_30min&quot;>30 min&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="335"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_preset_5959&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_preset_5959&quot;>59:59&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="336"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_preset_20min&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_preset_20min&quot;>20 min&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="337"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_preset_45min&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_preset_45min&quot;>45 min&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="338"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;timer_preset_60min&quot; is not translated in &quot;ar&quot; (Arabic), &quot;de&quot; (German), &quot;ru&quot; (Russian), &quot;bg&quot; (Bulgarian), &quot;ja&quot; (Japanese), &quot;fr&quot; (French), &quot;pl&quot; (Polish), &quot;hu&quot; (Hungarian), &quot;ca&quot; (Catalan), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese)"
+        errorLine1="    &lt;string name=&quot;timer_preset_60min&quot;>60 min&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="339"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Typos"
+        message="&quot;via&quot; is a common misspelling; did you mean &quot;vía&quot;?"
+        errorLine1="    &lt;string name=&quot;exact_alarm_dialog_body&quot;>If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.&lt;/string>"
+        errorLine2="                                                                                                                            ~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="174"
+            column="125"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;app_name&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;app_name&quot; translatable=&quot;false&quot;>Cassiopeia Watch&lt;/string>"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="2"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;home&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;home&quot; translatable=&quot;false&quot;>Home&lt;/string>"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="10"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;broadcast_send_test&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;broadcast_send_test&quot; translatable=&quot;false&quot;>Send test broadcast&lt;/string>"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="69"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;font&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;font&quot; translatable=&quot;false&quot;>Font&lt;/string>"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="87"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;paired_watches_empty&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;zh&quot; (Chinese) here"
+        errorLine1="    &lt;string name=&quot;paired_watches_empty&quot; translatable=&quot;false&quot;>No watches paired yet.&lt;/string>"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="163"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_title&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;zh&quot; (Chinese) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_title&quot; translatable=&quot;false&quot;>Forget %1$s?&lt;/string>"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="164"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_body&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;zh&quot; (Chinese) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_body&quot; translatable=&quot;false&quot;>This removes the watch from your paired list and deletes all its alarms, settings, and sync history on this phone. The watch itself is unaffected.&lt;/string>"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="165"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;zh&quot; (Chinese) here"
+        errorLine1="    &lt;string name=&quot;connect&quot; translatable=&quot;false&quot;>Connect&lt;/string>"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="166"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;disconnect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;zh&quot; (Chinese) here"
+        errorLine1="    &lt;string name=&quot;disconnect&quot; translatable=&quot;false&quot;>Disconnect&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="167"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;paired_watches_empty&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;hu&quot; (Hungarian) here"
+        errorLine1="    &lt;string name=&quot;paired_watches_empty&quot; translatable=&quot;false&quot;>No watches paired yet.&lt;/string>"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="167"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;cached_prefix&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;zh&quot; (Chinese) here"
+        errorLine1="    &lt;string name=&quot;cached_prefix&quot; translatable=&quot;false&quot;>cached: %1$s&lt;/string>"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="168"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_title&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;hu&quot; (Hungarian) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_title&quot; translatable=&quot;false&quot;>Forget %1$s?&lt;/string>"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="168"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connecting&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;zh&quot; (Chinese) here"
+        errorLine1="    &lt;string name=&quot;connecting&quot; translatable=&quot;false&quot;>connecting…&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="169"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_body&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;hu&quot; (Hungarian) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_body&quot; translatable=&quot;false&quot;>This removes the watch from your paired list and deletes all its alarms, settings, and sync history on this phone. The watch itself is unaffected.&lt;/string>"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="169"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;hu&quot; (Hungarian) here"
+        errorLine1="    &lt;string name=&quot;connect&quot; translatable=&quot;false&quot;>Connect&lt;/string>"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="170"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connection_error&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;zh&quot; (Chinese) here"
+        errorLine1="    &lt;string name=&quot;connection_error&quot; translatable=&quot;false&quot;>connection error&lt;/string>"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="170"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;disconnect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;hu&quot; (Hungarian) here"
+        errorLine1="    &lt;string name=&quot;disconnect&quot; translatable=&quot;false&quot;>Disconnect&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="171"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;not_yet_synced&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;zh&quot; (Chinese) here"
+        errorLine1="    &lt;string name=&quot;not_yet_synced&quot; translatable=&quot;false&quot;>not yet synced&lt;/string>"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="171"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;paired_watches_empty&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ar&quot; (Arabic) here"
+        errorLine1="    &lt;string name=&quot;paired_watches_empty&quot; translatable=&quot;false&quot;>No watches paired yet.&lt;/string>"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="171"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;cached_prefix&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;hu&quot; (Hungarian) here"
+        errorLine1="    &lt;string name=&quot;cached_prefix&quot; translatable=&quot;false&quot;>cached: %1$s&lt;/string>"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="172"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect_to_read_watch&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;zh&quot; (Chinese) here"
+        errorLine1="    &lt;string name=&quot;connect_to_read_watch&quot; translatable=&quot;false&quot;>Connect to read watch&lt;/string>"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="172"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_title&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ar&quot; (Arabic) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_title&quot; translatable=&quot;false&quot;>Forget %1$s?&lt;/string>"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="172"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connecting&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;hu&quot; (Hungarian) here"
+        errorLine1="    &lt;string name=&quot;connecting&quot; translatable=&quot;false&quot;>connecting…&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="173"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_body&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ar&quot; (Arabic) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_body&quot; translatable=&quot;false&quot;>This removes the watch from your paired list and deletes all its alarms, settings, and sync history on this phone. The watch itself is unaffected.&lt;/string>"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="173"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ar&quot; (Arabic) here"
+        errorLine1="    &lt;string name=&quot;connect&quot; translatable=&quot;false&quot;>Connect&lt;/string>"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="174"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connection_error&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;hu&quot; (Hungarian) here"
+        errorLine1="    &lt;string name=&quot;connection_error&quot; translatable=&quot;false&quot;>connection error&lt;/string>"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="174"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;disconnect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ar&quot; (Arabic) here"
+        errorLine1="    &lt;string name=&quot;disconnect&quot; translatable=&quot;false&quot;>Disconnect&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="175"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;not_yet_synced&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;hu&quot; (Hungarian) here"
+        errorLine1="    &lt;string name=&quot;not_yet_synced&quot; translatable=&quot;false&quot;>not yet synced&lt;/string>"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="175"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;status_disconnected&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;zh&quot; (Chinese) here"
+        errorLine1="    &lt;string name=&quot;status_disconnected&quot; translatable=&quot;false&quot;>Disconnected&lt;/string>"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="175"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;cached_prefix&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ar&quot; (Arabic) here"
+        errorLine1="    &lt;string name=&quot;cached_prefix&quot; translatable=&quot;false&quot;>cached: %1$s&lt;/string>"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="176"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect_to_read_watch&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;hu&quot; (Hungarian) here"
+        errorLine1="    &lt;string name=&quot;connect_to_read_watch&quot; translatable=&quot;false&quot;>Connect to read watch&lt;/string>"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="176"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;paired_watches_empty&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
+        errorLine1="    &lt;string name=&quot;paired_watches_empty&quot; translatable=&quot;false&quot;>No watches paired yet.&lt;/string>"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="176"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connecting&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ar&quot; (Arabic) here"
+        errorLine1="    &lt;string name=&quot;connecting&quot; translatable=&quot;false&quot;>connecting…&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="177"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_title&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_title&quot; translatable=&quot;false&quot;>Forget %1$s?&lt;/string>"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="177"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;paired_watches_empty&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;bg&quot; (Bulgarian) here"
+        errorLine1="    &lt;string name=&quot;paired_watches_empty&quot; translatable=&quot;false&quot;>No watches paired yet.&lt;/string>"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="177"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;paired_watches_empty&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;es&quot; (Spanish) here"
+        errorLine1="    &lt;string name=&quot;paired_watches_empty&quot; translatable=&quot;false&quot;>No watches paired yet.&lt;/string>"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="177"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connection_error&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ar&quot; (Arabic) here"
+        errorLine1="    &lt;string name=&quot;connection_error&quot; translatable=&quot;false&quot;>connection error&lt;/string>"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="178"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_body&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_body&quot; translatable=&quot;false&quot;>This removes the watch from your paired list and deletes all its alarms, settings, and sync history on this phone. The watch itself is unaffected.&lt;/string>"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="178"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_title&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;bg&quot; (Bulgarian) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_title&quot; translatable=&quot;false&quot;>Forget %1$s?&lt;/string>"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="178"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_title&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;es&quot; (Spanish) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_title&quot; translatable=&quot;false&quot;>Forget %1$s?&lt;/string>"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="178"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;paired_watches_empty&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;de&quot; (German) here"
+        errorLine1="    &lt;string name=&quot;paired_watches_empty&quot;>Noch keine Uhren gekoppelt.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="178"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
+        errorLine1="    &lt;string name=&quot;connect&quot; translatable=&quot;false&quot;>Connect&lt;/string>"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="179"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_body&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;bg&quot; (Bulgarian) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_body&quot; translatable=&quot;false&quot;>This removes the watch from your paired list and deletes all its alarms, settings, and sync history on this phone. The watch itself is unaffected.&lt;/string>"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="179"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_body&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;es&quot; (Spanish) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_body&quot; translatable=&quot;false&quot;>This removes the watch from your paired list and deletes all its alarms, settings, and sync history on this phone. The watch itself is unaffected.&lt;/string>"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="179"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_title&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;de&quot; (German) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_title&quot;>%1$s vergessen?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="179"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;not_yet_synced&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ar&quot; (Arabic) here"
+        errorLine1="    &lt;string name=&quot;not_yet_synced&quot; translatable=&quot;false&quot;>not yet synced&lt;/string>"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="179"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;status_disconnected&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;hu&quot; (Hungarian) here"
+        errorLine1="    &lt;string name=&quot;status_disconnected&quot; translatable=&quot;false&quot;>Disconnected&lt;/string>"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="179"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;bg&quot; (Bulgarian) here"
+        errorLine1="    &lt;string name=&quot;connect&quot; translatable=&quot;false&quot;>Connect&lt;/string>"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="180"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;es&quot; (Spanish) here"
+        errorLine1="    &lt;string name=&quot;connect&quot; translatable=&quot;false&quot;>Connect&lt;/string>"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="180"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect_to_read_watch&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ar&quot; (Arabic) here"
+        errorLine1="    &lt;string name=&quot;connect_to_read_watch&quot; translatable=&quot;false&quot;>Connect to read watch&lt;/string>"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="180"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;disconnect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
+        errorLine1="    &lt;string name=&quot;disconnect&quot; translatable=&quot;false&quot;>Disconnect&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="180"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_body&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;de&quot; (German) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_body&quot;>Dies entfernt die Uhr aus Ihrer gekoppelten Liste und löscht alle ihre Alarme, Einstellungen und den Synchronisierungsverlauf auf diesem Telefon. Die Uhr selbst wird nicht beeinflusst.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="180"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;cached_prefix&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
+        errorLine1="    &lt;string name=&quot;cached_prefix&quot; translatable=&quot;false&quot;>cached: %1$s&lt;/string>"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="181"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;de&quot; (German) here"
+        errorLine1="    &lt;string name=&quot;connect&quot;>Verbinden&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="181"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;disconnect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;bg&quot; (Bulgarian) here"
+        errorLine1="    &lt;string name=&quot;disconnect&quot; translatable=&quot;false&quot;>Disconnect&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="181"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;disconnect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;es&quot; (Spanish) here"
+        errorLine1="    &lt;string name=&quot;disconnect&quot; translatable=&quot;false&quot;>Disconnect&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="181"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;cached_prefix&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;bg&quot; (Bulgarian) here"
+        errorLine1="    &lt;string name=&quot;cached_prefix&quot; translatable=&quot;false&quot;>cached: %1$s&lt;/string>"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="182"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;cached_prefix&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;es&quot; (Spanish) here"
+        errorLine1="    &lt;string name=&quot;cached_prefix&quot; translatable=&quot;false&quot;>cached: %1$s&lt;/string>"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="182"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connecting&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
+        errorLine1="    &lt;string name=&quot;connecting&quot; translatable=&quot;false&quot;>connecting…&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="182"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;disconnect&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;de&quot; (German) here"
+        errorLine1="    &lt;string name=&quot;disconnect&quot;>Trennen&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="182"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;cached_prefix&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;de&quot; (German) here"
+        errorLine1="    &lt;string name=&quot;cached_prefix&quot;>zwischengespeichert: %1$s&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="183"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connecting&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;bg&quot; (Bulgarian) here"
+        errorLine1="    &lt;string name=&quot;connecting&quot; translatable=&quot;false&quot;>connecting…&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="183"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connecting&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;es&quot; (Spanish) here"
+        errorLine1="    &lt;string name=&quot;connecting&quot; translatable=&quot;false&quot;>connecting…&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="183"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connection_error&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
+        errorLine1="    &lt;string name=&quot;connection_error&quot; translatable=&quot;false&quot;>connection error&lt;/string>"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="183"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;paired_watches_empty&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ca&quot; (Catalan) here"
+        errorLine1="    &lt;string name=&quot;paired_watches_empty&quot; translatable=&quot;false&quot;>No watches paired yet.&lt;/string>"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="183"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;paired_watches_empty&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ja&quot; (Japanese) here"
+        errorLine1="    &lt;string name=&quot;paired_watches_empty&quot; translatable=&quot;false&quot;>No watches paired yet.&lt;/string>"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="183"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;status_disconnected&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ar&quot; (Arabic) here"
+        errorLine1="    &lt;string name=&quot;status_disconnected&quot; translatable=&quot;false&quot;>Disconnected&lt;/string>"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="183"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connecting&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;de&quot; (German) here"
+        errorLine1="    &lt;string name=&quot;connecting&quot;>verbinde…&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="184"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connection_error&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;bg&quot; (Bulgarian) here"
+        errorLine1="    &lt;string name=&quot;connection_error&quot; translatable=&quot;false&quot;>connection error&lt;/string>"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="184"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connection_error&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;es&quot; (Spanish) here"
+        errorLine1="    &lt;string name=&quot;connection_error&quot; translatable=&quot;false&quot;>connection error&lt;/string>"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="184"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_title&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ca&quot; (Catalan) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_title&quot; translatable=&quot;false&quot;>Forget %1$s?&lt;/string>"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="184"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_title&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ja&quot; (Japanese) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_title&quot; translatable=&quot;false&quot;>Forget %1$s?&lt;/string>"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="184"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;not_yet_synced&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
+        errorLine1="    &lt;string name=&quot;not_yet_synced&quot; translatable=&quot;false&quot;>not yet synced&lt;/string>"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="184"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect_to_read_watch&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
+        errorLine1="    &lt;string name=&quot;connect_to_read_watch&quot; translatable=&quot;false&quot;>Connect to read watch&lt;/string>"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="185"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connection_error&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;de&quot; (German) here"
+        errorLine1="    &lt;string name=&quot;connection_error&quot;>Verbindungsfehler&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="185"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_body&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ca&quot; (Catalan) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_body&quot; translatable=&quot;false&quot;>This removes the watch from your paired list and deletes all its alarms, settings, and sync history on this phone. The watch itself is unaffected.&lt;/string>"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="185"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_body&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ja&quot; (Japanese) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_body&quot; translatable=&quot;false&quot;>This removes the watch from your paired list and deletes all its alarms, settings, and sync history on this phone. The watch itself is unaffected.&lt;/string>"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="185"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;not_yet_synced&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;bg&quot; (Bulgarian) here"
+        errorLine1="    &lt;string name=&quot;not_yet_synced&quot; translatable=&quot;false&quot;>not yet synced&lt;/string>"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="185"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;not_yet_synced&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;es&quot; (Spanish) here"
+        errorLine1="    &lt;string name=&quot;not_yet_synced&quot; translatable=&quot;false&quot;>not yet synced&lt;/string>"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="185"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ca&quot; (Catalan) here"
+        errorLine1="    &lt;string name=&quot;connect&quot; translatable=&quot;false&quot;>Connect&lt;/string>"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="186"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ja&quot; (Japanese) here"
+        errorLine1="    &lt;string name=&quot;connect&quot; translatable=&quot;false&quot;>Connect&lt;/string>"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="186"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect_to_read_watch&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;bg&quot; (Bulgarian) here"
+        errorLine1="    &lt;string name=&quot;connect_to_read_watch&quot; translatable=&quot;false&quot;>Connect to read watch&lt;/string>"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="186"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect_to_read_watch&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;es&quot; (Spanish) here"
+        errorLine1="    &lt;string name=&quot;connect_to_read_watch&quot; translatable=&quot;false&quot;>Connect to read watch&lt;/string>"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="186"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;not_yet_synced&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;de&quot; (German) here"
+        errorLine1="    &lt;string name=&quot;not_yet_synced&quot;>noch nicht synchronisiert&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="186"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect_to_read_watch&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;de&quot; (German) here"
+        errorLine1="    &lt;string name=&quot;connect_to_read_watch&quot;>Verbinden, um Uhr auszulesen&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="187"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;disconnect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ca&quot; (Catalan) here"
+        errorLine1="    &lt;string name=&quot;disconnect&quot; translatable=&quot;false&quot;>Disconnect&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="187"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;disconnect&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ja&quot; (Japanese) here"
+        errorLine1="    &lt;string name=&quot;disconnect&quot; translatable=&quot;false&quot;>Disconnect&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="187"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;paired_watches_empty&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;fr&quot; (French) here"
+        errorLine1="    &lt;string name=&quot;paired_watches_empty&quot;>Aucune montre associée pour le moment.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="187"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;cached_prefix&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ca&quot; (Catalan) here"
+        errorLine1="    &lt;string name=&quot;cached_prefix&quot; translatable=&quot;false&quot;>cached: %1$s&lt;/string>"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="188"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;cached_prefix&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ja&quot; (Japanese) here"
+        errorLine1="    &lt;string name=&quot;cached_prefix&quot; translatable=&quot;false&quot;>cached: %1$s&lt;/string>"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="188"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_title&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;fr&quot; (French) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_title&quot;>Oublier %1$s?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="188"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;status_disconnected&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
+        errorLine1="    &lt;string name=&quot;status_disconnected&quot; translatable=&quot;false&quot;>Disconnected&lt;/string>"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="188"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connecting&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ca&quot; (Catalan) here"
+        errorLine1="    &lt;string name=&quot;connecting&quot; translatable=&quot;false&quot;>connecting…&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="189"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connecting&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ja&quot; (Japanese) here"
+        errorLine1="    &lt;string name=&quot;connecting&quot; translatable=&quot;false&quot;>connecting…&lt;/string>"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="189"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_body&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;fr&quot; (French) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_body&quot;>Cela supprime la montre de votre liste associée et efface toutes ses alarmes, paramètres et l\&apos;historique de synchronisation sur ce téléphone. La montre elle-même n\&apos;est pas affectée.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="189"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;status_disconnected&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;bg&quot; (Bulgarian) here"
+        errorLine1="    &lt;string name=&quot;status_disconnected&quot; translatable=&quot;false&quot;>Disconnected&lt;/string>"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="189"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;status_disconnected&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;es&quot; (Spanish) here"
+        errorLine1="    &lt;string name=&quot;status_disconnected&quot; translatable=&quot;false&quot;>Disconnected&lt;/string>"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="189"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;fr&quot; (French) here"
+        errorLine1="    &lt;string name=&quot;connect&quot;>Connecter&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="190"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connection_error&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ca&quot; (Catalan) here"
+        errorLine1="    &lt;string name=&quot;connection_error&quot; translatable=&quot;false&quot;>connection error&lt;/string>"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="190"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connection_error&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ja&quot; (Japanese) here"
+        errorLine1="    &lt;string name=&quot;connection_error&quot; translatable=&quot;false&quot;>connection error&lt;/string>"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="190"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;status_disconnected&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;de&quot; (German) here"
+        errorLine1="    &lt;string name=&quot;status_disconnected&quot;>Getrennt&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="190"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;disconnect&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;fr&quot; (French) here"
+        errorLine1="    &lt;string name=&quot;disconnect&quot;>Déconnecter&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="191"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;not_yet_synced&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ca&quot; (Catalan) here"
+        errorLine1="    &lt;string name=&quot;not_yet_synced&quot; translatable=&quot;false&quot;>not yet synced&lt;/string>"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="191"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;not_yet_synced&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ja&quot; (Japanese) here"
+        errorLine1="    &lt;string name=&quot;not_yet_synced&quot; translatable=&quot;false&quot;>not yet synced&lt;/string>"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="191"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;cached_prefix&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;fr&quot; (French) here"
+        errorLine1="    &lt;string name=&quot;cached_prefix&quot;>mis en cache: %1$s&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="192"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect_to_read_watch&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ca&quot; (Catalan) here"
+        errorLine1="    &lt;string name=&quot;connect_to_read_watch&quot; translatable=&quot;false&quot;>Connect to read watch&lt;/string>"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="192"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect_to_read_watch&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ja&quot; (Japanese) here"
+        errorLine1="    &lt;string name=&quot;connect_to_read_watch&quot; translatable=&quot;false&quot;>Connect to read watch&lt;/string>"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="192"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connecting&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;fr&quot; (French) here"
+        errorLine1="    &lt;string name=&quot;connecting&quot;>connexion…&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="193"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connection_error&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;fr&quot; (French) here"
+        errorLine1="    &lt;string name=&quot;connection_error&quot;>erreur de connexion&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="194"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;not_yet_synced&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;fr&quot; (French) here"
+        errorLine1="    &lt;string name=&quot;not_yet_synced&quot;>pas encore synchronisé&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="195"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;status_disconnected&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ca&quot; (Catalan) here"
+        errorLine1="    &lt;string name=&quot;status_disconnected&quot; translatable=&quot;false&quot;>Disconnected&lt;/string>"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="195"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;status_disconnected&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ja&quot; (Japanese) here"
+        errorLine1="    &lt;string name=&quot;status_disconnected&quot; translatable=&quot;false&quot;>Disconnected&lt;/string>"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="195"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect_to_read_watch&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;fr&quot; (French) here"
+        errorLine1="    &lt;string name=&quot;connect_to_read_watch&quot;>Connecter pour lire la montre&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="196"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;status_disconnected&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;fr&quot; (French) here"
+        errorLine1="    &lt;string name=&quot;status_disconnected&quot;>Déconnecté&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="199"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;connect&quot;>Połącz&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="231"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;disconnect&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;disconnect&quot;>Rozłącz&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="232"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connecting&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;connecting&quot;>Łączenie…&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="233"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connection_error&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;connection_error&quot;>Błąd połączenia&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="234"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;cached_prefix&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;cached_prefix&quot;>cached: %1$s&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="235"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;not_yet_synced&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;not_yet_synced&quot;>Niezsynchronizowane&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="236"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;connect_to_read_watch&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;connect_to_read_watch&quot;>Połącz, aby odczytać zegarek&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="237"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;paired_watches_empty&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;paired_watches_empty&quot;>Brak sparowanych zegarków.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="238"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_title&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_title&quot;>Zapomnij %1$s?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="239"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;forget_watch_confirm_body&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;forget_watch_confirm_body&quot;>Ta operacja usuwa zegarek z listy sparowanych i usuwa wszystkie jego alarmy, ustawienia i historię synchronizacji na tym telefonie. Sam zegarek nie jest dotknięty.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="240"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;status_disconnected&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;status_disconnected&quot;>Rozłączono&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="244"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;sync_history_title&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;sync_history_title&quot;>Historia synchronizacji&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="257"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;sync_history_no_entries&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;sync_history_no_entries&quot;>Brak zdarzeń synchronizacji&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="258"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;sync_history_clear&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;sync_history_clear&quot;>Wyczyść historię&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="259"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;sync_history_clear_confirm_title&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;sync_history_clear_confirm_title&quot;>Wyczyść historię synchronizacji?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="260"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;sync_history_clear_confirm_body&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;sync_history_clear_confirm_body&quot;>Usuwa wszystkie 50 wpisów dla %1$s. Historia innych zegarków nie jest dotknięta.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="261"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;find_phone_dialog_title&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;find_phone_dialog_title&quot;>Znajdź telefon&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="262"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;find_phone_volume_label&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;find_phone_volume_label&quot;>Głośność: %1$d%%&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="263"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;find_phone_melody_label&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;find_phone_melody_label&quot;>Melodia&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="264"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;find_phone_melody_alarm&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;find_phone_melody_alarm&quot;>Alarm&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="265"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;find_phone_melody_ringtone&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;find_phone_melody_ringtone&quot;>Ton&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="266"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;find_phone_melody_notification&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;find_phone_melody_notification&quot;>Powiadomienie&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="267"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;find_phone_test_tone&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;find_phone_test_tone&quot;>Test&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="268"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;find_phone_notification_title&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;find_phone_notification_title&quot;>Znajdowanie telefonu&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="269"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;find_phone_notification_text&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;find_phone_notification_text&quot;>Telefon dzwoni. Naciśnij Stop, aby wyciszyć.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="270"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;stop&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;stop&quot;>Stop&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="271"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;pairing_failed_generic&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;pairing_failed_generic&quot;>Połączenie nie powiodło się: %1$s. Proszę spróbować ponownie.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="277"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;pairing_activity_finishing&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;pairing_activity_finishing&quot;>Nie można rozpocząć połączenia: Aktivit jest zamykana. Proszę spróbować ponownie.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="278"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;pairing_crash_recovery&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;pairing_crash_recovery&quot;>Odzyskano z poprzedniego błędu połączenia. Możesz spróbować ponownie.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="279"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;pairing_crash_detected&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
+        errorLine1="    &lt;string name=&quot;pairing_crash_detected&quot;>&lt;![CDATA["
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="280"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;chimes&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;hourly_signal_chimes_at&quot;>Chimes at %1$s (%2$d chimes / day)&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="54"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;active&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1$d active&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="202"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;disabled&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1$d disabled&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="203"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;entries&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;backup_export_success&quot; translatable=&quot;false&quot;>Backup saved (%1$d entries).&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="297"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;entries&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;backup_import_success&quot; translatable=&quot;false&quot;>Restored %1$d entries. Restart the app to load them; then re-pair watches via Add Watch (system pairing dialog) to restore their alarms and settings.&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="299"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;times&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;hourly_signal_chimes_from&quot;>Chimes %1$s:00 to %2$s:00 · %3$d times per day&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="318"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="153"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="200"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="155"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="202"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="156"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="203"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="157"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="200"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="159"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="202"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="160"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="203"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="161"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="200"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="163"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="202"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="164"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="203"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="166"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="200"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="167"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="200"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="167"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="200"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="168"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="202"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="168"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="200"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="169"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="202"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="169"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="202"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="169"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="203"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="170"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="202"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-bg/strings.xml"
+            line="170"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="203"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="170"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="203"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="171"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="203"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="173"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="200"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="173"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="200"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="175"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="202"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="175"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="202"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ca/strings.xml"
+            line="176"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="203"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ja/strings.xml"
+            line="176"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="203"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="177"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="200"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="179"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="202"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="StringFormatCount"
+        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
+        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="180"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="203"
+            column="5"
+            message="Conflicting number of arguments (1) here"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableLongStateOf` instead of `mutableStateOf`"
+        errorLine1="        mutableStateOf(currentTimeMillisForDisplay(source))"
+        errorLine2="        ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/beamburst/casswatch/ui/time/RealTimeClock.kt"
+            line="24"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.camera` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/camera.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.grey_500` appears to be unused"
+        errorLine1="    &lt;color name=&quot;grey_500&quot;>#9E9E9E&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="4"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.events` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/events.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.find_phone` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/find_phone.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.flashlight` appears to be unused"
+        errorLine1="&lt;vector android:height=&quot;24dp&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/flashlight.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.generic_action_item` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/generic_action_item.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.mipmap.ic_launcher_round` appears to be unused">
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher_round.webp"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.img` appears to be unused">
+        <location
+            file="src/main/res/drawable/img.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.location` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/location.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.mail` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/mail.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.phone` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/phone.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.skip_next` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/skip_next.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_time` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_time&quot;>Time&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="3"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_alarms` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_alarms&quot;>Alarms&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="4"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_events` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_events&quot;>Events&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="5"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_settings` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_settings&quot;>Settings&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="6"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.time` appears to be unused"
+        errorLine1="    &lt;string name=&quot;time&quot;>Time&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="9"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.alarm_view_simple` appears to be unused"
+        errorLine1="    &lt;string name=&quot;alarm_view_simple&quot;>Daily&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="11"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.alarm_view_weekly` appears to be unused"
+        errorLine1="    &lt;string name=&quot;alarm_view_weekly&quot;>Weekly&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="12"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.enabled` appears to be unused"
+        errorLine1="    &lt;string name=&quot;enabled&quot;>Enabled&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="16"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.disabled` appears to be unused"
+        errorLine1="    &lt;string name=&quot;disabled&quot;>Disabled&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="17"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.alarms_screen_info` appears to be unused"
+        errorLine1="    &lt;string name=&quot;alarms_screen_info&quot;>&lt;![CDATA[The &lt;b>B5600/B5000/B2100/ABL-100&lt;/b> watches have 5 alarms shown here."
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="33"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.events_screen_info` appears to be unused"
+        errorLine1="    &lt;string name=&quot;events_screen_info&quot;>&lt;![CDATA[This screen displays Events from your &lt;b>Google Calendar&lt;/b> and allows you to send them to the watch\&apos;s"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="36"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.feb_22_mar_24` appears to be unused"
+        errorLine1="    &lt;string name=&quot;feb_22_mar_24&quot;>Feb-22 - Mar-24&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="39"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.weekly` appears to be unused"
+        errorLine1="    &lt;string name=&quot;weekly&quot;>WEEKLY&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="40"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.action_item` appears to be unused"
+        errorLine1="    &lt;string name=&quot;action_item&quot;>Action Item&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="41"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.voice_assistant` appears to be unused"
+        errorLine1="    &lt;string name=&quot;voice_assistant&quot;>Voice Assistant&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="42"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.take_a_photo` appears to be unused"
+        errorLine1="    &lt;string name=&quot;take_a_photo&quot;>Take a photo&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="43"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.daily` appears to be unused"
+        errorLine1="    &lt;string name=&quot;daily&quot;>Daily&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="45"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string._12_00` appears to be unused"
+        errorLine1="    &lt;string name=&quot;_12_00&quot;>12:00&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="46"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.email_item` appears to be unused"
+        errorLine1="    &lt;string name=&quot;email_item&quot;>Email Item&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="47"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.email_example_com` appears to be unused"
+        errorLine1="    &lt;string name=&quot;email_example_com&quot;>me@example.com&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="48"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.hourly_signal_window_caption` appears to be unused"
+        errorLine1="    &lt;string name=&quot;hourly_signal_window_caption&quot;>%1$s:00 – %2$s:00&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="53"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.hourly_signal_chimes_at` appears to be unused"
+        errorLine1="    &lt;string name=&quot;hourly_signal_chimes_at&quot;>Chimes at %1$s (%2$d chimes / day)&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="54"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.hourly_signal_requires_auto_sync` appears to be unused"
+        errorLine1="    &lt;string name=&quot;hourly_signal_requires_auto_sync&quot;>Requires automatic sync. The watch updates at 00:00, 06:00, 12:00 and 18:00.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="55"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.hourly_signal_picker_start` appears to be unused"
+        errorLine1="    &lt;string name=&quot;hourly_signal_picker_start&quot;>start&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="56"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.hourly_signal_picker_end` appears to be unused"
+        errorLine1="    &lt;string name=&quot;hourly_signal_picker_end&quot;>end&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="57"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.flashlight_card_subtitle` appears to be unused"
+        errorLine1="    &lt;string name=&quot;flashlight_card_subtitle&quot;>Toggles the device flashlight on short press while connected.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="65"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.google_calendar_events` appears to be unused"
+        errorLine1="    &lt;string name=&quot;google_calendar_events&quot;>Google Calendar Events&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="74"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.phonecall_item` appears to be unused"
+        errorLine1="    &lt;string name=&quot;phonecall_item&quot;>PhoneCall Item&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="77"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.running_actions` appears to be unused"
+        errorLine1="    &lt;string name=&quot;running_actions&quot;>Running Actions&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="79"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_placeholder` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_placeholder&quot;>Title Placeholder&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="80"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.send_to_watch_settings` appears to be unused"
+        errorLine1="    &lt;string name=&quot;send_to_watch_settings&quot;>Send to Watch&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="82"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.timerDialogTitle` appears to be unused"
+        errorLine1="    &lt;string name=&quot;timerDialogTitle&quot;>Timer&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="94"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.info_home_time` appears to be unused"
+        errorLine1="    &lt;string name=&quot;info_home_time&quot;>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="95"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.time_adjustment_info` appears to be unused"
+        errorLine1="    &lt;string name=&quot;time_adjustment_info&quot; >&lt;![CDATA["
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="101"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.image_of_casio_watch` appears to be unused"
+        errorLine1="    &lt;string name=&quot;image_of_casio_watch&quot;>Casio Watch&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="105"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.connection_screen_device` appears to be unused"
+        errorLine1="    &lt;string name=&quot;connection_screen_device&quot;> &lt;![CDATA["
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="106"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.hand_adjustment` appears to be unused"
+        errorLine1="    &lt;string name=&quot;hand_adjustment&quot;>Hand Adjustment&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="114"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.move_hand_to_the_left` appears to be unused"
+        errorLine1="    &lt;string name=&quot;move_hand_to_the_left&quot;>Move hand to the Left&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="115"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.reset_hand_at_12_position` appears to be unused"
+        errorLine1="    &lt;string name=&quot;reset_hand_at_12_position&quot;>Reset hand at 12 position&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="116"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.move_hand_to_the_right` appears to be unused"
+        errorLine1="    &lt;string name=&quot;move_hand_to_the_right&quot;>Move hand to the Right&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="117"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.off` appears to be unused"
+        errorLine1="    &lt;string name=&quot;off&quot;>Off&lt;/string>"
+        errorLine2="            ~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="119"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.on` appears to be unused"
+        errorLine1="    &lt;string name=&quot;on&quot;>On&lt;/string>"
+        errorLine2="            ~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="120"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.notify_me` appears to be unused"
+        errorLine1="    &lt;string name=&quot;notify_me&quot;>Notify me&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="125"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string._00_00_00` appears to be unused"
+        errorLine1="    &lt;string name=&quot;_00_00_00&quot;>00:00:00&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="127"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string._00` appears to be unused"
+        errorLine1="    &lt;string name=&quot;_00&quot;>00&lt;/string>"
+        errorLine2="            ~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="128"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.semi_column` appears to be unused"
+        errorLine1="    &lt;string name=&quot;semi_column&quot;>:&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="129"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.set_time` appears to be unused"
+        errorLine1="    &lt;string name=&quot;set_time&quot;>Set Time&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="131"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.find_phone` appears to be unused"
+        errorLine1="    &lt;string name=&quot;find_phone&quot;>Find Phone&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="132"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.set_reminders` appears to be unused"
+        errorLine1="    &lt;string name=&quot;set_reminders&quot;>Set Reminders from\nGoogle Calendar&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="133"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.toggle_flashlight` appears to be unused"
+        errorLine1="    &lt;string name=&quot;toggle_flashlight&quot;>Toggle Flashlight&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="135"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.adjustment_time_minutes` appears to be unused"
+        errorLine1="    &lt;string name=&quot;adjustment_time_minutes&quot;>When to run&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="141"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.do_not_disturb_dnd` appears to be unused"
+        errorLine1="    &lt;string name=&quot;do_not_disturb_dnd&quot;>Do Not Disturb (DnD)&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="142"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.mirror_phone_s_dnd` appears to be unused"
+        errorLine1="    &lt;string name=&quot;mirror_phone_s_dnd&quot;>Mirror Phone\&apos;s DnD&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="143"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.DnD_info_message` appears to be unused"
+        errorLine1="    &lt;string name=&quot;DnD_info_message&quot;>&lt;![CDATA["
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="144"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.auto_light_at_night_only` appears to be unused"
+        errorLine1="    &lt;string name=&quot;auto_light_at_night_only&quot;>Auto-light at night only&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="149"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.keep_alive` appears to be unused"
+        errorLine1="    &lt;string name=&quot;keep_alive&quot;>Keep Alive (uses more battery)&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="150"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.enter_timer_time` appears to be unused"
+        errorLine1="    &lt;string name=&quot;enter_timer_time&quot;>Enter Timer Time&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="151"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.fine_time_adjustment` appears to be unused"
+        errorLine1="    &lt;string name=&quot;fine_time_adjustment&quot;>Fine Adjustment&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="153"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string._0000` appears to be unused"
+        errorLine1="    &lt;string name=&quot;_0000&quot;>0000&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="154"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.when_found_lift_phone_to_stop_ringing` appears to be unused"
+        errorLine1="    &lt;string name=&quot;when_found_lift_phone_to_stop_ringing&quot;>When found, lift phone to stop ringing&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="174"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.emaillocationaction_emailaddress` appears to be unused"
+        errorLine1="    &lt;string name=&quot;emaillocationaction_emailaddress&quot;>EmailLocationAction: emailAddress: %1$s&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="175"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.flashlight_not_available` appears to be unused"
+        errorLine1="    &lt;string name=&quot;flashlight_not_available&quot;>Flashlight not available&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="176"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.events_set` appears to be unused"
+        errorLine1="    &lt;string name=&quot;events_set&quot;>Events Set&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="179"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.event_not_compatible_with_watch` appears to be unused"
+        errorLine1="    &lt;string name=&quot;event_not_compatible_with_watch&quot;>Event not compatible with Watch&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="181"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.app_is_running` appears to be unused"
+        errorLine1="    &lt;string name=&quot;app_is_running&quot;>Cassiopeia Watch is running&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="190"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preventing_the_app_from_closing` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preventing_the_app_from_closing&quot;>Preventing the app from closing&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="191"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.app_is_not_running` appears to be unused"
+        errorLine1="    &lt;string name=&quot;app_is_not_running&quot;>Cassiopeia Watch is not running.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="192"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.health_connect_not_available` appears to be unused"
+        errorLine1="    &lt;string name=&quot;health_connect_not_available&quot;>\&quot;Health Connect\&quot; not available. Please install it.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="193"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.not_yet_synced` appears to be unused"
+        errorLine1="    &lt;string name=&quot;not_yet_synced&quot;>Not yet synced&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="235"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.status_not_connected` appears to be unused"
+        errorLine1="    &lt;string name=&quot;status_not_connected&quot;>Not connected&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="242"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.status_offline` appears to be unused"
+        errorLine1="    &lt;string name=&quot;status_offline&quot;>Offline&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="247"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.metric_battery` appears to be unused"
+        errorLine1="    &lt;string name=&quot;metric_battery&quot;>Battery&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="248"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.metric_temperature` appears to be unused"
+        errorLine1="    &lt;string name=&quot;metric_temperature&quot;>Temp&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="249"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.watches` appears to be unused"
+        errorLine1="    &lt;string name=&quot;watches&quot;>Watches&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="279"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.no_paired_watches` appears to be unused"
+        errorLine1="    &lt;string name=&quot;no_paired_watches&quot;>No paired watches.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="280"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pairing_crash_recovery` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pairing_crash_recovery&quot; translatable=&quot;false&quot;>Recovered from previous pairing crash. You can try pairing again.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="286"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pairing_crash_detected` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pairing_crash_detected&quot; translatable=&quot;false&quot;>&lt;![CDATA["
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="307"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.timer_label_hr` appears to be unused"
+        errorLine1="    &lt;string name=&quot;timer_label_hr&quot;>hr&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="330"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.timer_preset_5959` appears to be unused"
+        errorLine1="    &lt;string name=&quot;timer_preset_5959&quot;>59:59&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="336"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.stripes` appears to be unused">
+        <location
+            file="src/main/res/drawable/stripes.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.time` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/time.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.voice_assist` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/voice_assist.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="TypographyDashes"
+        message="Replace &quot;-&quot; with an &quot;en dash&quot; character (–, &amp;#8211;) ?"
+        errorLine1="    &lt;string name=&quot;minutes_between_0_and_59&quot;>0 - 59 minut&lt;/string>"
+        errorLine2="                                            ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="182"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="TypographyDashes"
+        message="Replace &quot;-&quot; with an &quot;en dash&quot; character (–, &amp;#8211;) ?"
+        errorLine1="    &lt;string name=&quot;ms_between_10000_and_10000&quot;>-10000 - 10000ms&lt;/string>"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="184"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/dw_b5600.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/dw_b5600.png"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/dw_h5600.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/dw_h5600.png"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/ecb_30d.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/ecb_30d.png"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/ga_b2100.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/ga_b2100.png"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/gw_b5600.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/gw_b5600.png"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/img.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/img.png"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/stripes.jpg` in densityless folder">
+        <location
+            file="src/main/res/drawable/stripes.jpg"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    testImplementation(&quot;org.json:json:20231013&quot;)"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="89"
+            column="24"/>
+    </issue>
+
+</issues>
