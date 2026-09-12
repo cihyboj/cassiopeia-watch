@@ -63,6 +63,10 @@ constructor(
     private val _showPreparing = MutableStateFlow(false)
     val showPreparing: StateFlow<Boolean> = _showPreparing
 
+    // Per-instance: two live instances with a shared id would unsubscribe each other.
+    // Declared before init so createSubscription() sees an initialized value.
+    private val subscriberId = "$EVENT_SUBSCRIBER_ID-${System.identityHashCode(this)}"
+
     init {
         viewModelScope.launch {
             val savedName = LocalDataStorage.get(appContext, KEY_LAST_DEVICE_NAME, noWatchString) ?: noWatchString
@@ -157,9 +161,6 @@ constructor(
         }
         return result
     }
-
-    // Per-instance: two live instances with a shared id would unsubscribe each other.
-    private val subscriberId = "$EVENT_SUBSCRIBER_ID-${System.identityHashCode(this)}"
 
     private fun createSubscription() {
         val eventActions = arrayOf(
