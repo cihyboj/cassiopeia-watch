@@ -3,9 +3,11 @@ package com.beamburst.casswatch.data.local
 import android.content.Context
 import com.beamburst.casswatch.utils.LocalDataStorage
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -45,7 +47,12 @@ class SyncHistoryStore @Inject constructor(
     }
 
     fun observe(deviceAddress: String): Flow<List<SyncEntry>> =
-        _changes.map { load(deviceAddress) }.distinctUntilChanged()
+        _changes
+            .map { load(deviceAddress) }
+            // load() is a blocking DataStore read; keep it off the collector's
+            // (typically main) thread.
+            .flowOn(Dispatchers.IO)
+            .distinctUntilChanged()
 
     private fun key(address: String) = "SyncHistory_$address"
 

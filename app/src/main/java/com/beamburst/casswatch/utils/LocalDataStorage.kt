@@ -42,15 +42,18 @@ object LocalDataStorage {
         }
     }
 
+    /**
+     * Blocking read. Deliberately does NOT take [mutex]: DataStore reads are atomic
+     * snapshots, and a writer may hold the mutex while suspended inside a DataStore
+     * edit from a main-dispatched coroutine. If this read (which callers invoke from
+     * the main thread via runBlocking) waited on that mutex, the writer could never
+     * resume to release it and the app would deadlock (ANR after "Add watch").
+     */
     fun get(context: Context, key: String, defaultValue: String? = null): String? {
-        var value: String?
-        runBlocking {
-            mutex.withLock {
-                val preferences = context.dataStore.data.first()
-                value = preferences[stringPreferencesKey(key)] ?: defaultValue
-            }
+        return runBlocking {
+            val preferences = context.dataStore.data.first()
+            preferences[stringPreferencesKey(key)] ?: defaultValue
         }
-        return value
     }
 
     fun delete(context: Context, key: String) {
@@ -85,14 +88,14 @@ object LocalDataStorage {
     fun toJsonObject(context: Context): JSONObject {
         val jsonObject = JSONObject()
         runBlocking {
-            mutex.withLock {
-                val preferences = context.dataStore.data.first()
-                preferences.asMap().forEach { (key, value) ->
-                    // We only store strings and string-representations of other types,
-                    // so we can safely cast the value.
-                    if (value is String) {
-                        jsonObject.put(key.name, value)
-                    }
+            // Lock-free for the same reason as get(): a read must never wait on a
+            // suspended writer.
+            val preferences = context.dataStore.data.first()
+            preferences.asMap().forEach { (key, value) ->
+                // We only store strings and string-representations of other types,
+                // so we can safely cast the value.
+                if (value is String) {
+                    jsonObject.put(key.name, value)
                 }
             }
         }
