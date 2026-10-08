@@ -165,6 +165,19 @@ class AlarmPayloadWriter internal constructor(
         confirm: suspend () -> Unit,
     ) {
         val snapshot = coordinator.snapshot(ready.address)
+        if (snapshot.alarms.isNotEmpty() && snapshot.confirmedPayloads().isEmpty()) {
+            // Send Time also repairs lost alarm evidence even when the chime is unchanged
+            // or lives in settings rather than alarm registers.
+            val target = HourlySignalEvaluator.shouldChimeAt(now, settings)
+            val scheduled = AlarmSchedulePlanner.applyWeeklySchedule(snapshot.watchAlarms(), snapshot.days, now,
+                AlarmViewMode.WEEKLY, snapshot.firedAts(), snapshot.oneShotLocalDates(), time.zone(), time.clock)
+            val payload = if (WatchInfo.chimeInSettings) scheduled else AlarmSchedulePlanner.mirrorChime(scheduled, target)
+            write(ready, payload, snapshot, trigger, target, confirm, { api.getAlarms() }) { api.setAlarms(ArrayList(it)) }
+            coordinator.update(ready.address) { current ->
+                checkSession(ready)
+                alarmStateAfterSuccessfulSync(current, snapshot)
+            }
+        }
         applyHourlySignalToWatch(api, settings, now, snapshot, time.clock, time.zone()) { payload ->
             write(ready, payload, snapshot, trigger, HourlySignalEvaluator.shouldChimeAt(now, settings), confirm, { api.getAlarms() }) { actual ->
                 api.setAlarms(ArrayList(actual))

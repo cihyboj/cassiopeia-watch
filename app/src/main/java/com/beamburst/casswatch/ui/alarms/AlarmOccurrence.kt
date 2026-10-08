@@ -113,7 +113,7 @@ internal fun nextAlarmOccurrence(alarm: AlarmSyncStorage.StoredAlarm, days: Set<
 
 /** A successful write cannot acknowledge an edit made while BLE was in flight. Consumption stays persisted. */
 internal fun alarmStateAfterSuccessfulSync(current: AlarmState, sent: AlarmState): AlarmState =
-    if (current.copy(watchPayloads = sent.watchPayloads) == sent) current.copy(dirty = false) else current
+    if (current.alarms == sent.alarms && current.days == sent.days) current.copy(dirty = false) else current
 
 internal fun alarmIsArmed(enabled: Boolean, firedAt: Long?): Boolean = enabled && firedAt == null
 

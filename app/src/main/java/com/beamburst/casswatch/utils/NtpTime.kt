@@ -2,7 +2,9 @@ package com.beamburst.casswatch.utils
 
 import com.beamburst.casswatch.pairing.awaitWatchResponse
 import com.beamburst.casswatch.pairing.confirmWatchWrite
-import com.beamburst.casswatch.pairing.WATCH_RESPONSE_TIMEOUT_MS
+import com.beamburst.casswatch.pairing.WATCH_TIME_TIMEOUT_MS
+import com.beamburst.casswatch.pairing.WatchResponseTimeoutException
+import com.beamburst.casswatch.ui.alarms.AlarmSchedulingCoordinator
 import com.beamburst.casswatch.pairing.WatchConnectionChangedException
 import android.content.Context
 import android.os.SystemClock
@@ -20,7 +22,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.withTimeoutOrNull
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
@@ -161,7 +162,7 @@ class WatchTimeProvider @Inject constructor(
     suspend fun nowForWatch(address: String? = session.address): WatchTime {
         val fineAdjustment = LocalDataStorage.getFineTimeAdjustment(context).toLong()
         val latencyCompensation = address
-            ?.let { LocalDataStorage.getLearnedTimeWriteCompensation(context, it) }
+            ?.let(learnedCompensation)
             ?: 0L
         if (!LocalDataStorage.getNtpTimeEnabled(context)) {
             return WatchTime(
@@ -238,19 +239,41 @@ class WatchTimeProvider @Inject constructor(
 }
 
 @Singleton
-class WatchTimeWriter @Inject constructor(
-    @param:ApplicationContext private val context: Context,
+class WatchTimeWriter internal constructor(
     private val session: WatchConnectionSession,
     private val connectionTracker: com.beamburst.casswatch.data.local.WatchConnectionTracker,
-    private val syncHistoryLogger: SyncHistoryLogger,
+    private val alarmCoordinator: AlarmSchedulingCoordinator,
+    private val recordPrime: suspend (String, PrimeResult) -> Unit,
+    private val learnedCompensation: (String) -> Long,
+    private val recordLatency: suspend (String, Long) -> Unit,
+    private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime,
 ) {
+    @Inject constructor(
+        @ApplicationContext context: Context,
+        session: WatchConnectionSession,
+        connectionTracker: com.beamburst.casswatch.data.local.WatchConnectionTracker,
+        syncHistoryLogger: SyncHistoryLogger,
+        alarmCoordinator: AlarmSchedulingCoordinator,
+    ) : this(session, connectionTracker, alarmCoordinator, { address, result ->
+        syncHistoryLogger.record(
+            address = address,
+            trigger = SyncTrigger.CONNECTION_CONNECTED,
+            kinds = setOf(SyncKind.CONNECTION),
+            success = result.outcome == PrimeOutcome.OK,
+            errorMessage = result.error?.message,
+            details = SyncDetails.Empty.copy(connection = "Cache prime", actions = listOf(
+                "primeTimeCache: ${result.outcome.name.lowercase()} in ${result.durationMs}ms")),
+        )
+    }, { address -> LocalDataStorage.getLearnedTimeWriteCompensation(context, address) },
+        { address, duration -> LocalDataStorage.addTimeWriteLatencySample(context, address, duration) })
+
     companion object {
         /**
          * Upper bound on `primeTimeCache`. Generous enough for the slowest legitimate
          * Mode-1 (DST + up to 6 World Cities BLE reads on a slow link), short enough to
          * detect a hung BLE stack and recover before the watch firmware gives up.
          */
-        const val PRIME_TIMEOUT_MS = WATCH_RESPONSE_TIMEOUT_MS
+        const val PRIME_TIMEOUT_MS = WATCH_TIME_TIMEOUT_MS
 
         /**
          * How long after the watch receives a setTime BLE packet before the encoded value
@@ -275,7 +298,7 @@ class WatchTimeWriter @Inject constructor(
     private fun resolveNowMs(watchTime: WatchTime): Long {
         return watchTime.resolveTimeMs(
             wallNowMs = System.currentTimeMillis(),
-            elapsedNowMs = SystemClock.elapsedRealtime(),
+            elapsedNowMs = elapsedRealtime(),
         ) ?: System.currentTimeMillis().plus(watchTime.fineAdjustmentMs)
     }
 
@@ -305,11 +328,17 @@ class WatchTimeWriter @Inject constructor(
             }
         }
         checkSession()
-        return if (connectionTracker.isCacheWarm(address)) {
+        val result = if (connectionTracker.isCacheWarm(address)) {
             writeAimedAtSecondBoundary(api, watchTime, address, checkSession, WATCH_ADOPTION_DELAY_MS)
         } else {
             writeColdPath(api, watchTime, address, checkSession)
         }
+        checkSession()
+        alarmCoordinator.update(address) { state ->
+            checkSession()
+            state.copy(clockNeedsSync = false)
+        }
+        return result
     }
 
     /**
@@ -333,11 +362,17 @@ class WatchTimeWriter @Inject constructor(
             }
         }
         checkSession()
-        return if (connectionTracker.isCacheWarm(address)) {
+        val result = if (connectionTracker.isCacheWarm(address)) {
             writeAimedAtSecondBoundary(api, watchTime, address, checkSession, WATCH_ADOPTION_DELAY_POST_PRIME_MS)
         } else {
             writeColdPath(api, watchTime, address, checkSession)
         }
+        checkSession()
+        alarmCoordinator.update(address) { state ->
+            checkSession()
+            state.copy(clockNeedsSync = false)
+        }
+        return result
     }
 
     /**
@@ -352,13 +387,11 @@ class WatchTimeWriter @Inject constructor(
     suspend fun primeCache(api: IGShockAPI): PrimeResult {
         val ready = requireNotNull(session.ready)
         val address = ready.address
-        val startMs = SystemClock.elapsedRealtime()
-        val res = withTimeoutOrNull(PRIME_TIMEOUT_MS) {
-            runCatching { api.primeTimeCache() }
-        }
-        val durationMs = SystemClock.elapsedRealtime() - startMs
+        val startMs = elapsedRealtime()
+        val res = runCatching { awaitWatchResponse(PRIME_TIMEOUT_MS) { api.primeTimeCache() } }
+        val durationMs = elapsedRealtime() - startMs
         val result = when {
-            res == null -> {
+            res.exceptionOrNull() is WatchResponseTimeoutException -> {
                 Timber.w("primeTimeCache timed out after ${durationMs}ms")
                 PrimeResult(PrimeOutcome.TIMEOUT, durationMs)
             }
@@ -377,29 +410,7 @@ class WatchTimeWriter @Inject constructor(
                 PrimeResult(PrimeOutcome.OK, durationMs)
             }
         }
-        runCatching {
-            syncHistoryLogger.record(
-                address = address,
-                trigger = SyncTrigger.CONNECTION_CONNECTED,
-                kinds = setOf(SyncKind.CONNECTION),
-                success = result.outcome == PrimeOutcome.OK,
-                errorMessage = when (result.outcome) {
-                    PrimeOutcome.TIMEOUT -> "Cache prime timed out after ${PRIME_TIMEOUT_MS}ms"
-                    PrimeOutcome.FAILURE -> result.error?.message ?: result.error?.javaClass?.simpleName
-                    PrimeOutcome.OK -> null
-                },
-                details = SyncDetails(
-                    alarmHashes = null,
-                    eventCount = null,
-                    hourlySignalTarget = null,
-                    timeMs = null,
-                    connection = "Cache prime",
-                    actions = listOf(
-                        "primeTimeCache: ${result.outcome.name.lowercase()} in ${durationMs}ms",
-                    ),
-                ),
-            )
-        }
+        runCatching { recordPrime(address, result) }
         return result
     }
 
@@ -412,11 +423,11 @@ class WatchTimeWriter @Inject constructor(
         val timeMs = resolveNowMs(watchTime)
         val cacheWarmAtStart = connectionTracker.isCacheWarm(address)
         val preSendWallMs = System.currentTimeMillis()
-        val preSendElapsedMs = SystemClock.elapsedRealtime()
+        val preSendElapsedMs = elapsedRealtime()
         checkSession()
-        awaitWatchResponse { api.setTime(timeMs = timeMs) }
+        awaitWatchResponse(WATCH_TIME_TIMEOUT_MS) { api.setTime(timeMs = timeMs) }
         confirmWatchWrite(checkSession)
-        val durationMs = SystemClock.elapsedRealtime() - preSendElapsedMs
+        val durationMs = elapsedRealtime() - preSendElapsedMs
         connectionTracker.markCacheWarmIfFast(address, durationMs)
         // Mode-1 samples mix cache-miss BLE reads into the latency; do not learn from them.
         if (address != null) {
@@ -449,7 +460,7 @@ class WatchTimeWriter @Inject constructor(
     ): TimeWriteResult {
         val cacheWarmAtStart = connectionTracker.isCacheWarm(address)
         val estimateMs = address
-            ?.let { LocalDataStorage.getLearnedTimeWriteCompensation(context, it) }
+            ?.let(learnedCompensation)
             ?.takeIf { it > 0L }
             ?: DEFAULT_SEND_LATENCY_ESTIMATE_MS
 
@@ -463,22 +474,22 @@ class WatchTimeWriter @Inject constructor(
         if (waitMs > 0L) delay(waitMs)
 
         val preSendWallMs = System.currentTimeMillis()
-        val preSendElapsedMs = SystemClock.elapsedRealtime()
+        val preSendElapsedMs = elapsedRealtime()
         try {
             checkSession()
-            awaitWatchResponse { api.setTime(timeMs = target) }
+            awaitWatchResponse(WATCH_TIME_TIMEOUT_MS) { api.setTime(timeMs = target) }
             confirmWatchWrite(checkSession)
         } catch (t: Throwable) {
             // Skip sample recording on throw to avoid biasing learned latency.
             throw t
         }
-        val durationMs = SystemClock.elapsedRealtime() - preSendElapsedMs
+        val durationMs = elapsedRealtime() - preSendElapsedMs
         connectionTracker.markCacheWarmIfFast(address, durationMs)
         if (address != null) {
             val generation = connectionTracker.connectionGeneration(address)
             if (shouldRecordLatencySample(address, generation)) {
                 runCatching {
-                    LocalDataStorage.addTimeWriteLatencySample(context, address, durationMs)
+                    recordLatency(address, durationMs)
                 }
             }
         }
