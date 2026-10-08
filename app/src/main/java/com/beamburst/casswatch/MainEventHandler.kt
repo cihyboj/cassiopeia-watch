@@ -3,7 +3,6 @@ package com.beamburst.casswatch
 import CachedIO
 
 import com.beamburst.casswatch.pairing.guardWrites
-import com.beamburst.casswatch.pairing.WatchConnectionEvents
 import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.utils.AppScopes
 import android.annotation.SuppressLint
@@ -50,7 +49,7 @@ class MainEventHandler(
         private const val EVENT_SUBSCRIBER_ID = "MainEventHandler"
     }
 
-    private val connectionEvents = WatchConnectionEvents(connectionSession)
+    private val connectionEvents = connectCoordinator.connectionEvents
 
     /** Generations for which a cache-warm has been dispatched, to keep it one-shot per connect. */
     private val warmedDispatchedFor = mutableSetOf<String>()
@@ -85,7 +84,10 @@ class MainEventHandler(
 
     @SuppressLint("MissingPermission")
     private fun handleConnectionSetup() {
-        if (!repository.isConnected()) return
+        val observed = connectionSession.ready
+        val connected = repository.isConnected()
+        connectionEvents.observeTransport(connected, observed)
+        if (!connected) return
         val device = ProgressEvents.getPayload("ConnectionSetupComplete") as? BluetoothDevice
         if (device == null) return
         val ready = connectionEvents.setup(device.address, device)

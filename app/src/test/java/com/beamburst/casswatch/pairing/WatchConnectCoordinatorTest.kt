@@ -34,7 +34,7 @@ class WatchConnectCoordinatorTest {
     /** Like ProgressEvents, starts, writes and event dispatch are independent of API callers. */
     private class Transport(private val scope: CoroutineScope) {
         val session = WatchConnectionSession()
-        val handler = WatchConnectionEvents(session)
+        val handler get() = coordinator.connectionEvents
         var connected = false
         var pending: String? = null
         var initialization = CompletableDeferred<Unit>()
@@ -300,6 +300,22 @@ class WatchConnectCoordinatorTest {
         assertTrue(runCatching { t.coordinator.withSession(old) {} }.isFailure)
     }
 
+    @Test fun `delayed disconnect after transport reconnect with same device initializes fresh generation`() = scenario {
+        val t = Transport(this)
+        val device = Any()
+        val old = t.connectReady(watchA, device)
+        val work = t.stuckRead(old)
+        // No down status was observed: the raw callback arrives after transport is up.
+        t.connected = true
+        t.disconnectEvent(device)
+        assertTrue(work.await().isFailure)
+        val ready = t.setup(watchA, device)!!
+        assertTrue(ready.generation > old.generation)
+        assertEquals(2, t.initCalls)
+        assertEquals(listOf(old.generation, ready.generation), t.initializationEvents)
+        assertEquals(1, t.uiDisconnects)
+    }
+
     @Test fun `new setup device renews Ready even before disconnect dispatch`() = scenario {
         val t = Transport(this)
         val oldDevice = Any()
@@ -314,13 +330,13 @@ class WatchConnectCoordinatorTest {
         assertEquals(1, t.uiDisconnects)
     }
 
-    @Test fun `duplicate setup of live device retains generation and initialization`() = scenario {
+    @Test fun `each transport setup advances generation even with same device payload`() = scenario {
         val t = Transport(this)
         val device = Any()
         val ready = t.connectReady(watchA, device)
-        assertEquals(ready, t.setup(watchA, device))
-        assertEquals(1, t.initCalls)
-        assertEquals(0, t.uiDisconnects)
+        assertTrue(t.setup(watchA, device)!!.generation > ready.generation)
+        assertEquals(2, t.initCalls)
+        assertEquals(1, t.uiDisconnects)
     }
 
     @Test fun `explicit disconnect emits effects once despite delayed raw callbacks`() = scenario {
