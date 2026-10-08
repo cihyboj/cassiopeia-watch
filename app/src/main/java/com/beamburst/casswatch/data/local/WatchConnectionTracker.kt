@@ -4,15 +4,14 @@ import com.beamburst.casswatch.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.update
-import org.avmedia.gshockapi.EventAction
-import org.avmedia.gshockapi.ProgressEvents
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class WatchConnectionTracker @Inject constructor(
-    private val selector: CurrentWatchSelector,
+    private val session: WatchConnectionSession,
 ) {
     enum class ConnectionState { CONNECTED, CONNECTING, DISCONNECTED, ERROR }
 
@@ -36,28 +35,26 @@ class WatchConnectionTracker @Inject constructor(
     }
 
     init {
-        ProgressEvents.runEventActions(
-            "WatchConnectionTracker-${System.identityHashCode(this)}",
-            arrayOf(
-                EventAction("WatchInitializationCompleted") {
-                    mark(selector.currentAddress(), ConnectionState.CONNECTED)
-                },
-                EventAction("ConnectionSetupComplete") {
-                    val address = selector.currentAddress()
-                    mark(address, ConnectionState.CONNECTED)
-                    incrementGeneration(address)
-                },
-                EventAction("Disconnect") {
-                    mark(selector.currentAddress(), ConnectionState.DISCONNECTED)
-                },
-                EventAction("DeviceDisappeared") {
-                    mark(selector.currentAddress(), ConnectionState.DISCONNECTED)
-                },
-                EventAction("ConnectionFailed") {
-                    mark(selector.currentAddress(), ConnectionState.ERROR)
-                },
-            )
-        )
+        com.beamburst.casswatch.utils.AppScopes.io.launch {
+            var previous: String? = null
+            session.state.collect { state ->
+                val address = when (state) {
+                    is WatchConnectionSession.Ready -> state.address
+                    is WatchConnectionSession.Connecting -> state.address
+                    else -> null
+                }
+                if (previous != address) mark(previous, ConnectionState.DISCONNECTED)
+                when (state) {
+                    is WatchConnectionSession.Ready -> {
+                        _connectionGenerations.update { it + (state.address to state.generation) }
+                        mark(state.address, ConnectionState.CONNECTED)
+                    }
+                    is WatchConnectionSession.Connecting -> mark(state.address, ConnectionState.CONNECTING)
+                    else -> mark(previous, ConnectionState.DISCONNECTED)
+                }
+                previous = address
+            }
+        }
     }
 
     fun mark(address: String?, state: ConnectionState) {
@@ -119,15 +116,4 @@ class WatchConnectionTracker @Inject constructor(
         }
     }
 
-    private fun incrementGeneration(address: String?) {
-        if (address == null) return
-        val normalizedAddress = Utils.sanitizeMacAddress(address)
-        if (normalizedAddress.isBlank()) return
-        _connectionGenerations.update { generations ->
-            val next = (generations[normalizedAddress] ?: 0L) + 1L
-            generations
-                .filterKeys { !it.equals(normalizedAddress, ignoreCase = true) }
-                .plus(normalizedAddress to next)
-        }
-    }
 }

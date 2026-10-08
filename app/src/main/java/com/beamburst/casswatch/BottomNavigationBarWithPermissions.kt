@@ -209,9 +209,9 @@ fun BottomNavigationBarWithPermissions(
                     )
                 )
             }
-            if (BuildConfig.DEBUG && debugUnlocked) {
+            if (BuildConfig.DEBUG) {
                 composable(Screens.Debug.route) {
-                    BleDebugScreen()
+                    if (debugUnlocked) BleDebugScreen()
                 }
             }
             composable(Screens.Settings.route) {

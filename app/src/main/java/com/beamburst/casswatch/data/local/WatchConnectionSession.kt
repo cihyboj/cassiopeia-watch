@@ -2,41 +2,59 @@ package com.beamburst.casswatch.data.local
 
 import com.beamburst.casswatch.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** The live BLE session identity; selecting a watch must never change it. */
+/** Single source of truth for the BLE lifecycle. Selection never changes this state. */
 @Singleton
 class WatchConnectionSession @Inject constructor() {
-    private val connectedAddress = MutableStateFlow<String?>(null)
-    val address: String? get() = connectedAddress.value
+    sealed interface State
+    data object Disconnected : State
+    data class Connecting(val address: String, val generation: Long) : State
+    data class Ready(val address: String, val generation: Long) : State
 
-    fun established(address: String) {
-        connectedAddress.value = Utils.sanitizeMacAddress(address).takeIf { it.isNotBlank() }
-    }
+    private val lock = Any()
+    private var generation = 0L
+    private val mutableState = MutableStateFlow<State>(Disconnected)
+    val state: StateFlow<State> = mutableState.asStateFlow()
+    val ready: Ready? get() = state.value as? Ready
+    val address: String? get() = ready?.address
 
-    fun disconnected() {
-        connectedAddress.value = null
-    }
-
-    /**
-     * Clears the session only if it still belongs to [address]. A Disconnect event for the
-     * previous watch can be delivered after the next watch has already connected.
-     */
-    fun disconnected(address: String?) {
-        val ended = address?.let(Utils::sanitizeMacAddress).orEmpty()
-        if (ended.isBlank()) {
-            disconnected()
-            return
+    /** Compare-and-set prevents erasing setup published during a transport status check. */
+    fun begin(expected: State, address: String): State = synchronized(lock) {
+        if (mutableState.value == expected) {
+            mutableState.value = Connecting(Utils.sanitizeMacAddress(address), ++generation)
         }
-        connectedAddress.update { current ->
-            if (current.equals(ended, ignoreCase = true)) null else current
-        }
+        mutableState.value
     }
 
-    /** Event subscribers can run after the API's connection waiter has resumed. */
-    suspend fun awaitAddress(): String = connectedAddress.filterNotNull().first()
+    fun established(address: String): Ready? = synchronized(lock) {
+        val normalized = Utils.sanitizeMacAddress(address).takeIf { it.isNotBlank() } ?: return null
+        when (val current = mutableState.value) {
+            is Connecting -> {
+                if (current.address != normalized) return null
+                Ready(normalized, current.generation)
+            }
+            is Ready -> return current.takeIf { it.address == normalized }
+            Disconnected -> return null // a cancelled attempt must not resurrect a session
+        }.also { mutableState.value = it }
+    }
+
+    fun matching(address: String?): Ready? = ready?.takeIf {
+        address != null && it.address == Utils.sanitizeMacAddress(address)
+    }
+
+    fun isCurrent(session: Ready): Boolean = ready == session
+
+    fun ended(expected: State): Boolean = synchronized(lock) {
+        if (mutableState.value != expected) return false
+        mutableState.value = Disconnected
+        true
+    }
+
+    suspend fun awaitReady(): Ready = state.filterIsInstance<Ready>().first()
 }

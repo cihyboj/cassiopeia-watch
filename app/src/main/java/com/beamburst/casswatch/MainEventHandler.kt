@@ -41,10 +41,13 @@ class MainEventHandler(
     private val watchSelector: CurrentWatchSelector,
     private val connectionTracker: WatchConnectionTracker,
     private val connectionSession: WatchConnectionSession,
+    private val connectCoordinator: com.beamburst.casswatch.pairing.WatchConnectCoordinator,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "MainEventHandler"
     }
+
+    private val connectionEvents = com.beamburst.casswatch.pairing.WatchConnectionEvents(connectionSession)
 
     /** Generations for which a cache-warm has been dispatched, to keep it one-shot per connect. */
     private val warmedDispatchedFor = mutableSetOf<String>()
@@ -75,11 +78,12 @@ class MainEventHandler(
     @SuppressLint("MissingPermission")
     private fun handleConnectionSetup() {
         val device = ProgressEvents.getPayload("ConnectionSetupComplete") as? BluetoothDevice
-        device?.address?.let(connectionSession::established)
-        logConnection(SyncTrigger.CONNECTION_CONNECTED, true)
+        val ready = device?.let { connectionEvents.setup(it.address, it) } ?: return
+        logConnection(SyncTrigger.CONNECTION_CONNECTED, true, address = ready.address)
     }
 
     private fun handleWatchInitialization() {
+        if (connectionSession.ready == null || !repository.isConnected()) return
         if (repository.supportsAppNotifications()) {
             NotificationMonitorService.startService(context)
         }
@@ -99,7 +103,8 @@ class MainEventHandler(
      * without ever flashing an incorrect time on the watch.
      */
     private fun dispatchCacheWarm() {
-        val address = watchSelector.currentAddress() ?: return
+        val ready = connectionSession.ready ?: return
+        val address = ready.address
         AppScopes.io.launch {
             runCatching {
                 // Reconnect auto-sync already primes the cache. Dirty settings must be
@@ -119,7 +124,9 @@ class MainEventHandler(
                 synchronized(warmedLock) {
                     if (!warmedDispatchedFor.add(key)) return@runCatching
                 }
-                watchTimeWriter.primeCache(repository)
+                connectCoordinator.withSession(ready) {
+                    watchTimeWriter.primeCache(repository)
+                }
             }.onFailure { Timber.w(it, "Cache-warm dispatch failed") }
         }
     }
@@ -138,10 +145,7 @@ class MainEventHandler(
     }
 
     private fun resolveWatchDisplayNameForSnackbar(): String {
-        val stored = LocalDataStorage.get(context, "LastDeviceName", "")
-        if (!stored.isNullOrBlank()) return stored.removePrefix("CASIO").trim()
-        val addr = LocalDataStorage.get(context, "LastDeviceAddress", "") ?: return ""
-        if (addr.isBlank()) return ""
+        val addr = connectionSession.address ?: return ""
         return LocalDataStorage.getDeviceName(context, addr)?.removePrefix("CASIO")?.trim().orEmpty()
     }
 
@@ -165,28 +169,34 @@ class MainEventHandler(
                 R.string.apierror_ensure_the_official_g_shock_app_is_not_running
             )
 
-        repository.disconnect()
+        AppScopes.io.launch { connectCoordinator.disconnect() }
         screenManager.showError(message)
     }
 
     @SuppressLint("MissingPermission") // BLUETOOTH_CONNECT is declared in the manifest
     private fun handleDisconnect() {
         val disconnectedDevice = ProgressEvents.getPayload("Disconnect") as? BluetoothDevice
-        connectionSession.disconnected(disconnectedDevice?.address)
-        sessionUiBridge.emitDisconnected()
-        disconnectedDevice?.let { device ->
-            repository.teardownConnection(device)
+        val device = disconnectedDevice ?: return
+        val token = connectionEvents.disconnectToken(device) ?: return
+        AppScopes.io.launch {
+            connectCoordinator.handleDisconnect {
+                connectionEvents.disconnect(token, repository.isConnected()) { ended ->
+                    sessionUiBridge.emitDisconnected()
+                    repository.teardownConnection(device)
+                    device.name
+                        ?.takeIf { it.isNotBlank() }
+                        ?.takeIf { AppUsageState.shouldShowConnectionSnackbar() }
+                        ?.let { name -> AppSnackbar(context.getString(R.string.watch_disconnected_snackbar, name)) }
+                    logConnection(SyncTrigger.CONNECTION_DISCONNECTED, true, address = ended.address)
+                }
+            }
         }
-        disconnectedDevice?.name
-            ?.takeIf { it.isNotBlank() }
-            ?.takeIf { AppUsageState.shouldShowConnectionSnackbar() }
-            ?.let { name -> AppSnackbar(context.getString(R.string.watch_disconnected_snackbar, name)) }
-        logConnection(SyncTrigger.CONNECTION_DISCONNECTED, true)
     }
 
-    private fun logConnection(trigger: SyncTrigger, success: Boolean, error: String? = null) {
+    private fun logConnection(trigger: SyncTrigger, success: Boolean, error: String? = null, address: String? = connectionSession.address) {
         AppScopes.io.launch {
             syncLogger.record(
+                address = address,
                 trigger = trigger,
                 kinds = setOf(SyncKind.CONNECTION),
                 success = success,

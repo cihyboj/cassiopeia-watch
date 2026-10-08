@@ -96,6 +96,9 @@ class GShockApplication : Application(), IScreenManager {
     @Inject
     lateinit var connectionSession: WatchConnectionSession
 
+    @Inject
+    lateinit var watchConnectCoordinator: com.beamburst.casswatch.pairing.WatchConnectCoordinator
+
     fun init() {
         Timber.i("Initializing GShockApplication")
         weeklyAlarmScheduler.ensureInitialized()
@@ -127,6 +130,7 @@ class GShockApplication : Application(), IScreenManager {
                 watchSelector = watchSelector,
                 connectionTracker = connectionTracker,
                 connectionSession = connectionSession,
+                connectCoordinator = watchConnectCoordinator,
             )
         eventHandler.setupEventSubscription()
     }

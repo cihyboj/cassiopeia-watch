@@ -94,20 +94,14 @@ class MultiWatchViewModel @Inject constructor(
             val normalizedAddress = Utils.sanitizeMacAddress(address)
             if (normalizedAddress.isBlank()) return@launch
             selector.select(normalizedAddress)
-            val previouslySelected = paired.value.firstOrNull {
-                it.state == ConnectionState.CONNECTED &&
-                    !it.address.equals(normalizedAddress, ignoreCase = true)
-            }?.address
-
             runCatching {
-                previouslySelected?.let { tracker.mark(it, ConnectionState.DISCONNECTED) }
-                if (repository.isConnected()) repository.disconnect()
                 tracker.mark(normalizedAddress, ConnectionState.CONNECTING)
                 if (!connectCoordinator.connect(normalizedAddress, takeover = true)) {
                     error("Connection attempt timed out")
                 }
                 tracker.mark(normalizedAddress, ConnectionState.CONNECTED)
                 syncHistoryLogger.record(
+                    address = normalizedAddress,
                     trigger = SyncTrigger.CONNECTION_CONNECTED,
                     kinds = setOf(SyncKind.CONNECTION),
                     success = true,
@@ -117,6 +111,7 @@ class MultiWatchViewModel @Inject constructor(
                 Timber.e(it, "Failed to connect watch $normalizedAddress")
                 tracker.mark(normalizedAddress, ConnectionState.ERROR)
                 syncHistoryLogger.record(
+                    address = normalizedAddress,
                     trigger = SyncTrigger.CONNECTION_FAILED,
                     kinds = setOf(SyncKind.CONNECTION),
                     success = false,
@@ -133,9 +128,10 @@ class MultiWatchViewModel @Inject constructor(
             val normalizedAddress = Utils.sanitizeMacAddress(address)
             if (normalizedAddress.isBlank()) return@launch
             runCatching {
-                repository.disconnect()
+                connectCoordinator.disconnect(normalizedAddress)
                 tracker.mark(normalizedAddress, ConnectionState.DISCONNECTED)
                 syncHistoryLogger.record(
+                    address = normalizedAddress,
                     trigger = SyncTrigger.CONNECTION_DISCONNECTED,
                     kinds = setOf(SyncKind.CONNECTION),
                     success = true,
@@ -145,6 +141,7 @@ class MultiWatchViewModel @Inject constructor(
                 Timber.e(it, "Failed to disconnect watch $normalizedAddress")
                 tracker.mark(normalizedAddress, ConnectionState.ERROR)
                 syncHistoryLogger.record(
+                    address = normalizedAddress,
                     trigger = SyncTrigger.CONNECTION_FAILED,
                     kinds = setOf(SyncKind.CONNECTION),
                     success = false,
@@ -168,7 +165,7 @@ class MultiWatchViewModel @Inject constructor(
             }
 
             if (repository.isConnected()) {
-                runCatching { repository.disconnect() }
+                runCatching { connectCoordinator.disconnect(normalizedAddress) }
             }
 
             runCatching {
@@ -207,7 +204,7 @@ class MultiWatchViewModel @Inject constructor(
                 ?: appContext.getString(R.string.no_watch)
             val isSelected = selected?.equals(address, ignoreCase = true) == true
             val state = states.stateFor(address)
-                ?: if (isSelected && repository.isConnected()) ConnectionState.CONNECTED else ConnectionState.DISCONNECTED
+                ?: ConnectionState.DISCONNECTED
             val snapshot = WatchSnapshot.load(appContext, address)
 
             PairedWatch(
