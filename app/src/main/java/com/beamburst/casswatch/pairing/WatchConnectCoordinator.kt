@@ -29,6 +29,8 @@ class WatchConnectCoordinator @Inject constructor(
         const val DEFAULT_TIMEOUT_MS = 30_000L
     }
 
+    val connectionEvents = WatchConnectionEvents(session)
+
     private val connectMutex = Mutex()
     private data class Attempt(val token: WatchConnectionSession.Connecting, val result: Deferred<Boolean>)
     @Volatile private var attempt: Attempt? = null
@@ -55,7 +57,9 @@ class WatchConnectCoordinator @Inject constructor(
             // Includes mutex acquisition, BLE setup and library initialization.
             val result = withTimeoutOrNull(timeoutMs) {
                 val active = connectMutex.withLock {
+                    val observed = session.ready
                     val connected = repository.isConnected()
+                    connectionEvents.observeTransport(connected || (observed != null && repository.isConnected()), observed)
                     var state = session.state.value
                     if (state is WatchConnectionSession.Ready && (connected || repository.isConnected())) {
                         if (state.address == requested) return@withLock null

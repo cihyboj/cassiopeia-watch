@@ -102,13 +102,6 @@ class MultiWatchViewModel @Inject constructor(
                     error("Connection attempt timed out")
                 }
                 tracker.mark(normalizedAddress, ConnectionState.CONNECTED)
-                syncHistoryLogger.record(
-                    address = normalizedAddress,
-                    trigger = SyncTrigger.CONNECTION_CONNECTED,
-                    kinds = setOf(SyncKind.CONNECTION),
-                    success = true,
-                    details = SyncDetails.Empty.copy(connection = "Started from watch row Connect menu"),
-                )
             }.onFailure {
                 Timber.e(it, "Failed to connect watch $normalizedAddress")
                 tracker.mark(normalizedAddress, ConnectionState.ERROR)
@@ -132,13 +125,6 @@ class MultiWatchViewModel @Inject constructor(
             runCatching {
                 connectCoordinator.disconnect(normalizedAddress)
                 tracker.mark(normalizedAddress, ConnectionState.DISCONNECTED)
-                syncHistoryLogger.record(
-                    address = normalizedAddress,
-                    trigger = SyncTrigger.CONNECTION_DISCONNECTED,
-                    kinds = setOf(SyncKind.CONNECTION),
-                    success = true,
-                    details = SyncDetails.Empty.copy(connection = "Started from watch row Disconnect menu"),
-                )
             }.onFailure {
                 Timber.e(it, "Failed to disconnect watch $normalizedAddress")
                 tracker.mark(normalizedAddress, ConnectionState.ERROR)

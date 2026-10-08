@@ -2,8 +2,8 @@ package com.beamburst.casswatch
 
 import CachedIO
 
+import com.beamburst.casswatch.pairing.WatchResponseTimeoutException
 import com.beamburst.casswatch.pairing.guardWrites
-import com.beamburst.casswatch.pairing.WatchConnectionEvents
 import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.utils.AppScopes
 import android.annotation.SuppressLint
@@ -50,7 +50,7 @@ class MainEventHandler(
         private const val EVENT_SUBSCRIBER_ID = "MainEventHandler"
     }
 
-    private val connectionEvents = WatchConnectionEvents(connectionSession)
+    private val connectionEvents = connectCoordinator.connectionEvents
 
     /** Generations for which a cache-warm has been dispatched, to keep it one-shot per connect. */
     private val warmedDispatchedFor = mutableSetOf<String>()
@@ -85,7 +85,10 @@ class MainEventHandler(
 
     @SuppressLint("MissingPermission")
     private fun handleConnectionSetup() {
-        if (!repository.isConnected()) return
+        val observed = connectionSession.ready
+        val connected = repository.isConnected()
+        connectionEvents.observeTransport(connected, observed)
+        if (!connected) return
         val device = ProgressEvents.getPayload("ConnectionSetupComplete") as? BluetoothDevice
         if (device == null) return
         val ready = connectionEvents.setup(device.address, device)
@@ -105,7 +108,11 @@ class MainEventHandler(
                     connectCoordinator.withSession(ready) { check -> repository.guardWrites(check).init() }
                 }.onFailure {
                     Timber.w(it, "Reconnect initialization failed for %s", ready.address)
-                    if (connectionSession.isCurrent(ready)) connectCoordinator.disconnect(ready.address)
+                    if (it is WatchResponseTimeoutException) {
+                        recordReconnectTimeout(ready, it)
+                    } else if (connectionSession.isCurrent(ready)) {
+                        connectCoordinator.disconnect(ready.address)
+                    }
                 }
             }
         }
@@ -127,7 +134,7 @@ class MainEventHandler(
     /**
      * Primes GShockAPI's CachedIO once per fresh connection generation. The first time
      * write on a fresh connection otherwise triggers a 2–4 s slow path (DST + WorldCities
-     * BLE reads). Calling [WatchTimeWriter.primeCache] right after initialization — while
+     * BLE reads). Calling the session-bound primeTimeCache right after initialization — while
      * the watch is still in its connect animation — moves the cost off the user-visible
      * sync path so later `Send Time` writes hit the fast Mode-2 path (~50 ms accuracy)
      * without ever flashing an incorrect time on the watch.
@@ -155,10 +162,28 @@ class MainEventHandler(
                     if (!warmedDispatchedFor.add(key)) return@runCatching
                 }
                 connectCoordinator.withSession(ready) { check ->
-                    watchTimeWriter.primeCache(repository.guardWrites(check))
+                    repository.guardWrites(check).primeTimeCache()
+                    check()
+                    connectionTracker.markCacheWarmed(address)
                 }
-            }.onFailure { Timber.w(it, "Cache-warm dispatch failed") }
+            }.onFailure {
+                Timber.w(it, "Cache-warm dispatch failed")
+                if (it is WatchResponseTimeoutException) recordReconnectTimeout(ready, it)
+            }
         }
+    }
+
+    private suspend fun recordReconnectTimeout(
+        ready: WatchConnectionSession.Ready,
+        error: WatchResponseTimeoutException,
+    ) {
+        syncLogger.record(
+            address = ready.address,
+            trigger = SyncTrigger.AUTO_ON_RECONNECT,
+            kinds = setOf(SyncKind.CONNECTION),
+            success = false,
+            errorMessage = error.message,
+        )
     }
 
     private fun showWatchConnectedSnackbar() {
