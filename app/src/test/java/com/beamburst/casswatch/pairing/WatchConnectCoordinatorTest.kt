@@ -289,6 +289,20 @@ class WatchConnectCoordinatorTest {
         assertFalse(readCalled)
     }
 
+    @Test fun `event driven work cannot bypass captured initialization outcome`() = scenario {
+        val t = Transport(this)
+        t.session.begin(t.session.state.value, watchA)
+        val ready = t.session.established(watchA)!!
+        t.connected = true
+        var ran = false
+        val work = async { t.coordinator.withSession(ready) { ran = true } }
+        runCurrent()
+        assertFalse(ran)
+        t.session.initializationCompleted(ready)
+        work.await()
+        assertTrue(ran)
+    }
+
     @Test fun `screen initialization gate expires within initialization budget`() = scenario {
         val t = Transport(this)
         t.session.begin(t.session.state.value, watchA)
@@ -840,6 +854,7 @@ class WatchConnectCoordinatorTest {
             val coordinator = WatchConnectCoordinator(api, session)
             session.begin(session.state.value, watchA)
             val ready = coordinator.connectionEvents.setup(watchA, Any())!!
+            session.initializationCompleted(ready)
             val activeStarted = CompletableDeferred<Unit>()
             val queuedStarted = CompletableDeferred<Unit>()
             val queuedRan = AtomicBoolean()

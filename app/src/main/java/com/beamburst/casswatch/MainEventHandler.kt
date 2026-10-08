@@ -131,7 +131,7 @@ class MainEventHandler(
         screenManager.showContentSelector(repository)
         showWatchConnectedSnackbar()
         sessionUiBridge.emitConnected()
-        dispatchCacheWarm()
+        dispatchCacheWarm(ready)
     }
 
     /**
@@ -142,8 +142,7 @@ class MainEventHandler(
      * sync path so later `Send Time` writes hit the fast Mode-2 path (~50 ms accuracy)
      * without ever flashing an incorrect time on the watch.
      */
-    private fun dispatchCacheWarm() {
-        val ready = connectionSession.ready ?: return
+    private fun dispatchCacheWarm(ready: WatchConnectionSession.Ready) {
         val address = ready.address
         AppScopes.io.launch {
             runCatching {
@@ -159,8 +158,7 @@ class MainEventHandler(
                 }
                 // AutoSyncCoordinator handles firmware-initiated prime+write chains.
                 if (repository.isAutoTimeStarted()) return@runCatching
-                val generation = connectionTracker.connectionGeneration(address)
-                val key = "$address@$generation"
+                val key = "$address@${ready.generation}"
                 synchronized(warmedLock) {
                     if (!warmedDispatchedFor.add(key)) return@runCatching
                 }

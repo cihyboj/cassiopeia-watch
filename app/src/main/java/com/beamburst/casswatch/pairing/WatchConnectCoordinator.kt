@@ -135,7 +135,7 @@ class WatchConnectCoordinator @Inject constructor(
     suspend fun initializeReconnect(expected: WatchConnectionSession.Ready) {
         var initialized = false
         try {
-            withSession(expected) { check ->
+            withSession(expected, initializing = true) { check ->
                 kotlin.check(repository.guardWrites(check).init()) { "Watch initialization failed" }
                 session.initializationCompleted(expected)
                 initialized = session.isInitialized(expected)
@@ -159,20 +159,24 @@ class WatchConnectCoordinator @Inject constructor(
     suspend fun <T> withSession(
         expected: WatchConnectionSession.Ready,
         selectedAddress: (() -> String?)? = null,
+        initializing: Boolean = false,
         block: suspend (check: () -> Unit) -> T,
-    ): T = session.withWork(expected) {
-        val check = {
-            if (!repository.isConnected() || !session.isCurrent(expected) ||
-                (selectedAddress != null && session.matching(selectedAddress()) != expected)) {
-                throw WatchConnectionChangedException()
+    ): T {
+        if (!initializing) session.awaitInitialized(expected)
+        return session.withWork(expected) {
+            val check = {
+                if (!repository.isConnected() || !session.isCurrent(expected) ||
+                    (selectedAddress != null && session.matching(selectedAddress()) != expected)) {
+                    throw WatchConnectionChangedException()
+                }
             }
-        }
-        check()
-        try {
-            block(check).also { confirmWatchWrite(check) }
-        } catch (error: Exception) {
-            if (error !is CancellationException) Timber.w(error, "Session work failed for %s", expected.address)
-            throw error
+            check()
+            try {
+                block(check).also { confirmWatchWrite(check) }
+            } catch (error: Exception) {
+                if (error !is CancellationException) Timber.w(error, "Session work failed for %s", expected.address)
+                throw error
+            }
         }
     }
 
