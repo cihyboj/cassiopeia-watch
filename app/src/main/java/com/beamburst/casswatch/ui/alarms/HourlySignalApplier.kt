@@ -212,10 +212,10 @@ suspend fun applyReconciledHourlySignal(
 
 internal const val ALARM_WRITE_TIMEOUT_MS = WATCH_ALARMS_TIMEOUT_MS + WATCH_RESPONSE_TIMEOUT_MS
 
-internal fun alarmRegistersMatch(sent: List<Alarm>, received: List<Alarm>): Boolean =
+internal fun alarmRegistersMatch(sent: List<Alarm>, received: List<Alarm>, compareChime: Boolean = !WatchInfo.chimeInSettings): Boolean =
     sent.isNotEmpty() && received.size >= sent.size && sent.indices.all { slot ->
         val expected = sent[slot]
         val actual = received[slot]
         expected.hour == actual.hour && expected.minute == actual.minute &&
-            expected.enabled == actual.enabled && expected.hasHourlyChime == actual.hasHourlyChime
+            expected.enabled == actual.enabled && (!compareChime || expected.hasHourlyChime == actual.hasHourlyChime)
     }

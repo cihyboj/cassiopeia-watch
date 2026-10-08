@@ -162,7 +162,7 @@ class WatchTimeProvider @Inject constructor(
     suspend fun nowForWatch(address: String? = session.address): WatchTime {
         val fineAdjustment = LocalDataStorage.getFineTimeAdjustment(context).toLong()
         val latencyCompensation = address
-            ?.let(learnedCompensation)
+            ?.let { LocalDataStorage.getLearnedTimeWriteCompensation(context, it) }
             ?: 0L
         if (!LocalDataStorage.getNtpTimeEnabled(context)) {
             return WatchTime(

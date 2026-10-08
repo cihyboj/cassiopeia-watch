@@ -79,6 +79,7 @@ class WatchConnectCoordinator @Inject constructor(
                             val job = SupervisorJob()
                             val result = CoroutineScope(currentCoroutineContext() + job).async(start = CoroutineStart.LAZY) {
                                 val ready = session.awaitReady()
+                                session.awaitInitialized(ready)
                                 repository.isConnected() && ready.address == requested
                             }
                             result.invokeOnCompletion { job.cancel() }

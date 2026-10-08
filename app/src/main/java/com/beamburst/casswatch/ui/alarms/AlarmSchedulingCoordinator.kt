@@ -163,6 +163,7 @@ internal class PersistedAlarmSchedulingCoordinator(
         }
         // Pending records an attempt that may have reached the clock. Recovery must not replay it.
         persistStatus("pending")
+        var handedOff = false
         try {
             // Storage/migration can suspend until after the due time. Check at the actual hand-off.
             if (!validFallbackCallback(key, addresses, state, instant, hash, clock, zone())) {
@@ -170,11 +171,12 @@ internal class PersistedAlarmSchedulingCoordinator(
                 return@serialized false
             }
             handoff(alarm)
+            handedOff = true
             persistStatus("requested", requested = true)
             true
         } catch (error: Exception) {
             // Do not turn a failed startActivity into a successful attempt receipt.
-            if (error !is kotlinx.coroutines.CancellationException) persistStatus("failed")
+            if (!handedOff && error !is kotlinx.coroutines.CancellationException) persistStatus("failed")
             throw error
         } finally {
             reconcileLocked(key.normalizedAddress)

@@ -21,9 +21,10 @@ class AlarmPayloadWriterTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-09T06:58:00Z"), zone)
     private val payload = listOf(Alarm(7, 0, true, false, "Wake"))
     private class Store(var state: AlarmState, val address: String) : AlarmPersistence {
+        var beforeSave: (AlarmState) -> Unit = {}
         override suspend fun addresses() = listOf(address)
         override suspend fun load(address: String) = state
-        override suspend fun save(address: String, state: AlarmState) { this.state = state }
+        override suspend fun save(address: String, state: AlarmState) { beforeSave(state); this.state = state }
         override suspend fun history(address: String): List<SyncEntry> = emptyList()
         override suspend fun legacySlots(): Set<Int> = emptySet()
         override suspend fun migrationDone() = true
@@ -47,7 +48,10 @@ class AlarmPayloadWriterTest {
         val backend = Backend()
         val coordinator = PersistedAlarmSchedulingCoordinator(store, backend, clock) { zone }
         val session = WatchConnectionSession()
-        val ready = session.run { begin(state.value, address); established(address)!! }
+        val ready = session.run {
+            begin(state.value, this@AlarmPayloadWriterTest.address)
+            established(this@AlarmPayloadWriterTest.address)!!
+        }
         val records = mutableListOf<AlarmPayloadRecord>()
         val writer = AlarmPayloadWriter(coordinator, AlarmSchedulingTime(clock) { zone }, session) { records += it }
         suspend fun write(read: suspend () -> List<Alarm>, send: suspend (List<Alarm>) -> Unit = {}) =
@@ -120,4 +124,27 @@ class AlarmPayloadWriterTest {
         assertFalse(alarmRegistersMatch(payload, payload.map { it.copy(hasHourlyChime = true) }))
         assertFalse(alarmRegistersMatch(payload, emptyList()))
     }
+    @Test fun `confirmed readback clears current warning and retains the outcome as history`() = runTest {
+        val s = Scenario()
+        val due = clock.millis() + 120_000
+        s.store.state = s.snapshot.copy(alarms = s.snapshot.alarms.map {
+            it.copy(fallbackStatus = "pending", fallbackStatusAt = due)
+        })
+        s.write({ payload })
+        assertNull(s.store.state.alarms[0].fallbackStatus)
+        assertEquals(AlarmFallbackOutcome(0, "pending", due), s.store.state.fallbackHistory.single())
+        assertEquals(due, s.store.state.alarms[0].fallbackAttemptAt)
+    }
+
+    @Test fun `generation ending during confirmation persistence discards committed evidence`() = runTest {
+        val s = Scenario()
+        s.store.beforeSave = { state ->
+            if (state.writePending == null && state.watchPayloads.isNotEmpty()) s.session.ended(s.ready)
+        }
+        assertTrue(runCatching { s.write({ payload }) }.isFailure)
+        assertTrue(s.store.state.watchPayloads.isEmpty())
+        assertTrue(s.store.state.dirty)
+        assertFalse(s.records.single().success)
+    }
+
 }

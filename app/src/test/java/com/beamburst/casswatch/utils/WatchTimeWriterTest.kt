@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.runTest
 import org.avmedia.gshockapi.Alarm
 import org.avmedia.gshockapi.IGShockAPI
 import org.avmedia.gshockapi.WatchInfo
+import org.avmedia.gshockapi.Settings
 import org.junit.Assert.*
 import org.junit.Test
 import java.lang.reflect.Proxy
@@ -89,6 +90,8 @@ class WatchTimeWriterTest {
                 "isConnected" -> true
                 "setTime" -> Unit
                 "getAlarms" -> received
+                "getSettings" -> Settings(hourlyChime = false)
+                "setSettings" -> error("Hourly signal transport failed")
                 "setAlarms" -> { @Suppress("UNCHECKED_CAST") received = args!![0] as ArrayList<Alarm>; Unit }
                 else -> error("Unexpected ${method.name}")
             }
@@ -109,7 +112,13 @@ class WatchTimeWriterTest {
         assertFalse(backend.scheduled)
         assertFalse(store.state.confirmedPayloads().isEmpty())
         // Later hourly-signal failure does not undo the confirmed time operation.
-        assertTrue(runCatching { error("Hourly signal transport failed") }.isFailure)
-        assertFalse(store.state.clockNeedsSync)
+        try {
+            WatchInfo.chimeInSettings = true
+            assertTrue(runCatching {
+                payloadWriter.hourlySignal(api, ready, HourlySignalSettings(enabled = true, startHour = 1, endHour = 0),
+                    java.time.LocalDateTime.ofInstant(clock.instant(), zone), SyncTrigger.MANUAL_SET_TIME, {})
+            }.isFailure)
+            assertFalse(store.state.clockNeedsSync)
+        } finally { WatchInfo.chimeInSettings = old }
     }
 }

@@ -103,8 +103,9 @@ class AlarmCoordinatorTest {
         store.beforeSave = { moving.now = Instant.parse("2026-10-09T07:00:00Z") }
         val due = moving.now.plusSeconds(120).toEpochMilli()
         assertFalse(coordinator.fallback(AlarmKey(a, 0), due, "07:00:true") { fail("Expired during storage") })
-        assertEquals("failed", store.states[a]!!.alarms[0].fallbackStatus)
-        assertNull(store.states[a]!!.alarms[0].fallbackAttemptAt)
+        assertNull(store.states[a]!!.alarms[0].fallbackStatus)
+        assertEquals(AlarmFallbackOutcome(0, "failed", due), store.states[a]!!.fallbackHistory.single())
+        assertEquals(due, store.states[a]!!.alarms[0].fallbackAttemptAt)
         assertEquals(due + 86_400_000, backend.scheduled[AlarmKey(a, 0)])
     }
     @Test fun `failed handoff persists failure without success receipt and keeps next daily fallback`() = runBlocking {
