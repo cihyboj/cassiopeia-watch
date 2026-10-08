@@ -7,6 +7,8 @@ import android.content.Intent
 import android.os.SystemClock
 import com.beamburst.casswatch.ui.alarms.alarmStateAfterPhoneClockChange
 import com.beamburst.casswatch.ui.alarms.PhoneFallbackReceiver
+import android.app.PendingIntent
+import android.net.Uri
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.AppScopes
 import dagger.hilt.android.EntryPointAccessors
@@ -32,11 +34,9 @@ class AlarmLifecycleReceiver : BroadcastReceiver() {
             } catch (error: Exception) {
                 Timber.e(error, "Alarm lifecycle reconciliation failed for %s", intent.action)
             } finally {
+                if (!completed) runCatching { scheduleLifecycleReconciliation(context, intent.action) }
+                    .onFailure { Timber.w(it, "Cannot schedule durable alarm lifecycle recovery") }
                 pending.finish()
-                if (!completed) AppScopes.io.launch {
-                    runCatching { reconcileLifecycle(context, intent.action) }
-                        .onFailure { Timber.w(it, "Deferred alarm lifecycle recovery failed") }
-                }
             }
         }
     }
@@ -62,3 +62,14 @@ internal fun isAlarmLifecycleAction(action: String?): Boolean = action in setOf(
     Intent.ACTION_TIMEZONE_CHANGED,
     AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED,
 )
+
+internal fun scheduleLifecycleReconciliation(context: Context, action: String?) {
+    val intent = Intent(context, AlarmLifecycleReceiver::class.java).apply {
+        this.action = action
+        data = Uri.parse("casswatch://alarm-lifecycle/${action.orEmpty()}")
+    }
+    val pending = PendingIntent.getBroadcast(context, 0, intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    context.getSystemService(AlarmManager::class.java).setAndAllowWhileIdle(
+        AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 5_000L, pending)
+}

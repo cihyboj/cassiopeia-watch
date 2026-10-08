@@ -24,6 +24,7 @@ data class AlarmState(
     val watchPayloads: Map<Int, WatchAlarmPayload> = emptyMap(),
     val clockNeedsSync: Boolean = false,
     val writePending: AlarmWritePending? = null,
+    val fallbackHistory: List<AlarmFallbackOutcome> = emptyList(),
 ) {
     fun confirmedPayloads(): Map<Int, WatchAlarmPayload> = if (clockNeedsSync) emptyMap() else watchPayloads
     fun watchAlarms(): List<Alarm> = alarms.map { Alarm(it.hour, it.minute, it.enabled, it.hasHourlyChime, it.name) }
@@ -33,6 +34,8 @@ data class AlarmState(
     fun oneShotLocalDates(): Map<Int, String> = alarms.mapIndexedNotNull { i, a -> a.oneShotLocalDate?.let { i to it } }.toMap()
     fun firedAts(): Map<Int, Long> = alarms.mapIndexedNotNull { i, a -> a.firedAt?.let { i to it } }.toMap()
 }
+
+data class AlarmFallbackOutcome(val slot: Int, val status: String, val occurrence: Long)
 
 data class AlarmWritePending(val id: String, val deadline: Long)
 
@@ -71,6 +74,9 @@ object AlarmSyncStorage {
     )
 
     internal fun encode(state: AlarmState): String = JSONObject().apply {
+        put("fallbackHistory", org.json.JSONArray().apply {
+            state.fallbackHistory.forEach { put(JSONObject().put("slot", it.slot).put("status", it.status).put("occurrence", it.occurrence)) }
+        })
         put("alarms", gson.toJson(state.alarms))
         put("days", encodeDays(state.days))
         put("dirty", state.dirty)
@@ -118,7 +124,14 @@ object AlarmSyncStorage {
             obj.getBoolean("dirty"), decoded, obj.optBoolean("clockNeedsSync", false),
             obj.optJSONObject("writePending")?.let { pending ->
                 AlarmWritePending(pending.getString("id"), pending.getLong("deadline")).also { require(it.deadline >= 0) }
-            })
+            }, obj.optJSONArray("fallbackHistory")?.let { history ->
+                (0 until history.length()).map { index ->
+                    val entry = history.getJSONObject(index)
+                    AlarmFallbackOutcome(entry.getInt("slot"), entry.getString("status"), entry.getLong("occurrence")).also {
+                        require(it.slot >= 0 && it.occurrence >= 0 && it.status in setOf("pending", "requested", "failed"))
+                    }
+                }.takeLast(50)
+            }.orEmpty())
     }
 
     internal fun decodeAlarms(raw: String): List<StoredAlarm> {

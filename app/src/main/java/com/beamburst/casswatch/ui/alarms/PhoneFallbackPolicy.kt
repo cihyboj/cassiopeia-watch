@@ -36,6 +36,6 @@ internal fun validFallbackCallback(
     if (fallbackWakeAt(expectedInstant, clock.millis()) == null || clock.millis() < expectedInstant - 5 * 60 * 1000L) return false
     if (expectedHash != alarmHash(alarm.hour, alarm.minute, emptySet(), true)) return false
     if (alarm.fallbackAttemptAt == expectedInstant ||
-        (alarm.fallbackStatus == "failed" && alarm.fallbackStatusAt == expectedInstant)) return false
+        (alarm.fallbackStatus in setOf("pending", "requested", "failed") && alarm.fallbackStatusAt == expectedInstant)) return false
     return nextAlarmOccurrence(alarm, state.days[key.slot] ?: AlarmSchedulePlanner.AllDays, clock, zone)?.toEpochMilli() == expectedInstant
 }

@@ -49,6 +49,7 @@ internal interface AlarmPersistence {
 
 internal interface AlarmScheduleBackend {
     fun recovery(address: String, instant: Long) = Unit
+    fun uncertain(key: AlarmKey) = Unit
     fun cancel(key: AlarmKey)
     fun cancelFallback(key: AlarmKey)
     fun cancelLegacy(slot: Int)
@@ -156,11 +157,11 @@ internal class PersistedAlarmSchedulingCoordinator(
         }
         suspend fun persistStatus(status: String, requested: Boolean = false) {
             persistence.save(key.normalizedAddress, state.copy(alarms = state.alarms.mapIndexed { slot, old ->
-                if (slot == key.slot) old.copy(fallbackAttemptAt = if (requested) instant else null,
+                if (slot == key.slot) old.copy(fallbackAttemptAt = if (requested || status == "pending") instant else state.alarms[slot].fallbackAttemptAt,
                     fallbackStatus = status, fallbackStatusAt = instant) else old
             }))
         }
-        // Pending is explicitly unconfirmed, not a delivery receipt. A crash remains visible.
+        // Pending records an attempt that may have reached the clock. Recovery must not replay it.
         persistStatus("pending")
         try {
             // Storage/migration can suspend until after the due time. Check at the actual hand-off.
@@ -196,12 +197,13 @@ internal class PersistedAlarmSchedulingCoordinator(
         val unavailable = unavailableKeys.value.filterNot { it.normalizedAddress == key.normalizedAddress }.toMutableSet()
         state.alarms.forEachIndexed { slot, alarm ->
             val alarmKey = key.copy(slot = slot)
+            if (activeFallbackStatus(alarm, clock.millis()) == "pending") backend.uncertain(alarmKey)
             val days = state.days[slot] ?: AlarmSchedulePlanner.AllDays
             backend.expiry(alarmKey, if (days.isEmpty() && alarm.enabled && alarm.firedAt == null)
                 alarm.occurrence()?.resolveInstant(zone())?.toEpochMilli() else null)
             val instant = nextAlarmOccurrence(alarm, days, clock, zone())?.toEpochMilli()
             if (state.writePending != null || instant == null || alarm.fallbackAttemptAt == instant ||
-                (alarm.fallbackStatus == "failed" && alarm.fallbackStatusAt == instant) || watchHasOccurrence(alarmKey, alarm, instant, state.confirmedPayloads(), clock.millis(), zone())) {
+                (alarm.fallbackStatus in setOf("pending", "requested", "failed") && alarm.fallbackStatusAt == instant) || watchHasOccurrence(alarmKey, alarm, instant, state.confirmedPayloads(), clock.millis(), zone())) {
                 backend.cancelFallback(alarmKey)
             } else if (backend.schedule(alarmKey, alarm, instant) == FallbackAvailability.UNAVAILABLE) {
                 backend.cancelFallback(alarmKey)

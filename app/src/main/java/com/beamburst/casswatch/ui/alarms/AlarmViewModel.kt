@@ -670,7 +670,7 @@ class AlarmViewModel @Inject constructor(
         val adjustmentTimeMinutes = settings?.adjustmentTimeMinutes ?: 0
         val state = AlarmSyncStorage.loadState(appContext, addr)
         _fallbackStatuses.value = state.alarms.mapIndexedNotNull { slot, alarm ->
-            when (alarm.fallbackStatus) {
+            when (activeFallbackStatus(alarm, alarmTime.clock.millis())) {
                 "failed" -> slot to appContext.getString(R.string.alarm_fallback_failed)
                 "pending" -> slot to appContext.getString(R.string.alarm_fallback_unconfirmed)
                 "requested" -> slot to appContext.getString(R.string.alarm_fallback_requested)

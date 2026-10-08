@@ -34,6 +34,8 @@ internal class PhoneFallbackScheduler @Inject constructor(
     fun canScheduleExactAlarms(): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
 
+    override fun uncertain(key: AlarmKey) = postFallbackRecovery(context, key, failed = false, uncertain = true)
+
     override fun recovery(address: String, instant: Long) = scheduleAlarmReconciliation(context, address, instant)
 
     override fun schedule(key: AlarmKey, alarm: AlarmSyncStorage.StoredAlarm, instant: Long): FallbackAvailability {

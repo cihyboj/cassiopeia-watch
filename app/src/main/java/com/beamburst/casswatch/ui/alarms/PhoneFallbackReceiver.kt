@@ -65,13 +65,24 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
                                 putExtra(AlarmClock.EXTRA_SKIP_UI, true)
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             }
-                            if (request.resolveActivity(context.packageManager) == null) {
-                                throw android.content.ActivityNotFoundException("No clock app resolves ACTION_SET_ALARM")
-                            }
-                            // Android may silently block BAL; return means requested, never created.
-                            context.startActivity(request)
+                            handoffBeforeDeadline(intent.getLongExtra(EXTRA_FIRE_INSTANT, -1),
+                                System::currentTimeMillis,
+                                { alarmReceiverTimeRemaining(receivedAt, SystemClock.elapsedRealtime()) != null },
+                                {
+                                    if (request.resolveActivity(context.packageManager) == null) {
+                                        throw android.content.ActivityNotFoundException("No clock app resolves ACTION_SET_ALARM")
+                                    }
+                                },
+                                { context.startActivity(request) })
+
                         }
                         if (requested) postFallbackRecovery(context, key, failed = false)
+                        else {
+                            val alarm = coordinator.snapshot(key.normalizedAddress).alarms.getOrNull(key.slot)
+                            if (alarm?.fallbackStatus == "pending" && activeFallbackStatus(alarm, System.currentTimeMillis()) != null) {
+                                postFallbackRecovery(context, key, failed = false, uncertain = true)
+                            }
+                        }
                     }
                 }
                 completed = true
@@ -79,17 +90,11 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
                 Timber.e(error, "Phone fallback callback failed for %s", key)
                 if (!expiry) postFallbackRecovery(context, key, failed = true)
             } finally {
-                pending.finish()
                 if (!completed) {
-                    // Deadline/dispatch failure must not strand tomorrow's recurring fallback.
-                    // This recovery only reconciles; it never performs a late clock hand-off.
-                    AppScopes.io.launch {
-                        runCatching {
-                            EntryPointAccessors.fromApplication(context.applicationContext, AlarmEntryPoint::class.java)
-                                .alarmSchedulingCoordinator().reconcile(key.normalizedAddress)
-                        }.onFailure { Timber.w(it, "Deferred alarm recovery failed for %s", key) }
-                    }
+                    runCatching { scheduleAlarmReconciliation(context, key.normalizedAddress) }
+                        .onFailure { Timber.w(it, "Cannot schedule durable alarm recovery for %s", key) }
                 }
+                pending.finish()
             }
         }
     }
@@ -112,13 +117,23 @@ internal fun openFallbackClock(context: Context) {
 }
 
 /** Notification taps open the clock for manual verification, without a date-less retry. */
-internal fun postFallbackRecovery(context: Context, key: AlarmKey, failed: Boolean) {
+internal fun postFallbackRecovery(context: Context, key: AlarmKey, failed: Boolean, uncertain: Boolean = false) {
     try {
         val notifications = NotificationManagerCompat.from(context)
         if (!canPostNotifications(context)) return
         val manager = context.getSystemService(NotificationManager::class.java)
-        val channel = "alarm_fallback_recovery"
-        manager.createNotificationChannel(NotificationChannel(channel, context.getString(R.string.alarm_fallback_channel), NotificationManager.IMPORTANCE_HIGH))
+        // Channel importance is immutable. Retire the old HIGH routine-notice channel.
+        manager.deleteNotificationChannel("alarm_fallback_recovery")
+        val channel = if (failed) "alarm_fallback_failure" else "alarm_fallback_silent"
+        val importance = fallbackNotificationImportance(failed)
+        manager.createNotificationChannel(NotificationChannel(channel, context.getString(R.string.alarm_fallback_channel), importance).apply {
+            if (!failed) { setSound(null, null); enableVibration(false) }
+        })
+        val message = context.getString(when {
+            failed -> R.string.alarm_fallback_failed
+            uncertain -> R.string.alarm_fallback_unconfirmed
+            else -> R.string.alarm_fallback_requested
+        })
         val clock = Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val recovery = if (clock.resolveActivity(context.packageManager) != null) clock else Intent(context, MainActivity::class.java)
         val pending = PendingIntent.getActivity(context, key.uri.hashCode(), recovery,
@@ -126,9 +141,11 @@ internal fun postFallbackRecovery(context: Context, key: AlarmKey, failed: Boole
         notifications.notify(key.uri, key.slot, NotificationCompat.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_alarm_black_24dp)
             .setContentTitle(context.getString(R.string.alarm_fallback_title))
-            .setContentText(context.getString(if (failed) R.string.alarm_fallback_failed else R.string.alarm_fallback_requested))
-            .setStyle(NotificationCompat.BigTextStyle().bigText(context.getString(if (failed) R.string.alarm_fallback_failed else R.string.alarm_fallback_requested)))
+            .setContentText(message)
+            .setSilent(!failed)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setContentIntent(pending)
+            .setOnlyAlertOnce(true)
             .setAutoCancel(true)
             .build())
     } catch (error: SecurityException) {
@@ -136,4 +153,21 @@ internal fun postFallbackRecovery(context: Context, key: AlarmKey, failed: Boole
     } catch (error: Exception) {
         Timber.w(error, "Cannot post fallback recovery notification for %s", key)
     }
+}
+
+internal fun fallbackNotificationImportance(failed: Boolean): Int =
+    if (failed) NotificationManager.IMPORTANCE_HIGH else NotificationManager.IMPORTANCE_LOW
+
+/** Resolution can block; both deadlines are checked again at the activity boundary. */
+internal fun handoffBeforeDeadline(
+    instant: Long,
+    now: () -> Long,
+    withinReceiverBudget: () -> Boolean,
+    resolve: () -> Unit,
+    start: () -> Unit,
+) {
+    resolve()
+    check(withinReceiverBudget() && fallbackWakeAt(instant, now()) != null) { "Phone alarm handoff deadline elapsed" }
+    // A return from Android is only a request; background launch may still be blocked.
+    start()
 }

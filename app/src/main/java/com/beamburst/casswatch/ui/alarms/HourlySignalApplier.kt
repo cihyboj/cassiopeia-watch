@@ -127,7 +127,7 @@ class AlarmPayloadWriter internal constructor(
                 writtenEvidence = evidence
                 coordinator.finishWrite(ready.address, pending) { current ->
                     checkSession(ready)
-                    current.copy(watchPayloads = evidence)
+                    current.copy(watchPayloads = evidence).clearFallbackStatuses()
                 }
                 confirm()
                 checkSession(ready)
