@@ -1,5 +1,7 @@
 package com.beamburst.casswatch.data.local
 
+import com.beamburst.casswatch.pairing.guardWrites
+import com.beamburst.casswatch.pairing.confirmWatchWrite
 import android.content.Context
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.google.gson.Gson
@@ -78,19 +80,17 @@ internal suspend fun reconcileConnectedSettings(
     save: suspend (Settings) -> Unit,
     clearDirty: suspend () -> Unit,
 ) {
+    val boundApi = api.guardWrites(checkSession)
     checkSession()
     if (dirty && cached != null) {
-        runCatching {
-            checkSession()
-            api.setSettings(cached)
-            checkSession()
-            clearDirty()
-        }
+        boundApi.setSettings(cached)
+        confirmWatchWrite(checkSession)
+        clearDirty()
     } else if (cached == null) {
-        val fromWatch = runCatching { api.getSettings() }.getOrNull() ?: return
+        val fromWatch = boundApi.getSettings()
         checkSession()
         save(fromWatch)
-        checkSession()
+        confirmWatchWrite(checkSession)
         clearDirty()
     }
 }

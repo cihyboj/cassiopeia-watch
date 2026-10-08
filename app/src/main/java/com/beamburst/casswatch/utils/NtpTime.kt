@@ -1,5 +1,8 @@
 package com.beamburst.casswatch.utils
 
+import com.beamburst.casswatch.pairing.awaitWatchResponse
+import com.beamburst.casswatch.pairing.confirmWatchWrite
+import com.beamburst.casswatch.pairing.WATCH_RESPONSE_TIMEOUT_MS
 import com.beamburst.casswatch.pairing.WatchConnectionChangedException
 import android.content.Context
 import android.os.SystemClock
@@ -14,7 +17,8 @@ import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import com.beamburst.casswatch.data.local.SyncDetails
@@ -246,7 +250,7 @@ class WatchTimeWriter @Inject constructor(
          * Mode-1 (DST + up to 6 World Cities BLE reads on a slow link), short enough to
          * detect a hung BLE stack and recover before the watch firmware gives up.
          */
-        const val PRIME_TIMEOUT_MS = 8_000L
+        const val PRIME_TIMEOUT_MS = WATCH_RESPONSE_TIMEOUT_MS
 
         /**
          * How long after the watch receives a setTime BLE packet before the encoded value
@@ -410,8 +414,8 @@ class WatchTimeWriter @Inject constructor(
         val preSendWallMs = System.currentTimeMillis()
         val preSendElapsedMs = SystemClock.elapsedRealtime()
         checkSession()
-        api.setTime(timeMs = timeMs)
-        checkSession()
+        awaitWatchResponse { api.setTime(timeMs = timeMs) }
+        confirmWatchWrite(checkSession)
         val durationMs = SystemClock.elapsedRealtime() - preSendElapsedMs
         connectionTracker.markCacheWarmIfFast(address, durationMs)
         // Mode-1 samples mix cache-miss BLE reads into the latency; do not learn from them.
@@ -462,8 +466,8 @@ class WatchTimeWriter @Inject constructor(
         val preSendElapsedMs = SystemClock.elapsedRealtime()
         try {
             checkSession()
-            api.setTime(timeMs = target)
-            checkSession()
+            awaitWatchResponse { api.setTime(timeMs = target) }
+            confirmWatchWrite(checkSession)
         } catch (t: Throwable) {
             // Skip sample recording on throw to avoid biasing learned latency.
             throw t
@@ -502,15 +506,21 @@ class SntpClient @Inject constructor() {
     suspend fun currentTimeMillis(
         server: String,
         timeoutMillis: Int = DEFAULT_TIMEOUT_MILLIS,
-    ): Long = withContext(Dispatchers.IO) {
-        query(server, timeoutMillis).timeMs
-    }
+    ): Long = sample(server, timeoutMillis).timeMs
 
     suspend fun sample(
         server: String,
         timeoutMillis: Int = DEFAULT_TIMEOUT_MILLIS,
-    ): SntpResult = withContext(Dispatchers.IO) {
-        query(server, timeoutMillis)
+    ): SntpResult = withTimeout(timeoutMillis * 2L + 1_000L) {
+        suspendCancellableCoroutine { continuation ->
+            // Some DNS implementations ignore interruption. A cancelled caller must
+            // not join that blocking worker or retain connection/session ownership.
+            val worker = AppScopes.io.launch {
+                val result = runCatching { runInterruptible { query(server, timeoutMillis) } }
+                continuation.resumeWith(result)
+            }
+            continuation.invokeOnCancellation { worker.cancel() }
+        }
     }
 
     private fun query(server: String, timeoutMillis: Int): SntpResult {

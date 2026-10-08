@@ -1,5 +1,7 @@
 package com.beamburst.casswatch.ui.events
 
+import com.beamburst.casswatch.pairing.watchOperationError
+import com.beamburst.casswatch.pairing.confirmWatchWrite
 import com.beamburst.casswatch.pairing.WatchWriteGuard
 import com.beamburst.casswatch.utils.WatchSyncActivity
 import android.content.Context
@@ -129,7 +131,7 @@ class EventViewModel @Inject constructor(
                         api.setEvents(ArrayList(sanitizedEvents))
                         checkSession()
                     }
-                    checkSession()
+                    confirmWatchWrite(checkSession)
                     syncLogger.record(
                         address = ready.address,
                         trigger = SyncTrigger.MANUAL_SEND_EVENTS,
@@ -147,7 +149,7 @@ class EventViewModel @Inject constructor(
                     if (result.isSuccess) {
                         AppSnackbar(appContext.getString(R.string.reminders_sent_to_watch))
                     } else {
-                        AppSnackbar("Error: ${result.exceptionOrNull()?.message ?: ""}")
+                        AppSnackbar(appContext.watchOperationError(result.exceptionOrNull()))
                     }
                 }
             }

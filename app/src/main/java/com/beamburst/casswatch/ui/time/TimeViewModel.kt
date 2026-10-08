@@ -1,5 +1,7 @@
 package com.beamburst.casswatch.ui.time
 
+import com.beamburst.casswatch.pairing.watchOperationError
+import com.beamburst.casswatch.pairing.confirmWatchWrite
 import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.pairing.WatchWriteGuard
@@ -30,8 +32,6 @@ import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.local.WatchSnapshot
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
-import com.beamburst.casswatch.session.SessionLinkEvent
-import com.beamburst.casswatch.session.WatchSessionUiBridge
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import com.beamburst.casswatch.utils.TimeWriteResult
@@ -44,7 +44,6 @@ import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
 import org.avmedia.gshockapi.WatchInfo
 import java.time.LocalDateTime
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 data class TimeState(
@@ -90,7 +89,6 @@ class TimeViewModel @Inject constructor(
     private val api: GShockRepository,
     private val connectionSession: WatchConnectionSession,
     private val writeGuard: WatchWriteGuard,
-    private val watchSessionUiBridge: WatchSessionUiBridge,
     @param:ApplicationContext private val appContext: Context,
     private val syncLogger: SyncHistoryLogger,
     private val watchSelector: CurrentWatchSelector,
@@ -98,7 +96,11 @@ class TimeViewModel @Inject constructor(
     private val watchTimeWriter: WatchTimeWriter,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TimeState())
-    val state = _state.asStateFlow()
+    val state: StateFlow<TimeState> = combine(
+        _state, connectionSession.state, watchSelector.selected,
+    ) { value, _, address ->
+        value.copy(isConnected = connectionSession.matching(address) != null)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, TimeState())
 
     private val _uiEvents = MutableSharedFlow<UiEvent>()
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
@@ -117,18 +119,6 @@ class TimeViewModel @Inject constructor(
             initialValue = ClockDisplaySource(),
         )
 
-    /**
-     * Blocks [refreshState] from showing a connected snapshot while the API still reports
-     * connected after a drop. Cleared by [WatchSessionUiBridge] (same path as snackbars),
-     * [onWatchConnected], or a successful full read in [refreshState].
-     */
-    private val linkLossUiHoldActive = AtomicBoolean(false)
-
-    /**
-     * a stack-trace-derived hash from an `init` block often resolves to the same key as other subscribers
-     * (e.g. `"<init>"`.hashCode()), so ProgressEvents can overwrite this subscription — then
-     * [Disconnect] never reaches the Time tab. Match [AlarmViewModel]'s unique subscriber id.
-     */
     private val progressEventsSubscriberId = "TimeViewModel-${System.identityHashCode(this)}"
 
     init {
@@ -141,24 +131,10 @@ class TimeViewModel @Inject constructor(
                 EventAction("DeviceAddress") { refreshState() },
             )
         )
-        viewModelScope.launch {
-            watchSessionUiBridge.linkEvents.collect { event ->
-                when (event) {
-                    SessionLinkEvent.Disconnected -> {
-                        linkLossUiHoldActive.set(true)
-                        withContext(Dispatchers.IO) {
-                            _state.value = TimeState(
-                                watchName = resolveWatchName(),
-                                isConnected = false,
-                            )
-                        }
-                        refreshState()
-                    }
-                    SessionLinkEvent.Connected -> {
-                        linkLossUiHoldActive.set(false)
-                        refreshState()
-                    }
-                }
+        viewModelScope.launch(Dispatchers.IO) {
+            connectionSession.state.collect { state ->
+                if (state is WatchConnectionSession.Ready) onWatchConnected()
+                else loadCachedState(watchSelector.currentAddress())
             }
         }
         viewModelScope.launch(Dispatchers.IO) {
@@ -178,10 +154,10 @@ class TimeViewModel @Inject constructor(
         when (action) {
             TimeAction.SendTimeToWatch -> {
                 val ready = writeGuard.capture() ?: return
-                viewModelScope.launch {
+                viewModelScope.launch(Dispatchers.IO) {
+                    val watchTime = watchTimeProvider.nowForWatch(ready.address)
                     writeGuard.run(ready) { checkSession ->
                         WatchSyncActivity.track {
-                            val watchTime = watchTimeProvider.nowForWatch(ready.address)
                             watchTime.fallbackReason?.let { AppSnackbar(it) }
                             AppSnackbar(appContext.getString(R.string.sending_time_to_watch))
                             var writeResult: TimeWriteResult? = null
@@ -192,7 +168,7 @@ class TimeViewModel @Inject constructor(
                                 checkSession()
                                 applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, LocalDateTime.now())
                             }
-                            checkSession()
+                            confirmWatchWrite(checkSession)
                             syncLogger.record(
                                 address = ready.address,
                                 trigger = SyncTrigger.MANUAL_SET_TIME,
@@ -211,7 +187,7 @@ class TimeViewModel @Inject constructor(
                                 AppSnackbar(appContext.getString(R.string.time_set))
                                 refreshState()
                             } else {
-                                AppSnackbar(result.exceptionOrNull()?.message ?: appContext.getString(R.string.api_error))
+                                AppSnackbar(appContext.watchOperationError(result.exceptionOrNull()))
                             }
                         }
                     }
@@ -225,23 +201,22 @@ class TimeViewModel @Inject constructor(
     private fun onWatchConnected() {
         viewModelScope.launch(Dispatchers.IO) {
             if (!isSelectedWatchConnected(watchSelector.currentAddress())) return@launch
-            // End disconnect UI hold as soon as the API agrees we have a session, so refreshState
-            // cannot keep forcing "disconnected" on every tick (second reconnect).
-            linkLossUiHoldActive.set(false)
             runCatching {
                 val ready = connectionSession.ready ?: return@runCatching
-                val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
-                val battery = api.getBatteryLevel()
-                val temperature = api.getWatchTemperature()
-                if (!connectionSession.isCurrent(ready)) return@runCatching
-                saveWatchSnapshot(ready.address, battery, temperature, homeTime)
-                _state.value = TimeState(
-                    homeTime = homeTime,
-                    batteryLevel = battery,
-                    temperature = temperature,
-                    watchName = resolveWatchName(),
-                    isConnected = true
-                )
+                writeGuard.readApi(ready, api) { api, confirm ->
+                    val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
+                    val battery = api.getBatteryLevel()
+                    val temperature = api.getWatchTemperature()
+                    confirm()
+                    saveWatchSnapshot(ready.address, battery, temperature, homeTime)
+                    _state.value = TimeState(
+                        homeTime = homeTime,
+                        batteryLevel = battery,
+                        temperature = temperature,
+                        watchName = resolveWatchName(),
+                        isConnected = true
+                    )
+                }
             }.onFailure {
                 AppSnackbar(appContext.getString(R.string.api_error))
                 val connected = runCatching { isSelectedWatchConnected(watchSelector.currentAddress()) }.getOrDefault(false)
@@ -287,19 +262,20 @@ class TimeViewModel @Inject constructor(
                 )
 
                 val ready = connectionSession.ready ?: return@runCatching
-                val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
-                val battery = api.getBatteryLevel()
-                val temperature = api.getWatchTemperature()
-                if (!connectionSession.isCurrent(ready)) return@runCatching
-                saveWatchSnapshot(ready.address, battery, temperature, homeTime)
-                _state.value = TimeState(
-                    homeTime = homeTime,
-                    batteryLevel = battery,
-                    temperature = temperature,
-                    watchName = primedWatchName,
-                    isConnected = true
-                )
-                linkLossUiHoldActive.set(false)
+                writeGuard.readApi(ready, api) { api, confirm ->
+                    val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
+                    val battery = api.getBatteryLevel()
+                    val temperature = api.getWatchTemperature()
+                    confirm()
+                    saveWatchSnapshot(ready.address, battery, temperature, homeTime)
+                    _state.value = TimeState(
+                        homeTime = homeTime,
+                        batteryLevel = battery,
+                        temperature = temperature,
+                        watchName = primedWatchName,
+                        isConnected = true
+                    )
+                }
             }.onFailure {
                 AppSnackbar(appContext.getString(R.string.api_error))
                 val safeName = resolveWatchName()
