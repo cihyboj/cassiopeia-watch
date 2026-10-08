@@ -281,4 +281,5 @@
         Aplikacja wykryła poprzedni błąd podczas połączenia. Logi błędów zostały zapisane.
         <p>Jeśli ten problem będzie się powtarzać, proszę zgłosić go na <a href="https://github.com/cihyboj/cassiopeia-watch/issues">GitHub</a> z modelem urządzenia i zegarka.</p>
     ]]></string>
+    <string name="selected_watch_not_connected">Połącz wybrany zegarek przed wysłaniem zmian.</string>
 </resources>

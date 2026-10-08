@@ -1,5 +1,6 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.utils.AppScopes
 import android.annotation.SuppressLint
 import android.app.Application
@@ -16,8 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.MultiWatchMigrator
@@ -96,6 +95,9 @@ class GShockApplication : Application(), IScreenManager {
     @Inject
     lateinit var connectionSession: WatchConnectionSession
 
+    @Inject
+    lateinit var watchConnectCoordinator: WatchConnectCoordinator
+
     fun init() {
         Timber.i("Initializing GShockApplication")
         weeklyAlarmScheduler.ensureInitialized()
@@ -124,9 +126,9 @@ class GShockApplication : Application(), IScreenManager {
                 syncLogger = syncHistoryLogger,
                 watchTimeProvider = watchTimeProvider,
                 watchTimeWriter = watchTimeWriter,
-                watchSelector = watchSelector,
                 connectionTracker = connectionTracker,
                 connectionSession = connectionSession,
+                connectCoordinator = watchConnectCoordinator,
             )
         eventHandler.setupEventSubscription()
     }

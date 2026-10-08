@@ -1,12 +1,12 @@
 package com.beamburst.casswatch.ui.time
 
+import com.beamburst.casswatch.data.local.WatchConnectionSession
+import com.beamburst.casswatch.pairing.WatchWriteGuard
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
-import com.beamburst.casswatch.data.local.WatchConnectionTracker
-import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
 import com.beamburst.casswatch.data.local.WatchSnapshot
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.common.AppSnackbar
@@ -27,9 +27,10 @@ data class TimerState(
 @HiltViewModel
 class TimerViewModel @Inject constructor(
     private val api: GShockRepository,
+    private val connectionSession: WatchConnectionSession,
+    private val writeGuard: WatchWriteGuard,
     @param:ApplicationContext private val appContext: Context,
     private val watchSelector: CurrentWatchSelector,
-    private val connectionTracker: WatchConnectionTracker,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TimerState())
     val state = _state.asStateFlow()
@@ -66,15 +67,20 @@ class TimerViewModel @Inject constructor(
         saveTimer(timer)
     }
 
-    fun sendTimerToWatch() = viewModelScope.launch {
-        if (!api.isConnected()) {
-            AppSnackbar(appContext.getString(R.string.watch_not_connected))
-            return@launch
-        }
+    fun sendTimerToWatch() {
+        val ready = writeGuard.capture() ?: return
         val timer = _state.value.timer
-        api.setTimer(timer)
-        saveTimer(timer)
-        AppSnackbar(appContext.getString(R.string.timer_set))
+        viewModelScope.launch {
+            writeGuard.run(ready) { checkSession ->
+                com.beamburst.casswatch.utils.WatchSyncActivity.track {
+                    checkSession()
+                    api.setTimer(timer)
+                    checkSession()
+                    saveTimer(timer, ready.address)
+                    AppSnackbar(appContext.getString(R.string.timer_set))
+                }
+            }
+        }
     }
 
     private fun refreshTimer() = viewModelScope.launch(Dispatchers.IO) {
@@ -93,9 +99,11 @@ class TimerViewModel @Inject constructor(
         }
 
         runCatching {
+            val ready = connectionSession.matching(addr) ?: return@runCatching
             val timer = api.getTimer()
+            if (!connectionSession.isCurrent(ready)) return@runCatching
             _state.value = TimerState(timer = timer)
-            saveTimer(timer)
+            saveTimer(timer, ready.address)
         }.onFailure {
             AppSnackbar(appContext.getString(R.string.api_error))
         }
@@ -106,8 +114,8 @@ class TimerViewModel @Inject constructor(
         _state.value = TimerState(timer = snapshot?.timer ?: 0)
     }
 
-    private fun saveTimer(timer: Int) {
-        val addr = watchSelector.currentAddress() ?: return
+    private fun saveTimer(timer: Int, address: String? = watchSelector.currentAddress()) {
+        val addr = address ?: return
         val current = WatchSnapshot.load(appContext, addr)
         WatchSnapshot.save(
             appContext,
@@ -122,9 +130,7 @@ class TimerViewModel @Inject constructor(
         )
     }
 
-    private fun isSelectedWatchConnected(address: String?): Boolean {
-        if (address == null || !api.isConnected()) return false
-        val tracked = connectionTracker.states.value[address]
-        return tracked == ConnectionState.CONNECTED || tracked == null
-    }
+    private fun isSelectedWatchConnected(addr: String?): Boolean =
+        api.isConnected() && connectionSession.matching(addr) != null
+
 }

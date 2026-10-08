@@ -1,5 +1,8 @@
 package com.beamburst.casswatch.ui.settings
 
+import com.beamburst.casswatch.pairing.guardWrites
+import com.beamburst.casswatch.data.local.WatchConnectionSession
+import com.beamburst.casswatch.pairing.WatchWriteGuard
 import com.beamburst.casswatch.utils.WatchSyncActivity
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -99,6 +102,8 @@ class SettingsViewModel
 @Inject
 constructor(
         private val api: GShockRepository,
+        private val connectionSession: WatchConnectionSession,
+        private val writeGuard: WatchWriteGuard,
         @param:ApplicationContext private val appContext: Context,
         private val pressCardRepository: PressCardRepository,
         private val syncLogger: SyncHistoryLogger,
@@ -184,7 +189,9 @@ constructor(
 
         if (!isSelectedWatchConnected(addr)) return
 
+        val ready = connectionSession.matching(addr) ?: return
         val settings = api.getSettings()
+        if (!connectionSession.isCurrent(ready)) return
         if (addr != null) {
             WatchSettingsCache.saveClean(appContext, addr, settings)
         }
@@ -283,16 +290,13 @@ constructor(
             val newMap = state.value.settingsMap.toMutableMap()
             newMap[updatedSetting::class.java] = updatedSetting
             _state.update { it.copy(settings = currentList, settingsMap = newMap) }
+            val address = watchSelector.currentAddress() ?: return
+            val settings = buildApiSettings()
             viewModelScope.launch {
                 updatedSetting.save()
-                markCurrentSettingsDirty()
+                WatchSettingsCache.save(appContext, address, settings)
             }
         }
-    }
-
-    private suspend fun markCurrentSettingsDirty() {
-        val addr = watchSelector.currentAddress() ?: return
-        WatchSettingsCache.save(appContext, addr, buildApiSettings())
     }
 
     data class Locale(
@@ -562,74 +566,73 @@ constructor(
         PhoneFinder.stop()
     }
 
-    fun setTimeNow() = viewModelScope.launch {
-        WatchSyncActivity.track {
-        if (!api.isConnected()) {
-            AppSnackbar(appContext.getString(R.string.watch_not_connected))
-            return@launch
-        }
-        val watchTime = watchTimeProvider.nowForWatch()
-        watchTime.fallbackReason?.let { AppSnackbar(it) }
-        val addr = watchSelector.currentAddress()
-        val signalSettings = if (addr != null) {
-            HourlySignalSettings.load(appContext, addr)
-        } else {
-            HourlySignalSettings.Default
-        }
-        val now = LocalDateTime.now()
-        val hourlyTarget = HourlySignalEvaluator.shouldChimeAt(now, signalSettings)
-        var writeResult: TimeWriteResult? = null
-        val result = runCatching {
-            writeResult = watchTimeWriter.write(api, watchTime)
-            applyHourlySignalToWatch(api, signalSettings, now)
-        }
-        syncLogger.record(
-            trigger = SyncTrigger.MANUAL_SETTINGS_SET_TIME,
-            kinds = setOf(SyncKind.TIME, SyncKind.HOURLY_SIGNAL),
-            success = result.isSuccess,
-            errorMessage = result.exceptionOrNull()?.message,
-            details = SyncDetails(
-                alarmHashes = null,
-                eventCount = null,
-                hourlySignalTarget = hourlyTarget,
-                timeMs = writeResult?.timeMs,
-                actions = watchTime.syncHistoryActions("Settings screen set-time button", writeResult),
-            ),
-        )
-        if (result.isSuccess) {
-            AppSnackbar(appContext.getString(R.string.time_sent_to_watch))
-        } else {
-            AppSnackbar(result.exceptionOrNull()?.message ?: appContext.getString(R.string.watch_not_connected))
-        }
+    fun setTimeNow() {
+        val ready = writeGuard.capture() ?: return
+        viewModelScope.launch {
+            writeGuard.run(ready) { checkSession ->
+                WatchSyncActivity.track {
+                    val watchTime = watchTimeProvider.nowForWatch(ready.address)
+                    watchTime.fallbackReason?.let { AppSnackbar(it) }
+                    val addr = ready.address
+                    val signalSettings = HourlySignalSettings.load(appContext, addr)
+                    val now = LocalDateTime.now()
+                    val hourlyTarget = HourlySignalEvaluator.shouldChimeAt(now, signalSettings)
+                    var writeResult: TimeWriteResult? = null
+                    val result = runCatching {
+                        writeResult = watchTimeWriter.write(api, watchTime, ready, checkSession)
+                        checkSession()
+                        applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, now)
+                    }
+                    checkSession()
+                    syncLogger.record(
+                        address = ready.address,
+                        trigger = SyncTrigger.MANUAL_SETTINGS_SET_TIME,
+                        kinds = setOf(SyncKind.TIME, SyncKind.HOURLY_SIGNAL),
+                        success = result.isSuccess,
+                        errorMessage = result.exceptionOrNull()?.message,
+                        details = SyncDetails(
+                            alarmHashes = null,
+                            eventCount = null,
+                            hourlySignalTarget = hourlyTarget,
+                            timeMs = writeResult?.timeMs,
+                            actions = watchTime.syncHistoryActions("Settings screen set-time button", writeResult),
+                        ),
+                    )
+                    if (result.isSuccess) {
+                        AppSnackbar(appContext.getString(R.string.time_sent_to_watch))
+                    } else {
+                        AppSnackbar(result.exceptionOrNull()?.message ?: appContext.getString(R.string.watch_not_connected))
+                    }
+                }
+            }
         }
     }
 
     fun sendToWatch() {
+        val ready = writeGuard.capture() ?: return
         val settings = buildApiSettings()
 
         viewModelScope.launch {
-            WatchSyncActivity.track {
-            if (!api.isConnected()) {
-                // Return before syncLogger.record: the old early-return inside runCatching
-                // logged a MANUAL_SEND_SETTINGS *success* without sending anything.
-                AppSnackbar(appContext.getString(R.string.watch_not_connected))
-                return@launch
-            }
-            val result = runCatching {
-                api.setSettings(settings)
-                watchSelector.currentAddress()?.let { addr ->
-                    WatchSettingsCache.saveClean(appContext, addr, settings)
+            writeGuard.run(ready) { checkSession ->
+                WatchSyncActivity.track {
+                    val result = runCatching {
+                        checkSession()
+                        api.setSettings(settings)
+                        checkSession()
+                        WatchSettingsCache.saveClean(appContext, ready.address, settings)
+                        AppSnackbar(appContext.getString(R.string.settings_sent_to_watch))
+                    }
+                    checkSession()
+                    syncLogger.record(
+                        address = ready.address,
+                        trigger = SyncTrigger.MANUAL_SEND_SETTINGS,
+                        kinds = setOf(SyncKind.SETTINGS),
+                        success = result.isSuccess,
+                        errorMessage = result.exceptionOrNull()?.message,
+                        details = SyncDetails.Empty.copy(actions = listOf("Watch settings sent")),
+                    )
+                    result.onFailure { e -> AppSnackbar(e.message ?: appContext.getString(R.string.api_error)) }
                 }
-                AppSnackbar(appContext.getString(R.string.settings_sent_to_watch))
-            }
-            syncLogger.record(
-                trigger = SyncTrigger.MANUAL_SEND_SETTINGS,
-                kinds = setOf(SyncKind.SETTINGS),
-                success = result.isSuccess,
-                errorMessage = result.exceptionOrNull()?.message,
-                details = SyncDetails.Empty.copy(actions = listOf("Watch settings sent")),
-            )
-            result.onFailure { e -> AppSnackbar(e.message ?: "Api Error") }
             }
         }
     }
@@ -665,9 +668,7 @@ constructor(
         return settings
     }
 
-    private fun isSelectedWatchConnected(addr: String?): Boolean {
-        if (addr == null || !api.isConnected()) return false
-        val tracked = connectionTracker.states.value[addr]
-        return tracked == ConnectionState.CONNECTED || tracked == null
-    }
+    private fun isSelectedWatchConnected(addr: String?): Boolean =
+        api.isConnected() && connectionSession.matching(addr) != null
+
 }

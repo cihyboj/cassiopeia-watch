@@ -1,14 +1,14 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.pairing.guardWrites
+import com.beamburst.casswatch.data.local.WatchConnectionSession
+import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.utils.WatchSyncActivity
 import com.beamburst.casswatch.utils.AppScopes
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
@@ -43,7 +43,8 @@ class AutoSyncCoordinator @Inject constructor(
     private val calendarEvents: CalendarEvents,
     private val notificationProvider: NotificationProvider,
     private val syncLogger: SyncHistoryLogger,
-    private val watchSelector: CurrentWatchSelector,
+    private val session: WatchConnectionSession,
+    private val coordinator: WatchConnectCoordinator,
     private val watchTimeProvider: WatchTimeProvider,
     private val watchTimeWriter: WatchTimeWriter,
 ) {
@@ -70,71 +71,72 @@ class AutoSyncCoordinator @Inject constructor(
         trigger: SyncTrigger = SyncTrigger.AUTO,
         actions: List<String>? = null,
     ) {
-        WatchSyncActivity.track {
-        val kinds = mutableSetOf<SyncKind>()
-        var success = true
-        var error: String? = null
-        var recordedTimeMs: Long? = null
-        var recordedEventCount: Int? = null
-        var recordedHourlyTarget: Boolean? = null
-        val recordedActions = actions.orEmpty().toMutableList()
+        val ready = session.ready ?: return
+        coordinator.withSession(ready) { checkSession ->
+            WatchSyncActivity.track {
+                val kinds = mutableSetOf<SyncKind>()
+                var success = true
+                var error: String? = null
+                var recordedTimeMs: Long? = null
+                var recordedEventCount: Int? = null
+                var recordedHourlyTarget: Boolean? = null
+                val recordedActions = actions.orEmpty().toMutableList()
 
-        runCatching {
-            runCatching { watchTimeWriter.primeCache(api) }
-                .onFailure { Timber.w(it, "Auto-sync cache prime failed") }
-            val watchTime = watchTimeProvider.nowForWatch()
-            val writeResult = watchTimeWriter.writeAfterPrime(api, watchTime)
-            kinds += SyncKind.TIME
-            recordedTimeMs = writeResult.timeMs
-            recordedActions += watchTime.syncHistoryActions("Automatic time write", writeResult)
+                runCatching {
+                    val addr = ready.address
+                    WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession)
+                    runCatching { watchTimeWriter.primeCache(api) }
+                        .onFailure { Timber.w(it, "Auto-sync cache prime failed") }
+                    val watchTime = watchTimeProvider.nowForWatch(ready.address)
+                    val writeResult = watchTimeWriter.writeAfterPrime(api, watchTime, ready, checkSession)
+                    kinds += SyncKind.TIME
+                    recordedTimeMs = writeResult.timeMs
+                    recordedActions += watchTime.syncHistoryActions("Automatic time write", writeResult)
 
-            val addr = watchSelector.currentAddress()
-            if (addr != null) {
-                WatchSettingsCache.reconcileOnConnect(context, addr, api)
+                    if (WatchInfo.hasReminders) {
+                        EventsModel.refresh(calendarEvents.getEventsFromCalendar())
+                        checkSession()
+                        api.setEvents(EventsModel.events)
+                        kinds += SyncKind.EVENTS
+                        recordedEventCount = EventsModel.events.size
+                    }
+
+                    val signalSettings = HourlySignalSettings.load(context, addr)
+                    val now = LocalDateTime.now()
+                    val target = HourlySignalEvaluator.shouldChimeAt(now, signalSettings)
+                    checkSession()
+                    applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, now)
+                    kinds += SyncKind.HOURLY_SIGNAL
+                    recordedHourlyTarget = target
+                }.onFailure {
+                    success = false
+                    error = it.message
+                }
+
+                checkSession()
+                syncLogger.record(
+                    address = ready.address,
+                    trigger = trigger,
+                    kinds = kinds,
+                    success = success,
+                    errorMessage = error,
+                    details = SyncDetails(
+                        alarmHashes = null,
+                        eventCount = recordedEventCount,
+                        hourlySignalTarget = recordedHourlyTarget,
+                        timeMs = recordedTimeMs,
+                        actions = recordedActions.ifEmpty { null },
+                    ),
+                )
+
+                if (success && LocalDataStorage.getTimeAdjustmentNotification(context) && !WatchInfo.alwaysConnected) {
+                    postSyncNotification()
+                }
+                // Prevent CDM from immediately reconnecting after the firmware-initiated sync disconnects,
+                // which would cause a spurious cache-prime timeout in the sync log.
+                checkSession()
+                api.preventReconnection()
             }
-
-            if (WatchInfo.hasReminders) {
-                EventsModel.refresh(calendarEvents.getEventsFromCalendar())
-                api.setEvents(EventsModel.events)
-                kinds += SyncKind.EVENTS
-                recordedEventCount = EventsModel.events.size
-            }
-
-            val signalSettings = if (addr != null) {
-                HourlySignalSettings.load(context, addr)
-            } else {
-                HourlySignalSettings.Default
-            }
-            val now = LocalDateTime.now()
-            val target = HourlySignalEvaluator.shouldChimeAt(now, signalSettings)
-            applyHourlySignalToWatch(api, signalSettings, now)
-            kinds += SyncKind.HOURLY_SIGNAL
-            recordedHourlyTarget = target
-        }.onFailure {
-            success = false
-            error = it.message
-        }
-
-        syncLogger.record(
-            trigger = trigger,
-            kinds = kinds,
-            success = success,
-            errorMessage = error,
-            details = SyncDetails(
-                alarmHashes = null,
-                eventCount = recordedEventCount,
-                hourlySignalTarget = recordedHourlyTarget,
-                timeMs = recordedTimeMs,
-                actions = recordedActions.ifEmpty { null },
-            ),
-        )
-
-        if (success && LocalDataStorage.getTimeAdjustmentNotification(context) && !WatchInfo.alwaysConnected) {
-            postSyncNotification()
-        }
-        // Prevent CDM from immediately reconnecting after the firmware-initiated sync disconnects,
-        // which would cause a spurious cache-prime timeout in the sync log.
-        api.preventReconnection()
         }
     }
 

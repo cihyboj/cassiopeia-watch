@@ -220,4 +220,5 @@
     <string name="broadcast_how_to_receive">How to receive</string>
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
+    <string name="selected_watch_not_connected">Свържете избрания часовник, преди да изпратите промените.</string>
 </resources>

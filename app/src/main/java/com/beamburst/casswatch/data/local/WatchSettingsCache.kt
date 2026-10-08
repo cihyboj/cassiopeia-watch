@@ -50,31 +50,47 @@ object WatchSettingsCache {
         }
     }
 
-    suspend fun reconcileOnConnect(context: Context, addr: String, api: IGShockAPI) {
+    suspend fun reconcileOnConnect(
+        context: Context,
+        addr: String,
+        api: IGShockAPI,
+        checkSession: () -> Unit,
+    ) {
         writeMutex.withLock {
-            if (isDirty(context, addr)) {
-                val cached = load(context, addr)
-                if (cached != null) {
-                    runCatching { api.setSettings(cached) }
-                        .onSuccess {
-                            LocalDataStorage.putAsync(context, dirtyKey(addr), "false")
-                        }
-                } else {
-                    val fromWatch = runCatching { api.getSettings() }.getOrNull()
-                    if (fromWatch != null) {
-                        LocalDataStorage.putAsync(context, cacheKey(addr), gson.toJson(fromWatch))
-                    }
-                    LocalDataStorage.putAsync(context, dirtyKey(addr), "false")
-                }
-            } else {
-                if (load(context, addr) != null) return
-
-                val fromWatch = runCatching { api.getSettings() }.getOrNull()
-                if (fromWatch != null) {
-                    LocalDataStorage.putAsync(context, cacheKey(addr), gson.toJson(fromWatch))
-                    LocalDataStorage.putAsync(context, dirtyKey(addr), "false")
-                }
-            }
+            reconcileConnectedSettings(
+                api = api,
+                checkSession = checkSession,
+                cached = load(context, addr),
+                dirty = isDirty(context, addr),
+                save = { settings -> LocalDataStorage.putAsync(context, cacheKey(addr), gson.toJson(settings)) },
+                clearDirty = { LocalDataStorage.putAsync(context, dirtyKey(addr), "false") },
+            )
         }
+    }
+}
+
+/** Shared seam for reconnect reconciliation; caller supplies storage for the captured address. */
+internal suspend fun reconcileConnectedSettings(
+    api: IGShockAPI,
+    checkSession: () -> Unit,
+    cached: Settings?,
+    dirty: Boolean,
+    save: suspend (Settings) -> Unit,
+    clearDirty: suspend () -> Unit,
+) {
+    checkSession()
+    if (dirty && cached != null) {
+        runCatching {
+            checkSession()
+            api.setSettings(cached)
+            checkSession()
+            clearDirty()
+        }
+    } else if (cached == null) {
+        val fromWatch = runCatching { api.getSettings() }.getOrNull() ?: return
+        checkSession()
+        save(fromWatch)
+        checkSession()
+        clearDirty()
     }
 }

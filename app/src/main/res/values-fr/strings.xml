@@ -230,4 +230,5 @@ si votre montre est en avance de 2,5 secondes par rapport à l\'heure réelle, d
     <string name="broadcast_how_to_receive">How to receive</string>
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
+    <string name="selected_watch_not_connected">Connectez la montre sélectionnée avant d’envoyer les modifications.</string>
 </resources>

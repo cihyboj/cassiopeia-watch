@@ -1,5 +1,8 @@
 package com.beamburst.casswatch.ui.time
 
+import com.beamburst.casswatch.pairing.guardWrites
+import com.beamburst.casswatch.data.local.WatchConnectionSession
+import com.beamburst.casswatch.pairing.WatchWriteGuard
 import com.beamburst.casswatch.utils.WatchSyncActivity
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -24,8 +27,6 @@ import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
-import com.beamburst.casswatch.data.local.WatchConnectionTracker
-import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
 import com.beamburst.casswatch.data.local.WatchSnapshot
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
@@ -87,11 +88,12 @@ sealed class UiEvent {
 @HiltViewModel
 class TimeViewModel @Inject constructor(
     private val api: GShockRepository,
+    private val connectionSession: WatchConnectionSession,
+    private val writeGuard: WatchWriteGuard,
     private val watchSessionUiBridge: WatchSessionUiBridge,
     @param:ApplicationContext private val appContext: Context,
     private val syncLogger: SyncHistoryLogger,
     private val watchSelector: CurrentWatchSelector,
-    private val connectionTracker: WatchConnectionTracker,
     private val watchTimeProvider: WatchTimeProvider,
     private val watchTimeWriter: WatchTimeWriter,
 ) : ViewModel() {
@@ -137,9 +139,6 @@ class TimeViewModel @Inject constructor(
                 EventAction("ConnectionSetupComplete") { onWatchConnected() },
                 EventAction("DeviceName") { refreshState() },
                 EventAction("DeviceAddress") { refreshState() },
-                EventAction("Disconnect") { onLinkLostEvent() },
-                EventAction("DeviceDisappeared") { onLinkLostEvent() },
-                EventAction("ConnectionFailed") { onLinkLostEvent() },
             )
         )
         viewModelScope.launch {
@@ -178,45 +177,43 @@ class TimeViewModel @Inject constructor(
     fun onAction(action: TimeAction) {
         when (action) {
             TimeAction.SendTimeToWatch -> {
+                val ready = writeGuard.capture() ?: return
                 viewModelScope.launch {
-                    WatchSyncActivity.track {
-                    if (!api.isConnected()) {
-                        AppSnackbar(appContext.getString(R.string.watch_not_connected))
-                        return@launch
-                    }
-                    val watchTime = watchTimeProvider.nowForWatch()
-                    watchTime.fallbackReason?.let { AppSnackbar(it) }
-                    AppSnackbar(appContext.getString(R.string.sending_time_to_watch))
-                    var writeResult: TimeWriteResult? = null
-                    val result = runCatching {
-                        writeResult = watchTimeWriter.write(api, watchTime)
-                        val addr = watchSelector.currentAddress()
-                        val signalSettings = if (addr != null) {
-                            HourlySignalSettings.load(appContext, addr)
-                        } else {
-                            HourlySignalSettings.Default
+                    writeGuard.run(ready) { checkSession ->
+                        WatchSyncActivity.track {
+                            val watchTime = watchTimeProvider.nowForWatch(ready.address)
+                            watchTime.fallbackReason?.let { AppSnackbar(it) }
+                            AppSnackbar(appContext.getString(R.string.sending_time_to_watch))
+                            var writeResult: TimeWriteResult? = null
+                            val result = runCatching {
+                                writeResult = watchTimeWriter.write(api, watchTime, ready, checkSession)
+                                val addr = ready.address
+                                val signalSettings = HourlySignalSettings.load(appContext, addr)
+                                checkSession()
+                                applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, LocalDateTime.now())
+                            }
+                            checkSession()
+                            syncLogger.record(
+                                address = ready.address,
+                                trigger = SyncTrigger.MANUAL_SET_TIME,
+                                kinds = setOf(SyncKind.TIME),
+                                success = result.isSuccess,
+                                errorMessage = result.exceptionOrNull()?.message,
+                                details = SyncDetails(
+                                    alarmHashes = null,
+                                    eventCount = null,
+                                    hourlySignalTarget = null,
+                                    timeMs = writeResult?.timeMs,
+                                    actions = watchTime.syncHistoryActions("Time screen send-time button", writeResult),
+                                ),
+                            )
+                            if (result.isSuccess) {
+                                AppSnackbar(appContext.getString(R.string.time_set))
+                                refreshState()
+                            } else {
+                                AppSnackbar(result.exceptionOrNull()?.message ?: appContext.getString(R.string.api_error))
+                            }
                         }
-                        applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
-                    }
-                    syncLogger.record(
-                        trigger = SyncTrigger.MANUAL_SET_TIME,
-                        kinds = setOf(SyncKind.TIME),
-                        success = result.isSuccess,
-                        errorMessage = result.exceptionOrNull()?.message,
-                        details = SyncDetails(
-                        alarmHashes = null,
-                        eventCount = null,
-                        hourlySignalTarget = null,
-                        timeMs = writeResult?.timeMs,
-                        actions = watchTime.syncHistoryActions("Time screen send-time button", writeResult),
-                    ),
-                )
-                    if (result.isSuccess) {
-                        AppSnackbar(appContext.getString(R.string.time_set))
-                        refreshState()
-                    } else {
-                        AppSnackbar(result.exceptionOrNull()?.message ?: appContext.getString(R.string.api_error))
-                    }
                     }
                 }
             }
@@ -225,21 +222,19 @@ class TimeViewModel @Inject constructor(
         }
     }
 
-    private fun onLinkLostEvent() {
-        watchSessionUiBridge.emitDisconnected()
-    }
-
     private fun onWatchConnected() {
         viewModelScope.launch(Dispatchers.IO) {
-            if (!api.isConnected()) return@launch
+            if (!isSelectedWatchConnected(watchSelector.currentAddress())) return@launch
             // End disconnect UI hold as soon as the API agrees we have a session, so refreshState
             // cannot keep forcing "disconnected" on every tick (second reconnect).
             linkLossUiHoldActive.set(false)
             runCatching {
+                val ready = connectionSession.ready ?: return@runCatching
                 val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
                 val battery = api.getBatteryLevel()
                 val temperature = api.getWatchTemperature()
-                saveWatchSnapshot(battery, temperature, homeTime)
+                if (!connectionSession.isCurrent(ready)) return@runCatching
+                saveWatchSnapshot(ready.address, battery, temperature, homeTime)
                 _state.value = TimeState(
                     homeTime = homeTime,
                     batteryLevel = battery,
@@ -249,7 +244,7 @@ class TimeViewModel @Inject constructor(
                 )
             }.onFailure {
                 AppSnackbar(appContext.getString(R.string.api_error))
-                val connected = runCatching { api.isConnected() }.getOrDefault(false)
+                val connected = runCatching { isSelectedWatchConnected(watchSelector.currentAddress()) }.getOrDefault(false)
                 _state.value = _state.value.copy(
                     watchName = resolveWatchName(),
                     isConnected = connected,
@@ -291,10 +286,12 @@ class TimeViewModel @Inject constructor(
                     isConnected = true,
                 )
 
+                val ready = connectionSession.ready ?: return@runCatching
                 val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
                 val battery = api.getBatteryLevel()
                 val temperature = api.getWatchTemperature()
-                saveWatchSnapshot(battery, temperature, homeTime)
+                if (!connectionSession.isCurrent(ready)) return@runCatching
+                saveWatchSnapshot(ready.address, battery, temperature, homeTime)
                 _state.value = TimeState(
                     homeTime = homeTime,
                     batteryLevel = battery,
@@ -306,7 +303,7 @@ class TimeViewModel @Inject constructor(
             }.onFailure {
                 AppSnackbar(appContext.getString(R.string.api_error))
                 val safeName = resolveWatchName()
-                val connected = runCatching { api.isConnected() }.getOrDefault(false)
+                val connected = runCatching { isSelectedWatchConnected(watchSelector.currentAddress()) }.getOrDefault(false)
                 _state.value = _state.value.copy(
                     watchName = safeName,
                     isConnected = connected,
@@ -326,14 +323,11 @@ class TimeViewModel @Inject constructor(
         )
     }
 
-    private fun isSelectedWatchConnected(address: String?): Boolean {
-        if (address == null || !api.isConnected()) return false
-        val tracked = connectionTracker.states.value[address]
-        return tracked == ConnectionState.CONNECTED || tracked == null
-    }
+    private fun isSelectedWatchConnected(addr: String?): Boolean =
+        api.isConnected() && connectionSession.matching(addr) != null
 
-    private fun saveWatchSnapshot(battery: Int, temperature: Int, homeTime: String) {
-        val addr = watchSelector.currentAddress() ?: return
+
+    private fun saveWatchSnapshot(addr: String, battery: Int, temperature: Int, homeTime: String) {
         val current = WatchSnapshot.load(appContext, addr)
         WatchSnapshot.save(
             appContext,

@@ -1,5 +1,7 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.data.local.WatchConnectionSession
+import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.utils.AppScopes
 import android.content.Context
 import com.beamburst.casswatch.data.local.PressCardRepository
@@ -11,8 +13,6 @@ import com.beamburst.casswatch.ui.events.EventsModel
 import com.beamburst.casswatch.utils.PhoneFinder
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.IGShockAPI
@@ -34,6 +34,8 @@ class WatchButtonDispatcher @Inject constructor(
     private val calendarEvents: CalendarEvents,
     private val autoSyncCoordinator: AutoSyncCoordinator,
     private val syncLogger: SyncHistoryLogger,
+    private val session: WatchConnectionSession,
+    private val coordinator: WatchConnectCoordinator,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "WatchButtonDispatcher"
@@ -48,11 +50,12 @@ class WatchButtonDispatcher @Inject constructor(
     }
 
     private suspend fun onPress() {
+        val ready = session.ready ?: return
         when {
-            api.isActionButtonPressed()              -> handleShort()
-            api.isFindPhoneButtonPressed()           -> handleLong()
+            api.isActionButtonPressed()              -> handleShort(ready)
+            api.isFindPhoneButtonPressed()           -> handleLong(ready)
             api.isAutoTimeStarted()                  -> { /* AutoSyncCoordinator handles this */ }
-            api.isNormalButtonPressed()              -> handleNormalConnection()
+            api.isNormalButtonPressed()              -> handleNormalConnection(ready)
             api.isAlwaysConnectedConnectionPressed() -> autoSyncCoordinator.runChain(
                 trigger = SyncTrigger.WATCH_ALWAYS_CONNECTED,
                 actions = listOf("Always-connected button press"),
@@ -60,7 +63,7 @@ class WatchButtonDispatcher @Inject constructor(
         }
     }
 
-    private suspend fun handleShort() {
+    private suspend fun handleShort(ready: WatchConnectionSession.Ready) {
         val cards = cardRepository.shortPress()
         val actions = mutableListOf("Short button press")
         if (cards.broadcast.enabled) {
@@ -70,10 +73,10 @@ class WatchButtonDispatcher @Inject constructor(
         } else {
             actions += "Broadcast disabled"
         }
-        recordWatchAction(SyncTrigger.WATCH_SHORT_PRESS, actions)
+        recordWatchAction(SyncTrigger.WATCH_SHORT_PRESS, actions, ready.address)
     }
 
-    private suspend fun handleLong() {
+    private suspend fun handleLong(ready: WatchConnectionSession.Ready) {
         val cards = cardRepository.longPress()
         val actions = mutableListOf("Long button press / Find Phone function")
         if (cards.broadcast.enabled) {
@@ -93,45 +96,51 @@ class WatchButtonDispatcher @Inject constructor(
         } else {
             actions += "Find my phone disabled"
         }
-        recordWatchAction(SyncTrigger.WATCH_LONG_PRESS, actions)
+        recordWatchAction(SyncTrigger.WATCH_LONG_PRESS, actions, ready.address)
     }
 
-    private suspend fun handleNormalConnection() {
-        val kinds = mutableSetOf(SyncKind.CONNECTION)
-        val actions = mutableListOf("Normal connection button press")
-        var success = true
-        var error: String? = null
-        if (WatchInfo.hasReminders) {
-            runCatching {
-                EventsModel.refresh(calendarEvents.getEventsFromCalendar())
-                api.setEvents(EventsModel.events)
-                kinds += SyncKind.EVENTS
-                actions += "Events synchronized: ${EventsModel.events.size}"
-            }.onFailure {
-                success = false
-                error = it.message
+    private suspend fun handleNormalConnection(ready: WatchConnectionSession.Ready) {
+        coordinator.withSession(ready) { checkSession ->
+            val kinds = mutableSetOf(SyncKind.CONNECTION)
+            val actions = mutableListOf("Normal connection button press")
+            var success = true
+            var error: String? = null
+            if (WatchInfo.hasReminders) {
+                runCatching {
+                    EventsModel.refresh(calendarEvents.getEventsFromCalendar())
+                    checkSession()
+                    api.setEvents(EventsModel.events)
+                    kinds += SyncKind.EVENTS
+                    actions += "Events synchronized: ${EventsModel.events.size}"
+                }.onFailure {
+                    success = false
+                    error = it.message
+                }
+            } else {
+                actions += "No reminder support for this watch"
             }
-        } else {
-            actions += "No reminder support for this watch"
+            checkSession()
+            syncLogger.record(
+                address = ready.address,
+                trigger = SyncTrigger.WATCH_NORMAL_CONNECTION,
+                kinds = kinds,
+                success = success,
+                errorMessage = error,
+                details = SyncDetails(
+                    alarmHashes = null,
+                    eventCount = if (SyncKind.EVENTS in kinds) EventsModel.events.size else null,
+                    hourlySignalTarget = null,
+                    timeMs = null,
+                    connection = "Normal connection button press",
+                    actions = actions,
+                ),
+            )
         }
-        syncLogger.record(
-            trigger = SyncTrigger.WATCH_NORMAL_CONNECTION,
-            kinds = kinds,
-            success = success,
-            errorMessage = error,
-            details = SyncDetails(
-                alarmHashes = null,
-                eventCount = if (SyncKind.EVENTS in kinds) EventsModel.events.size else null,
-                hourlySignalTarget = null,
-                timeMs = null,
-                connection = "Normal connection button press",
-                actions = actions,
-            ),
-        )
     }
 
-    private suspend fun recordWatchAction(trigger: SyncTrigger, actions: List<String>) {
+    private suspend fun recordWatchAction(trigger: SyncTrigger, actions: List<String>, address: String) {
         syncLogger.record(
+            address = address,
             trigger = trigger,
             kinds = setOf(SyncKind.ACTION),
             success = true,

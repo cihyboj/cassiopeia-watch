@@ -1,18 +1,18 @@
 package com.beamburst.casswatch.data.local
 
+import com.beamburst.casswatch.utils.AppScopes
 import com.beamburst.casswatch.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.update
-import org.avmedia.gshockapi.EventAction
-import org.avmedia.gshockapi.ProgressEvents
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class WatchConnectionTracker @Inject constructor(
-    private val selector: CurrentWatchSelector,
+    private val session: WatchConnectionSession,
 ) {
     enum class ConnectionState { CONNECTED, CONNECTING, DISCONNECTED, ERROR }
 
@@ -36,37 +36,49 @@ class WatchConnectionTracker @Inject constructor(
     }
 
     init {
-        ProgressEvents.runEventActions(
-            "WatchConnectionTracker-${System.identityHashCode(this)}",
-            arrayOf(
-                EventAction("WatchInitializationCompleted") {
-                    mark(selector.currentAddress(), ConnectionState.CONNECTED)
-                },
-                EventAction("ConnectionSetupComplete") {
-                    val address = selector.currentAddress()
-                    mark(address, ConnectionState.CONNECTED)
-                    incrementGeneration(address)
-                },
-                EventAction("Disconnect") {
-                    mark(selector.currentAddress(), ConnectionState.DISCONNECTED)
-                },
-                EventAction("DeviceDisappeared") {
-                    mark(selector.currentAddress(), ConnectionState.DISCONNECTED)
-                },
-                EventAction("ConnectionFailed") {
-                    mark(selector.currentAddress(), ConnectionState.ERROR)
-                },
-            )
-        )
+        AppScopes.io.launch {
+            var previous: String? = null
+            session.state.collect { state ->
+                val address = when (state) {
+                    is WatchConnectionSession.Ready -> state.address
+                    is WatchConnectionSession.Connecting -> state.address
+                    else -> null
+                }
+                val connected = (state as? WatchConnectionSession.Ready)?.address
+                _states.update { states ->
+                    states.mapValues { (watch, status) ->
+                        if (status == ConnectionState.CONNECTED && watch != connected) {
+                            ConnectionState.DISCONNECTED
+                        } else status
+                    }
+                }
+                if (previous != address) mark(previous, ConnectionState.DISCONNECTED)
+                when (state) {
+                    is WatchConnectionSession.Ready -> {
+                        _connectionGenerations.update { it + (state.address to state.generation) }
+                        mark(state.address, ConnectionState.CONNECTED)
+                    }
+                    is WatchConnectionSession.Connecting -> mark(state.address, ConnectionState.CONNECTING)
+                    else -> mark(previous, ConnectionState.DISCONNECTED)
+                }
+                previous = address
+            }
+        }
     }
 
     fun mark(address: String?, state: ConnectionState) {
         if (address == null) return
         val normalizedAddress = Utils.sanitizeMacAddress(address)
         if (normalizedAddress.isBlank()) return
+        if (state == ConnectionState.CONNECTED && session.matching(normalizedAddress) == null) return
         _states.update { states ->
             states
                 .filterKeys { !it.equals(normalizedAddress, ignoreCase = true) }
+                .mapValues { (_, current) ->
+                    if (state == ConnectionState.CONNECTED && current == ConnectionState.CONNECTED) {
+                        ConnectionState.DISCONNECTED
+                    } else current
+                }
                 .plus(normalizedAddress to state)
         }
     }
@@ -88,14 +100,15 @@ class WatchConnectionTracker @Inject constructor(
     fun connectionGeneration(address: String): Long {
         val normalizedAddress = Utils.sanitizeMacAddress(address)
         if (normalizedAddress.isBlank()) return 0L
-        return connectionGenerations.value[normalizedAddress] ?: 0L
+        return session.matching(normalizedAddress)?.generation
+            ?: connectionGenerations.value[normalizedAddress] ?: 0L
     }
 
     fun isCacheWarm(address: String?): Boolean {
         if (address == null) return false
         val normalizedAddress = Utils.sanitizeMacAddress(address)
         if (normalizedAddress.isBlank()) return false
-        val current = _connectionGenerations.value[normalizedAddress] ?: return false
+        val current = session.matching(normalizedAddress)?.generation ?: return false
         val warmed = _cacheWarmGenerations.value[normalizedAddress] ?: return false
         return warmed == current
     }
@@ -111,7 +124,7 @@ class WatchConnectionTracker @Inject constructor(
         if (address == null) return
         val normalizedAddress = Utils.sanitizeMacAddress(address)
         if (normalizedAddress.isBlank()) return
-        val gen = _connectionGenerations.value[normalizedAddress] ?: return
+        val gen = session.matching(normalizedAddress)?.generation ?: return
         _cacheWarmGenerations.update { warm ->
             warm
                 .filterKeys { !it.equals(normalizedAddress, ignoreCase = true) }
@@ -119,15 +132,4 @@ class WatchConnectionTracker @Inject constructor(
         }
     }
 
-    private fun incrementGeneration(address: String?) {
-        if (address == null) return
-        val normalizedAddress = Utils.sanitizeMacAddress(address)
-        if (normalizedAddress.isBlank()) return
-        _connectionGenerations.update { generations ->
-            val next = (generations[normalizedAddress] ?: 0L) + 1L
-            generations
-                .filterKeys { !it.equals(normalizedAddress, ignoreCase = true) }
-                .plus(normalizedAddress to next)
-        }
-    }
 }

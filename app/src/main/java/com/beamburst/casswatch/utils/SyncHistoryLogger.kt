@@ -1,6 +1,6 @@
 package com.beamburst.casswatch.utils
 
-import com.beamburst.casswatch.data.local.CurrentWatchSelector
+import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncEntry
 import com.beamburst.casswatch.data.local.SyncHistoryStore
@@ -12,7 +12,7 @@ import javax.inject.Singleton
 @Singleton
 class SyncHistoryLogger @Inject constructor(
     private val store: SyncHistoryStore,
-    private val watchSelector: CurrentWatchSelector,
+    private val session: WatchConnectionSession,
 ) {
     suspend fun record(
         trigger: SyncTrigger,
@@ -20,8 +20,9 @@ class SyncHistoryLogger @Inject constructor(
         success: Boolean,
         errorMessage: String? = null,
         details: SyncDetails = SyncDetails.Empty,
+        address: String? = session.address,
     ) {
-        val addr = watchSelector.currentAddress() ?: return
+        val addr = address ?: return
         store.append(
             SyncEntry(
                 timestamp = System.currentTimeMillis(),
