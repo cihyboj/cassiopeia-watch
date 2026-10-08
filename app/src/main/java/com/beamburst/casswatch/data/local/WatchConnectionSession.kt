@@ -1,6 +1,9 @@
 package com.beamburst.casswatch.data.local
 
 import com.beamburst.casswatch.utils.Utils
+import com.beamburst.casswatch.pairing.WATCH_INITIALIZATION_TIMEOUT_MS
+import com.beamburst.casswatch.pairing.WatchConnectionChangedException
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -42,8 +45,10 @@ class WatchConnectionSession @Inject constructor() {
     fun isInitialized(expected: Ready): Boolean = isCurrent(expected) && initializedState.value == expected
 
     suspend fun awaitInitialized(expected: Ready) {
-        combine(state, initialized) { current, initialized -> current != expected || initialized == expected }.first { it }
-        if (!isInitialized(expected)) throw com.beamburst.casswatch.pairing.WatchConnectionChangedException()
+        val completed = withTimeoutOrNull(WATCH_INITIALIZATION_TIMEOUT_MS) {
+            combine(state, initialized) { current, initialized -> current != expected || initialized == expected }.first { it }
+        }
+        if (completed != true || !isInitialized(expected)) throw WatchConnectionChangedException()
     }
     private val endListeners = mutableListOf<(Ready) -> Unit>()
 

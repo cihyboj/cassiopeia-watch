@@ -12,6 +12,7 @@ import android.content.Intent
 import android.provider.Settings
 import android.app.AlertDialog
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.filterNotNull
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncTrigger
@@ -62,9 +63,13 @@ class MainEventHandler(
             connectionTracker.mark(ended.address, WatchConnectionTracker.ConnectionState.DISCONNECTED)
             logConnection(SyncTrigger.CONNECTION_DISCONNECTED, true, address = ended.address)
         }
+        AppScopes.io.launch {
+            connectionSession.initialized.filterNotNull().collect { ready ->
+                safely("WatchInitializationCompleted") { handleWatchInitialization(ready) }
+            }
+        }
         val eventActions = arrayOf(
             EventAction("ConnectionSetupComplete") { safely("ConnectionSetupComplete") { handleConnectionSetup() } },
-            EventAction("WatchInitializationCompleted") { safely("WatchInitializationCompleted") { handleWatchInitialization() } },
             EventAction("ConnectionFailed") { safely("ConnectionFailed") { handleConnectionFailure() } },
             EventAction("Error") { safely("Error") { handleError() } },
             EventAction("WaitForConnection") { safely("WaitForConnection") { handleWaitForConnection() } },
@@ -105,13 +110,11 @@ class MainEventHandler(
             CachedIO.clearCache()
             AppScopes.io.launch {
                 runCatching {
-                    connectCoordinator.withSession(ready) { check -> repository.guardWrites(check).init() }
+                    connectCoordinator.initializeReconnect(ready)
                 }.onFailure {
                     Timber.w(it, "Reconnect initialization failed for %s", ready.address)
                     if (it is WatchResponseTimeoutException) {
                         recordReconnectTimeout(ready, it)
-                    } else if (connectionSession.isCurrent(ready)) {
-                        connectCoordinator.disconnect(ready.address)
                     }
                 }
             }
@@ -119,8 +122,8 @@ class MainEventHandler(
         logConnection(SyncTrigger.CONNECTION_CONNECTED, true, address = ready.address)
     }
 
-    private fun handleWatchInitialization() {
-        if (connectionSession.ready == null || !repository.isConnected()) return
+    private fun handleWatchInitialization(ready: WatchConnectionSession.Ready) {
+        if (!connectionSession.isInitialized(ready) || !repository.isConnected()) return
         if (repository.supportsAppNotifications()) {
             NotificationMonitorService.startService(context)
         }
@@ -128,7 +131,7 @@ class MainEventHandler(
         screenManager.showContentSelector(repository)
         showWatchConnectedSnackbar()
         sessionUiBridge.emitConnected()
-        dispatchCacheWarm()
+        dispatchCacheWarm(ready)
     }
 
     /**
@@ -139,8 +142,7 @@ class MainEventHandler(
      * sync path so later `Send Time` writes hit the fast Mode-2 path (~50 ms accuracy)
      * without ever flashing an incorrect time on the watch.
      */
-    private fun dispatchCacheWarm() {
-        val ready = connectionSession.ready ?: return
+    private fun dispatchCacheWarm(ready: WatchConnectionSession.Ready) {
         val address = ready.address
         AppScopes.io.launch {
             runCatching {
@@ -156,8 +158,7 @@ class MainEventHandler(
                 }
                 // AutoSyncCoordinator handles firmware-initiated prime+write chains.
                 if (repository.isAutoTimeStarted()) return@runCatching
-                val generation = connectionTracker.connectionGeneration(address)
-                val key = "$address@$generation"
+                val key = "$address@${ready.generation}"
                 synchronized(warmedLock) {
                     if (!warmedDispatchedFor.add(key)) return@runCatching
                 }

@@ -181,7 +181,7 @@ class WatchConnectCoordinatorTest {
         private suspend fun initialize() {
             initCalls++
             delay(opaqueDelayMs)
-            session.ready?.let { initializationEvents += it.generation; session.initializationCompleted(it) }
+            session.ready?.let { initializationEvents += it.generation }
         }
 
         suspend fun awaitAttempt(address: String) {
@@ -190,13 +190,13 @@ class WatchConnectCoordinatorTest {
         }
 
         suspend fun setup(address: String, device: Any): WatchConnectionSession.Ready? = scope.async {
-            val ready = handler.setup(address, device)
-            if (ready == null) coordinator.closeRejectedSetup()
-            else if (handler.needsInitialization) {
-                coordinator.withSession(ready) { check -> api.guardWrites(check).init() }
+            runCatching {
+                val ready = handler.setup(address, device)
+                if (ready == null) coordinator.closeRejectedSetup()
+                else if (handler.needsInitialization) coordinator.initializeReconnect(ready)
+                ready
             }
-            ready
-        }.await()
+        }.await().getOrThrow()
 
         suspend fun connectReady(address: String, device: Any = Any()): WatchConnectionSession.Ready = coroutineScope {
             val attempt = async { coordinator.connect(address) }
@@ -244,6 +244,78 @@ class WatchConnectCoordinatorTest {
         read.await()
         assertTrue(screenRead)
         assertEquals(ready, guard.capture())
+    }
+
+    @Test fun `auto reconnect initialization timeout ends generation and next connect succeeds`() = scenario {
+        val t = Transport(this)
+        val device = Any()
+        t.connectReady(watchA, device)
+        t.connected = false
+        t.disconnectEvent(device)
+        t.connected = true
+        t.opaqueDelayMs = WATCH_INITIALIZATION_TIMEOUT_MS + 1
+        assertTrue(runCatching { t.setup(watchA, device) }.exceptionOrNull() is WatchResponseTimeoutException)
+        assertEquals(WatchConnectionSession.Disconnected, t.session.state.value)
+        assertNull(t.session.initialized.value)
+        assertEquals(1, t.closes)
+        assertEquals(2, t.uiDisconnects)
+        t.opaqueDelayMs = 0
+        assertTrue(t.session.isInitialized(t.connectReady(watchA)))
+    }
+
+    @Test fun `stale initialization completion cannot initialize replacement generation`() = scenario {
+        val t = Transport(this)
+        val old = t.connectReady(watchA)
+        val replacement = t.session.renewed(old)!!
+        org.avmedia.gshockapi.ProgressEvents.onNext("WatchInitializationCompleted")
+        t.session.initializationCompleted(old)
+        runCurrent()
+        assertFalse(t.session.isInitialized(replacement))
+        assertNull(t.session.initialized.value)
+    }
+
+    @Test fun `screen waiting for initialization returns when generation ends`() = scenario {
+        val t = Transport(this)
+        t.session.begin(t.session.state.value, watchA)
+        val ready = t.session.established(watchA)!!
+        t.connected = true
+        val guard = WatchWriteGuard({ watchA }, t.session, t.coordinator) {}
+        var readCalled = false
+        val read = async { guard.readApi(ready, t.api) { _, _ -> readCalled = true } }
+        runCurrent()
+        assertFalse(read.isCompleted)
+        t.coordinator.disconnect()
+        read.await()
+        assertFalse(readCalled)
+    }
+
+    @Test fun `event driven work cannot bypass captured initialization outcome`() = scenario {
+        val t = Transport(this)
+        t.session.begin(t.session.state.value, watchA)
+        val ready = t.session.established(watchA)!!
+        t.connected = true
+        var ran = false
+        val work = async { t.coordinator.withSession(ready) { ran = true } }
+        runCurrent()
+        assertFalse(ran)
+        t.session.initializationCompleted(ready)
+        work.await()
+        assertTrue(ran)
+    }
+
+    @Test fun `screen initialization gate expires within initialization budget`() = scenario {
+        val t = Transport(this)
+        t.session.begin(t.session.state.value, watchA)
+        val ready = t.session.established(watchA)!!
+        t.connected = true
+        val guard = WatchWriteGuard({ watchA }, t.session, t.coordinator) {}
+        var readCalled = false
+        val read = async { guard.readApi(ready, t.api) { _, _ -> readCalled = true } }
+        advanceTimeBy(WATCH_INITIALIZATION_TIMEOUT_MS)
+        runCurrent()
+        assertTrue(read.isCompleted)
+        read.await()
+        assertFalse(readCalled)
     }
 
     @Test fun `CONNECTED before identity retry awaits readiness`() = scenario {
@@ -782,6 +854,7 @@ class WatchConnectCoordinatorTest {
             val coordinator = WatchConnectCoordinator(api, session)
             session.begin(session.state.value, watchA)
             val ready = coordinator.connectionEvents.setup(watchA, Any())!!
+            session.initializationCompleted(ready)
             val activeStarted = CompletableDeferred<Unit>()
             val queuedStarted = CompletableDeferred<Unit>()
             val queuedRan = AtomicBoolean()

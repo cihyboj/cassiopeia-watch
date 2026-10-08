@@ -30,7 +30,7 @@ internal fun buildBackupJson(entries: JSONObject, nowMs: Long, versionName: Stri
         put(BackupSchema.KEY_SCHEMA, BackupSchema.VERSION)
         put(BackupSchema.KEY_EXPORTED_AT, nowMs)
         put(BackupSchema.KEY_PACKAGE_VERSION, versionName)
-        put(BackupSchema.KEY_ENTRIES, entries)
+        put(BackupSchema.KEY_ENTRIES, JSONObject(entries.toString()).apply { remove("ntpOffsetCache") })
     }
 
 sealed class ImportResult {
@@ -47,7 +47,7 @@ object BackupExporter {
      */
     suspend fun export(context: Context, target: Uri): Int = withContext(Dispatchers.IO) {
         coordinator(context).reconcileAll()
-        val entries = LocalDataStorage.toJsonObject(context)
+        val entries = LocalDataStorage.toJsonObject(context).apply { remove("ntpOffsetCache") }
         val payload = buildBackupJson(
             entries = entries,
             nowMs = System.currentTimeMillis(),
@@ -122,7 +122,7 @@ internal fun validatedBackupEntries(payload: JSONObject): JSONObject {
         require(exportedAt is Number && exportedAt.toDouble() == exportedAt.toLong().toDouble() && exportedAt.toLong() >= 0)
     }
     if (payload.has(BackupSchema.KEY_PACKAGE_VERSION)) require(payload.get(BackupSchema.KEY_PACKAGE_VERSION) is String)
-    val entries = payload.getJSONObject(BackupSchema.KEY_ENTRIES)
+    val entries = JSONObject(payload.getJSONObject(BackupSchema.KEY_ENTRIES).toString()).apply { remove("ntpOffsetCache") }
     entries.keys().asSequence().forEach { key ->
         require(entries.get(key) is String) { "entry '$key' must be a string" }
         val raw = entries.getString(key)
@@ -184,6 +184,7 @@ internal suspend fun restoreBackup(text: String, target: BackupRestoreTarget): I
 
 /** A foreign done-flag cannot complete this installation's migration. Filter settings before the atomic restore. */
 internal fun backupEntriesForRestore(entries: JSONObject): JSONObject = JSONObject(entries.toString()).apply {
+    remove("ntpOffsetCache")
     remove(ALARM_FALLBACK_MIGRATION_FLAG)
     BackupImporter.watchSettingsImportKeysToDrop(entries).forEach { remove(it) }
     keys().asSequence().toList().forEach { key ->

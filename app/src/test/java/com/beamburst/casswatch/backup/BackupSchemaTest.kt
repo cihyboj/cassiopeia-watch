@@ -9,6 +9,34 @@ import org.junit.Test
 class BackupSchemaTest {
 
     @Test
+    fun `export excludes NTP samples without changing preferences`() {
+        val entries = JSONObject().put("ntpOffsetCache", "old sample").put("ntpTimeEnabled", "true")
+        val exported = buildBackupJson(entries, 0, "test").getJSONObject(BackupSchema.KEY_ENTRIES)
+        assertFalse(exported.has("ntpOffsetCache"))
+        assertEquals("true", exported.getString("ntpTimeEnabled"))
+        assertTrue(entries.has("ntpOffsetCache"))
+    }
+
+    @Test
+    fun `both import schemas ignore NTP samples`() = kotlinx.coroutines.test.runTest {
+        for (version in listOf(1, 2)) {
+            val entries = JSONObject().put("ntpOffsetCache", "old sample").put("ntpTimeServer", "pool.ntp.org")
+            val payload = buildBackupJson(entries, 0, "test").put(BackupSchema.KEY_SCHEMA, version)
+                .put(BackupSchema.KEY_ENTRIES, entries)
+            val result = restoreBackup(payload.toString(), object : BackupRestoreTarget {
+                override suspend fun replace(entries: JSONObject): Int {
+                    assertFalse(entries.has("ntpOffsetCache"))
+                    val restored = backupEntriesForRestore(entries)
+                    assertFalse(restored.has("ntpOffsetCache"))
+                    assertEquals("pool.ntp.org", restored.getString("ntpTimeServer"))
+                    return restored.length()
+                }
+            })
+            assertTrue(result is ImportResult.Ok)
+        }
+    }
+
+    @Test
     fun `buildBackupJson wraps entries with schema metadata`() {
         val entries = JSONObject().apply {
             put("key.one", "value one")

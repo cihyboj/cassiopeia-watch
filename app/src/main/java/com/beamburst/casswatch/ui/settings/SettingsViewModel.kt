@@ -1,6 +1,7 @@
 // Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE.
 package com.beamburst.casswatch.ui.settings
 
+import CachedIO
 import com.beamburst.casswatch.ui.alarms.alarmOperationError
 import com.beamburst.casswatch.pairing.confirmWatchWrite
 import com.beamburst.casswatch.pairing.guardWrites
@@ -15,6 +16,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -22,6 +24,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.R
@@ -64,8 +69,22 @@ abstract class Setting(val name: String) {
 
 data class SettingsState(
         val settings: List<Setting> = emptyList(),
-        val settingsMap: Map<Class<out Setting>, Setting> = emptyMap()
-)
+        val settingsMap: Map<Class<out Setting>, Setting> = emptyMap(),
+        val address: String? = null,
+        val baseline: Settings? = null,
+        val draft: Settings? = null,
+) {
+    val hasBaseline: Boolean get() = baseline != null && draft != null
+
+    internal fun withBaseline(address: String?, loaded: Settings): SettingsState = copy(
+        address = address,
+        baseline = loaded.copy(),
+        draft = mergeSettingsRefresh(loaded, baseline, draft),
+    )
+
+    fun settingsForSend(selectedAddress: String?): Settings? =
+        draft?.takeIf { hasBaseline && address != null && address == selectedAddress }?.copy()
+}
 
 sealed class SettingsAction {
     data class UpdateSetting<T : Setting>(val setting: T) : SettingsAction()
@@ -162,44 +181,63 @@ constructor(
     private fun defaultSettings(): ArrayList<Setting> = filter(allSettings())
 
     private fun observeSelectedWatchSettings() {
-        viewModelScope.launch(Dispatchers.Default) {
-            watchSelector.selected.collect { addr ->
-                runCatching {
-                    loadSettingsForAddress(addr)
-                }.onFailure { Timber.w(it, "Failed to load settings for %s", addr) }
+        viewModelScope.launch {
+            settingsReloads(watchSelector.selected, connectionSession.initialized).collectLatest { (addr, ready) ->
+                runCatching { loadSettingsForAddress(addr, ready) }
+                    .onFailure { Timber.w(it, "Failed to load settings for %s", addr) }
             }
         }
     }
 
     private fun observeConnectionState() {
-        viewModelScope.launch(Dispatchers.Default) {
-            combine(watchSelector.selected, connectionSession.state) { addr, _ ->
-                isSelectedWatchConnected(addr)
-            }.collect { connected ->
-                _isConnected.value = connected
+        viewModelScope.launch {
+            combine(watchSelector.selected, connectionSession.initialized) { addr, ready ->
+                ready != null && ready.address == addr && connectionSession.isInitialized(ready)
+            }.collect { connected -> _isConnected.value = connected }
+        }
+    }
+
+    private suspend fun loadSettingsForAddress(addr: String?, ready: WatchConnectionSession.Ready?) {
+        if (state.value.address != addr) {
+            _state.value = SettingsState(address = addr)
+            updateSettingsAndMap(defaultSettings())
+        }
+        val (cached, dirty) = withContext(Dispatchers.IO) {
+            loadAutoSyncOnReconnectForAddress(addr)
+            (addr?.let { WatchSettingsCache.load(appContext, it) }) to
+                (addr != null && WatchSettingsCache.isDirty(appContext, addr))
+        }
+        if (watchSelector.currentAddress() != addr) return
+        if (cached != null) acceptSettings(addr, cached)
+        if (ready == null || dirty) return
+
+        writeGuard.readApi(ready, api) { boundApi, confirm ->
+            val settings = boundApi.getSettings()
+            confirm()
+            if (watchSelector.currentAddress() != addr) return@readApi
+            acceptSettings(addr, settings)
+            val draft = buildApiSettings() ?: return@readApi
+            withContext(Dispatchers.IO) {
+                if (draft == settings) WatchSettingsCache.saveClean(appContext, ready.address, settings)
+                else WatchSettingsCache.save(appContext, ready.address, draft)
             }
         }
     }
 
-    private suspend fun loadSettingsForAddress(addr: String?) {
+    private fun acceptSettings(addr: String?, settings: Settings) {
+        val refreshed = state.value.withBaseline(addr, settings)
+        val localAdjustment = state.value.settingsMap[TimeAdjustment::class.java] as? TimeAdjustment
         updateSettingsAndMap(defaultSettings())
-        loadAutoSyncOnReconnectForAddress(addr)
-        val cached = if (addr != null) WatchSettingsCache.load(appContext, addr) else null
-        if (cached != null) {
-            updateSettingsAndMap(fromJson(Gson().toJson(cached)))
-            return
+        val loaded = fromJson(Gson().toJson(refreshed.draft))
+        // These two controls are phone preferences, not fields read from the watch.
+        loaded.filterIsInstance<TimeAdjustment>().firstOrNull()?.let {
+            if (localAdjustment != null) {
+                it.fineAdjustment = localAdjustment.fineAdjustment
+                it.timeAdjustmentNotifications = localAdjustment.timeAdjustmentNotifications
+            }
         }
-
-        if (!isSelectedWatchConnected(addr)) return
-
-        val ready = connectionSession.matching(addr) ?: return
-        writeGuard.readApi(ready, api) { api, confirm ->
-            val settings = api.getSettings()
-            confirm()
-            WatchSettingsCache.saveClean(appContext, ready.address, settings)
-            val settingStr = Gson().toJson(settings)
-            updateSettingsAndMap(fromJson(settingStr))
-        }
+        updateSettingsAndMap(loaded)
+        _state.update { it.copy(address = addr, baseline = refreshed.baseline, draft = refreshed.draft) }
     }
 
     private suspend fun loadAutoSyncOnReconnectForAddress(addr: String?) {
@@ -286,15 +324,18 @@ constructor(
      * Note: If no matching setting is found (index == -1), no update occurs
      */
     private fun updateSetting(updatedSetting: Setting) {
+        val current = state.value
+        val address = watchSelector.currentAddress() ?: return
+        val draft = current.settingsForSend(address) ?: return
+        val previousSetting = current.settingsMap[updatedSetting::class.java] ?: return
+        val settings = applySettingsEdit(draft, previousSetting, updatedSetting)
         val currentList = state.value.settings.toMutableList()
         val index = currentList.indexOfFirst { it::class == updatedSetting::class }
         if (index != -1) {
             currentList[index] = updatedSetting
             val newMap = state.value.settingsMap.toMutableMap()
             newMap[updatedSetting::class.java] = updatedSetting
-            _state.update { it.copy(settings = currentList, settingsMap = newMap) }
-            val address = watchSelector.currentAddress() ?: return
-            val settings = buildApiSettings()
+            _state.update { it.copy(settings = currentList, settingsMap = newMap, draft = settings) }
             viewModelScope.launch {
                 updatedSetting.save()
                 WatchSettingsCache.save(appContext, address, settings)
@@ -613,17 +654,26 @@ constructor(
     }
 
     fun sendToWatch() {
+        val draft = buildApiSettings() ?: return
         val ready = writeGuard.capture() ?: return
-        val settings = buildApiSettings()
 
         viewModelScope.launch {
             writeGuard.run(ready) { checkSession ->
                 WatchSyncActivity.track {
                     val result = runCatching {
                         checkSession()
+                        val settings = if (WatchInfo.chimeInSettings) {
+                            // The hourly-signal writer may have changed this target since load.
+                            CachedIO.remove("GET_SETTINGS")
+                            val current = api.guardWrites(checkSession).getBasicSettings()
+                            draft.copy(hourlyChime = current.hourlyChime)
+                        } else draft
                         api.setSettings(settings)
                         confirmWatchWrite(checkSession)
-                        WatchSettingsCache.saveClean(appContext, ready.address, settings)
+                        acceptSettings(ready.address, settings)
+                        val pending = buildApiSettings() ?: return@runCatching
+                        if (pending == settings) WatchSettingsCache.saveClean(appContext, ready.address, settings)
+                        else WatchSettingsCache.save(appContext, ready.address, pending)
                         AppSnackbar(appContext.getString(R.string.settings_sent_to_watch))
                     }
                     confirmWatchWrite(checkSession)
@@ -641,38 +691,60 @@ constructor(
         }
     }
 
-    private fun buildApiSettings(): Settings {
-        val settings = Settings()
-
-        val localeSetting: Locale = getSetting(Locale::class.java)
-        settings.language = localeSetting.dayOfWeekLanguage.englishName
-        settings.timeFormat = localeSetting.timeFormat.value
-        settings.dateFormat = localeSetting.dateFormat.value
-
-        val lightSetting: Light = getSetting(Light::class.java)
-        settings.autoLight = lightSetting.autoLight
-        settings.lightDuration = lightSetting.duration.value
-
-        (state.value.settingsMap[PowerSavingMode::class.java] as? PowerSavingMode)?.let {
-            settings.powerSavingMode = it.powerSavingMode
-        }
-
-        val buttonTone: OperationSound = getSetting(OperationSound::class.java)
-        settings.buttonTone = buttonTone.sound
-        settings.keyVibration = buttonTone.vibrate
-
-        val timeAdjustment: TimeAdjustment = getSetting(TimeAdjustment::class.java)
-        settings.timeAdjustment = timeAdjustment.timeAdjustment
-        settings.adjustmentTimeMinutes = timeAdjustment.adjustmentTimeMinutes
-
-        (state.value.settingsMap[Font::class.java] as? Font)?.let {
-            settings.font = it.font.value
-        }
-
-        return settings
-    }
-
-    private fun isSelectedWatchConnected(addr: String?): Boolean =
-        api.isConnected() && connectionSession.matching(addr) != null
+    private fun buildApiSettings(): Settings? = state.value.settingsForSend(watchSelector.currentAddress())
 
 }
+
+/** Refresh only replaces fields without a pending user edit. Noneditable fields come from the watch. */
+internal fun mergeSettingsRefresh(loaded: Settings, baseline: Settings?, draft: Settings?): Settings {
+    if (baseline == null || draft == null) return loaded.copy()
+    return loaded.copy(
+        language = if (draft.language != baseline.language) draft.language else loaded.language,
+        timeFormat = if (draft.timeFormat != baseline.timeFormat) draft.timeFormat else loaded.timeFormat,
+        dateFormat = if (draft.dateFormat != baseline.dateFormat) draft.dateFormat else loaded.dateFormat,
+        autoLight = if (draft.autoLight != baseline.autoLight) draft.autoLight else loaded.autoLight,
+        lightDuration = if (draft.lightDuration != baseline.lightDuration) draft.lightDuration else loaded.lightDuration,
+        powerSavingMode = if (draft.powerSavingMode != baseline.powerSavingMode) draft.powerSavingMode else loaded.powerSavingMode,
+        buttonTone = if (draft.buttonTone != baseline.buttonTone) draft.buttonTone else loaded.buttonTone,
+        keyVibration = if (draft.keyVibration != baseline.keyVibration) draft.keyVibration else loaded.keyVibration,
+        timeAdjustment = if (draft.timeAdjustment != baseline.timeAdjustment) draft.timeAdjustment else loaded.timeAdjustment,
+        adjustmentTimeMinutes = if (draft.adjustmentTimeMinutes != baseline.adjustmentTimeMinutes) draft.adjustmentTimeMinutes else loaded.adjustmentTimeMinutes,
+        font = if (draft.font != baseline.font) draft.font else loaded.font,
+    )
+}
+
+/** Apply only the fields changed by this control, preserving all other API settings. */
+internal fun applySettingsEdit(settings: Settings, previous: Setting, updated: Setting): Settings = settings.copy().apply {
+    when {
+        previous is SettingsViewModel.Locale && updated is SettingsViewModel.Locale -> {
+            if (previous.dayOfWeekLanguage != updated.dayOfWeekLanguage) language = updated.dayOfWeekLanguage.englishName
+            if (previous.timeFormat != updated.timeFormat) timeFormat = updated.timeFormat.value
+            if (previous.dateFormat != updated.dateFormat) dateFormat = updated.dateFormat.value
+        }
+        previous is SettingsViewModel.Light && updated is SettingsViewModel.Light -> {
+            if (previous.autoLight != updated.autoLight) autoLight = updated.autoLight
+            if (previous.duration != updated.duration) lightDuration = updated.duration.value
+        }
+        previous is SettingsViewModel.OperationSound && updated is SettingsViewModel.OperationSound -> {
+            if (previous.sound != updated.sound) buttonTone = updated.sound
+            if (previous.vibrate != updated.vibrate) keyVibration = updated.vibrate
+        }
+        previous is SettingsViewModel.PowerSavingMode && updated is SettingsViewModel.PowerSavingMode -> {
+            if (previous.powerSavingMode != updated.powerSavingMode) powerSavingMode = updated.powerSavingMode
+        }
+        previous is SettingsViewModel.TimeAdjustment && updated is SettingsViewModel.TimeAdjustment -> {
+            if (previous.timeAdjustment != updated.timeAdjustment) timeAdjustment = updated.timeAdjustment
+            if (previous.adjustmentTimeMinutes != updated.adjustmentTimeMinutes) adjustmentTimeMinutes = updated.adjustmentTimeMinutes
+        }
+        previous is SettingsViewModel.Font && updated is SettingsViewModel.Font -> {
+            if (previous.font != updated.font) font = updated.font.value
+        }
+    }
+}
+
+internal fun settingsReloads(
+    selected: Flow<String?>,
+    initialized: Flow<WatchConnectionSession.Ready?>,
+): Flow<Pair<String?, WatchConnectionSession.Ready?>> = combine(selected, initialized) { addr, ready ->
+    addr to ready?.takeIf { it.address == addr }
+}.distinctUntilChanged()

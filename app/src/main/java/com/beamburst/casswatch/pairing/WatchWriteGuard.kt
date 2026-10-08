@@ -44,7 +44,7 @@ class WatchWriteGuard internal constructor(
     ) {
         try {
             session.awaitInitialized(expected)
-            coordinator.withSession(expected, selectedAddress, block)
+            coordinator.withSession(expected, selectedAddress, block = block)
         } catch (_: WatchConnectionChangedException) {
             refused()
         }
