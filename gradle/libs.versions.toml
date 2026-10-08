@@ -1,3 +1,4 @@
+# Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE.
 [versions]
 agp = "8.12.3"
 kotlin = "2.2.0"

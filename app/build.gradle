@@ -1,3 +1,4 @@
+// Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE.
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)

@@ -1,4 +1,5 @@
 #!/bin/bash
+# Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE.
 
 # release.sh - Prepares a release PR for Cassiopeia Watch
 

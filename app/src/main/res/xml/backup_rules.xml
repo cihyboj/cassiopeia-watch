@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE. -->
 <!-- Pre-API-31 auto-backup: keep DataStore settings, drop local crash logs. -->
 <full-backup-content>
     <include domain="file" path="datastore/" />

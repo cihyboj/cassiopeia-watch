@@ -1,3 +1,4 @@
+<!-- Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE. -->
 <resources>
     <string name="title_time">時間</string>
     <string name="title_alarms">アラーム</string>

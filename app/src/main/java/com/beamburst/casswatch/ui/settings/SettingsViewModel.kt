@@ -1,3 +1,4 @@
+// Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE.
 package com.beamburst.casswatch.ui.settings
 
 import com.beamburst.casswatch.pairing.watchOperationError

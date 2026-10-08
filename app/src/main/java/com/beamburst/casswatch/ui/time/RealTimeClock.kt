@@ -1,3 +1,4 @@
+// Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE.
 import com.beamburst.casswatch.ui.common.AppTextVeryLarge
 import com.beamburst.casswatch.ui.time.ClockDisplaySource
 import android.os.SystemClock

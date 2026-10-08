@@ -1,3 +1,4 @@
+<!-- Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE. -->
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">Cassiopeia Watch</string>
     <string name="title_time">Time</string>

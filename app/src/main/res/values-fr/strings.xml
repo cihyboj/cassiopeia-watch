@@ -1,3 +1,4 @@
+<!-- Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE. -->
 <resources>
     <string name="title_time">Heure</string>
     <string name="title_alarms">Alarmes</string>
