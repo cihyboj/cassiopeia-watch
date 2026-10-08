@@ -89,12 +89,14 @@ VERSION_NAME=${1#v}
 
 # Version code: major * 1000 + minor, so ordering survives any minor number
 # (the old "strip the dots" scheme made 41.0 -> 410 sort BELOW 40.10 -> 4010).
-MAJOR=$(echo "$VERSION_NAME" | cut -d. -f1)
-MINOR=$(echo "$VERSION_NAME" | cut -d. -f2)
-if ! [[ "$MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$MINOR" =~ ^[0-9]+$ ]]; then
-    echo "❌ Version must look like <major>.<minor> (e.g. 41.0)"
+# Validate the WHOLE string first: "41" or "41.0.1" would otherwise slip through
+# the per-component checks and publish an unintended version name/code.
+if ! [[ "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+$ ]]; then
+    echo "❌ Version must look like <major>.<minor> (e.g. 41.0), got: $VERSION_NAME"
     exit 1
 fi
+MAJOR=${VERSION_NAME%%.*}
+MINOR=${VERSION_NAME##*.}
 VERSION_CODE=$((MAJOR * 1000 + MINOR))
 
 PREVIOUS_CODE=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' app/build.gradle)
