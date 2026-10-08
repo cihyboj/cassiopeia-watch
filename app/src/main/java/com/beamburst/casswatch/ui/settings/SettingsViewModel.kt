@@ -670,6 +670,9 @@ constructor(
                         } else draft
                         api.setSettings(settings)
                         confirmWatchWrite(checkSession)
+                        // Edits made while the send was in flight are judged against what was
+                        // sent, not against the baseline from before the send.
+                        _state.update { it.copy(baseline = draft.copy()) }
                         acceptSettings(ready.address, settings)
                         val pending = buildApiSettings() ?: return@runCatching
                         if (pending == settings) WatchSettingsCache.saveClean(appContext, ready.address, settings)

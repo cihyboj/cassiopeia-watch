@@ -87,4 +87,16 @@ class SettingsBaselineTest {
             SettingsViewModel.Light(autoLight = true, duration = SettingsViewModel.Light.LightDuration.THREE_SECONDS))
         assertEquals(baseline.copy(autoLight = true), updated)
     }
+
+    @Test fun `an edit made while a send is in flight survives the send completing`() {
+        val loaded = Settings(autoLight = false)
+        val sent = loaded.copy(autoLight = true)
+        val editedDuringSend = sent.copy(autoLight = false)
+        // Send completion re-bases on what was sent, then merges what the watch now holds.
+        val afterSend = SettingsState(address = address, baseline = sent.copy(), draft = editedDuringSend)
+            .withBaseline(address, sent)
+        assertFalse(afterSend.draft!!.autoLight)
+        assertTrue(afterSend.baseline!!.autoLight)
+        assertNotEquals(afterSend.baseline, afterSend.draft)
+    }
 }
