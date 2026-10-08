@@ -7,10 +7,14 @@ https://github.com/izivkov/CasioGShockSmartSync
 Original upstream author and copyright holder:
 Copyright Ivo Zivkov and CasioGShockSmartSync contributors.
 
-Portions of the source code (including parts of the calendar event handling
-and inactivity handling, and several drawable resources) were originally
-authored by Ivo Zivkov, Copyright (c) 2022. Per-file attribution headers
-have been consolidated into this NOTICE file.
+Several source files and drawable resources (calendar event handling,
+inactivity handling, and some icons) were originally authored by Ivo Zivkov
+in 2022. Their original per-file headers are retained in those files; files
+that have been changed since carry a modification notice.
+
+Cassiopeia Watch is not affiliated with or endorsed by Casio. It builds
+against a fork of the GShockAPI library (MIT License, Copyright Ivo Zivkov);
+see THIRD_PARTY_NOTICES.md for third-party licences.
 
 Cassiopeia Watch and the upstream CasioGShockSmartSync project are licensed
 under the Apache License, Version 2.0.

@@ -1,3 +1,10 @@
+/*
+ * Created by Ivo Zivkov (izivkov@gmail.com) on 2022-03-30, 12:06 a.m.
+ * Copyright (c) 2022 . All rights reserved.
+ * Last modified 2022-03-20, 7:47 p.m.
+ */
+// Modified for Cassiopeia Watch by the Cassiopeia Watch contributors.
+
 package com.beamburst.casswatch.ui.events
 
 import org.avmedia.gshockapi.Event
