@@ -9,6 +9,17 @@ class NtpTimeTest {
     private val nowMs = 1_800_000_000_000L
 
     @Test
+    fun `sample from previous boot is unavailable in a new process cache`() {
+        val previousBoot = NtpSampleCache()
+        val sample = NtpOffsetCache("pool.ntp.org", 0, 10, 600_000, 1_700_000_000_000)
+        previousBoot.put(sample)
+        assertEquals(sample, previousBoot.freshFor("pool.ntp.org", 1_200_000))
+        // Even overlapping uptimes after boot/device change cannot resurrect a sample.
+        val currentBoot = NtpSampleCache()
+        assertEquals(null, currentBoot.freshFor("pool.ntp.org", 1_200_000))
+    }
+
+    @Test
     fun `encodes and decodes ntp timestamp`() {
         val packet = ByteArray(48)
         val fixedTime = 1_713_456_789_123L

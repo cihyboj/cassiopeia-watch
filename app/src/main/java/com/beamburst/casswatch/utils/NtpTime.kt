@@ -101,6 +101,16 @@ data class NtpOffsetCache(
             elapsedNowMs - capturedElapsedRealtimeMs <= maxAgeMs
 }
 
+/** Samples use this process's monotonic clock and are never read from persistence. */
+internal class NtpSampleCache {
+    @Volatile private var sample: NtpOffsetCache? = null
+
+    fun freshFor(server: String, elapsedNowMs: Long): NtpOffsetCache? =
+        sample?.takeIf { it.isFreshFor(server, elapsedNowMs) }
+
+    fun put(sample: NtpOffsetCache) { this.sample = sample }
+}
+
 internal const val NTP_CACHE_VALID_MS = 30L * 60L * 1_000L
 
 internal fun resolveWatchTimeMs(
@@ -158,6 +168,7 @@ class WatchTimeProvider @Inject constructor(
     private val session: WatchConnectionSession,
 ) {
     private val scope = AppScopes.io
+    private val ntpSamples = NtpSampleCache()
 
     suspend fun nowForWatch(address: String? = session.address): WatchTime {
         val fineAdjustment = LocalDataStorage.getFineTimeAdjustment(context).toLong()
@@ -175,8 +186,8 @@ class WatchTimeProvider @Inject constructor(
 
         val server = LocalDataStorage.getNtpTimeServer(context)
         val elapsedNow = SystemClock.elapsedRealtime()
-        val cached = LocalDataStorage.getNtpOffsetCache(context)
-        if (cached?.isFreshFor(server, elapsedNow) == true) {
+        val cached = ntpSamples.freshFor(server, elapsedNow)
+        if (cached != null) {
             return WatchTime(
                 ntpCache = cached,
                 fineAdjustmentMs = fineAdjustment,
@@ -228,7 +239,7 @@ class WatchTimeProvider @Inject constructor(
             capturedElapsedRealtimeMs = result.elapsedRealtimeMs,
             ntpTimeAtCaptureMs = result.timeMs,
         )
-        LocalDataStorage.setNtpOffsetCache(context, cache)
+        ntpSamples.put(cache)
         return cache
     }
 
