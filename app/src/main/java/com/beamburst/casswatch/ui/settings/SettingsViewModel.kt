@@ -569,7 +569,7 @@ constructor(
         val ready = writeGuard.capture() ?: return
         viewModelScope.launch {
             writeGuard.run(ready) { checkSession ->
-                    WatchSyncActivity.track {
+                WatchSyncActivity.track {
                     val watchTime = watchTimeProvider.nowForWatch(ready.address)
                     watchTime.fallbackReason?.let { AppSnackbar(it) }
                     val addr = ready.address
@@ -602,7 +602,7 @@ constructor(
                     } else {
                         AppSnackbar(result.exceptionOrNull()?.message ?: appContext.getString(R.string.watch_not_connected))
                     }
-                    }
+                }
             }
         }
     }

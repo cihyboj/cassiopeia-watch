@@ -12,7 +12,7 @@ class WatchConnectionEvents(private val session: WatchConnectionSession) {
         session.established(address)?.also { devices[device] = it }
 
     @Synchronized
-    fun disconnectToken(device: Any): WatchConnectionSession.Ready? = devices[device]
+    fun disconnectToken(device: Any): WatchConnectionSession.Ready? = devices.remove(device)
 
     fun disconnect(
         token: WatchConnectionSession.Ready,

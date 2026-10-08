@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import com.beamburst.casswatch.data.repository.GShockRepository
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
 import timber.log.Timber
@@ -14,8 +13,6 @@ import javax.inject.Singleton
 
 @Singleton
 class CompanionDevicePresenceMonitor @Inject constructor(
-    // 1. Inject the repository directly in the constructor
-    private val repository: GShockRepository,
     private val connectCoordinator: WatchConnectCoordinator,
 ) {
     companion object {

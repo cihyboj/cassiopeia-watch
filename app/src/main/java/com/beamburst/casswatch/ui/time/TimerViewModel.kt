@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
-import com.beamburst.casswatch.data.local.WatchConnectionTracker
 import com.beamburst.casswatch.data.local.WatchSnapshot
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.common.AppSnackbar
@@ -32,7 +31,6 @@ class TimerViewModel @Inject constructor(
     private val writeGuard: WatchWriteGuard,
     @param:ApplicationContext private val appContext: Context,
     private val watchSelector: CurrentWatchSelector,
-    private val connectionTracker: WatchConnectionTracker,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TimerState())
     val state = _state.asStateFlow()

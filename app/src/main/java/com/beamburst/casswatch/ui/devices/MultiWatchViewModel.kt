@@ -164,9 +164,7 @@ class MultiWatchViewModel @Inject constructor(
                 remaining.firstOrNull()?.let { selector.select(it) } ?: selector.clear()
             }
 
-            if (repository.isConnected()) {
-                runCatching { connectCoordinator.disconnect(normalizedAddress) }
-            }
+            runCatching { connectCoordinator.disconnect(normalizedAddress) }
 
             runCatching {
                 repository.disassociate(appContext, normalizedAddress)

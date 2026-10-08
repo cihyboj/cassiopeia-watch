@@ -126,7 +126,6 @@ class GShockApplication : Application(), IScreenManager {
                 syncLogger = syncHistoryLogger,
                 watchTimeProvider = watchTimeProvider,
                 watchTimeWriter = watchTimeWriter,
-                watchSelector = watchSelector,
                 connectionTracker = connectionTracker,
                 connectionSession = connectionSession,
                 connectCoordinator = watchConnectCoordinator,

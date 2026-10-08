@@ -9,7 +9,6 @@ import android.content.Intent
 import android.provider.Settings
 import android.app.AlertDialog
 import kotlinx.coroutines.launch
-import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncTrigger
@@ -40,7 +39,6 @@ class MainEventHandler(
     private val syncLogger: SyncHistoryLogger,
     private val watchTimeProvider: WatchTimeProvider,
     private val watchTimeWriter: WatchTimeWriter,
-    private val watchSelector: CurrentWatchSelector,
     private val connectionTracker: WatchConnectionTracker,
     private val connectionSession: WatchConnectionSession,
     private val connectCoordinator: WatchConnectCoordinator,
@@ -195,7 +193,12 @@ class MainEventHandler(
         }
     }
 
-    private fun logConnection(trigger: SyncTrigger, success: Boolean, error: String? = null, address: String? = connectionSession.address) {
+    private fun logConnection(
+        trigger: SyncTrigger,
+        success: Boolean,
+        error: String? = null,
+        address: String? = connectionSession.address,
+    ) {
         AppScopes.io.launch {
             syncLogger.record(
                 address = address,

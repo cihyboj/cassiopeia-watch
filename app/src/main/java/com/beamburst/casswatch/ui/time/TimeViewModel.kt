@@ -26,7 +26,6 @@ import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
-import com.beamburst.casswatch.data.local.WatchConnectionTracker
 import com.beamburst.casswatch.data.local.WatchSnapshot
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
@@ -94,7 +93,6 @@ class TimeViewModel @Inject constructor(
     @param:ApplicationContext private val appContext: Context,
     private val syncLogger: SyncHistoryLogger,
     private val watchSelector: CurrentWatchSelector,
-    private val connectionTracker: WatchConnectionTracker,
     private val watchTimeProvider: WatchTimeProvider,
     private val watchTimeWriter: WatchTimeWriter,
 ) : ViewModel() {
@@ -201,13 +199,13 @@ class TimeViewModel @Inject constructor(
                                 success = result.isSuccess,
                                 errorMessage = result.exceptionOrNull()?.message,
                                 details = SyncDetails(
-                                alarmHashes = null,
-                                eventCount = null,
-                                hourlySignalTarget = null,
-                                timeMs = writeResult?.timeMs,
-                                actions = watchTime.syncHistoryActions("Time screen send-time button", writeResult),
-                            ),
-                        )
+                                    alarmHashes = null,
+                                    eventCount = null,
+                                    hourlySignalTarget = null,
+                                    timeMs = writeResult?.timeMs,
+                                    actions = watchTime.syncHistoryActions("Time screen send-time button", writeResult),
+                                ),
+                            )
                             if (result.isSuccess) {
                                 AppSnackbar(appContext.getString(R.string.time_set))
                                 refreshState()

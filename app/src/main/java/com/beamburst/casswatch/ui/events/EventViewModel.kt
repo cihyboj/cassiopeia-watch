@@ -1,6 +1,5 @@
 package com.beamburst.casswatch.ui.events
 
-import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.pairing.WatchWriteGuard
 import com.beamburst.casswatch.utils.WatchSyncActivity
 import android.content.Context
@@ -32,10 +31,8 @@ import javax.inject.Inject
 @HiltViewModel
 class EventViewModel @Inject constructor(
     private val api: GShockRepository,
-    private val connectionSession: WatchConnectionSession,
     private val writeGuard: WatchWriteGuard,
     private val calendarEvents: CalendarEvents,
-    private val watchSelector: com.beamburst.casswatch.data.local.CurrentWatchSelector,
     @param:ApplicationContext private val appContext: Context,
     private val syncLogger: SyncHistoryLogger,
 ) : ViewModel() {
