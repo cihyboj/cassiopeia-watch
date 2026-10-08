@@ -26,6 +26,14 @@ object PhoneFinder {
     private const val CHANNEL_ID = "find_phone"
     private const val NOTIFICATION_ID = 4242
 
+    // Watch events can arrive on a background dispatcher. Serialize the toggle with
+    // playback and timeout cleanup on the main looper.
+    fun toggle(context: Context, volumePercent: Int = 100, melody: FindPhoneMelody = FindPhoneMelody.ALARM) {
+        handler.post {
+            if (shouldStopPhoneFinder(player != null)) stop() else ring(context, volumePercent, melody)
+        }
+    }
+
     fun ring(context: Context, volumePercent: Int = 100, melody: FindPhoneMelody = FindPhoneMelody.ALARM) {
         stop()
         appContext = context.applicationContext
@@ -118,3 +126,5 @@ object PhoneFinder {
         manager.cancel(NOTIFICATION_ID)
     }
 }
+
+internal fun shouldStopPhoneFinder(isRinging: Boolean): Boolean = isRinging
