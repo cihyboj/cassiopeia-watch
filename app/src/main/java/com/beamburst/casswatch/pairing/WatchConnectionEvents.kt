@@ -38,6 +38,8 @@ class WatchConnectionEvents(private val session: WatchConnectionSession) {
         return ready
     }
 
+    fun failed(sideEffects: (String?) -> Unit) = sideEffects(session.attemptedAddress)
+
     @Synchronized
     fun disconnectToken(device: Any): WatchConnectionSession.Ready? = devices[device]
 

@@ -31,7 +31,13 @@ class WatchConnectCoordinator @Inject constructor(
 
     private val connectMutex = Mutex()
     private data class Attempt(val token: WatchConnectionSession.Connecting, val result: Deferred<Boolean>)
-    private var attempt: Attempt? = null
+    @Volatile private var attempt: Attempt? = null
+
+    init {
+        session.onEnded { ended ->
+            attempt?.takeIf { it.token.generation == ended.generation }?.result?.cancel()
+        }
+    }
 
     suspend fun connect(
         address: String,
@@ -46,13 +52,23 @@ class WatchConnectCoordinator @Inject constructor(
             // Includes mutex acquisition, BLE setup and library initialization.
             val result = withTimeoutOrNull(timeoutMs) {
                 val active = connectMutex.withLock {
+                    val connected = repository.isConnected()
                     val state = session.state.value
-                    if (state is WatchConnectionSession.Ready && repository.isConnected()) {
+                    if (state is WatchConnectionSession.Ready && (connected || repository.isConnected())) {
                         if (state.address == requested) return@withLock null
                         if (!takeover) return@withTimeoutOrNull false
                         stopCurrent()
                     } else if (state is WatchConnectionSession.Connecting) {
                         if (state.address == requested && attempt != null) return@withLock attempt
+                        if (state.address == requested && connected) {
+                            val job = SupervisorJob()
+                            val result = CoroutineScope(currentCoroutineContext() + job).async(start = CoroutineStart.LAZY) {
+                                val ready = session.awaitReady()
+                                repository.isConnected() && ready.address == requested
+                            }
+                            result.invokeOnCompletion { job.cancel() }
+                            return@withLock Attempt(state, result).also { attempt = it; owned = it }
+                        }
                         if (state.address != requested) {
                             if (!takeover) return@withTimeoutOrNull false
                             stopCurrent()

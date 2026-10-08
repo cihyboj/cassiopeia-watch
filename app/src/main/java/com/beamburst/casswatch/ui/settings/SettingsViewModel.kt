@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.settings
 
+import com.beamburst.casswatch.pairing.confirmWatchWrite
 import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.pairing.WatchWriteGuard
@@ -170,7 +171,7 @@ constructor(
 
     private fun observeConnectionState() {
         viewModelScope.launch(Dispatchers.Default) {
-            combine(watchSelector.selected, connectionTracker.states) { addr, _ ->
+            combine(watchSelector.selected, connectionSession.state) { addr, _ ->
                 isSelectedWatchConnected(addr)
             }.collect { connected ->
                 _isConnected.value = connected
@@ -190,13 +191,13 @@ constructor(
         if (!isSelectedWatchConnected(addr)) return
 
         val ready = connectionSession.matching(addr) ?: return
-        val settings = api.getSettings()
-        if (!connectionSession.isCurrent(ready)) return
-        if (addr != null) {
-            WatchSettingsCache.saveClean(appContext, addr, settings)
+        writeGuard.runApi(ready, api) { api, confirm ->
+            val settings = api.getSettings()
+            confirm()
+            WatchSettingsCache.saveClean(appContext, ready.address, settings)
+            val settingStr = Gson().toJson(settings)
+            updateSettingsAndMap(fromJson(settingStr))
         }
-        val settingStr = Gson().toJson(settings)
-        updateSettingsAndMap(fromJson(settingStr))
     }
 
     private suspend fun loadAutoSyncOnReconnectForAddress(addr: String?) {
@@ -568,10 +569,10 @@ constructor(
 
     fun setTimeNow() {
         val ready = writeGuard.capture() ?: return
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
+            val watchTime = watchTimeProvider.nowForWatch(ready.address)
             writeGuard.run(ready) { checkSession ->
                 WatchSyncActivity.track {
-                    val watchTime = watchTimeProvider.nowForWatch(ready.address)
                     watchTime.fallbackReason?.let { AppSnackbar(it) }
                     val addr = ready.address
                     val signalSettings = HourlySignalSettings.load(appContext, addr)
@@ -583,7 +584,7 @@ constructor(
                         checkSession()
                         applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, now)
                     }
-                    checkSession()
+                    confirmWatchWrite(checkSession)
                     syncLogger.record(
                         address = ready.address,
                         trigger = SyncTrigger.MANUAL_SETTINGS_SET_TIME,
@@ -618,11 +619,11 @@ constructor(
                     val result = runCatching {
                         checkSession()
                         api.setSettings(settings)
-                        checkSession()
+                        confirmWatchWrite(checkSession)
                         WatchSettingsCache.saveClean(appContext, ready.address, settings)
                         AppSnackbar(appContext.getString(R.string.settings_sent_to_watch))
                     }
-                    checkSession()
+                    confirmWatchWrite(checkSession)
                     syncLogger.record(
                         address = ready.address,
                         trigger = SyncTrigger.MANUAL_SEND_SETTINGS,

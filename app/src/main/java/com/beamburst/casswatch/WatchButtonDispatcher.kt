@@ -1,5 +1,7 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.pairing.guardWrites
+import com.beamburst.casswatch.pairing.confirmWatchWrite
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.utils.AppScopes
@@ -100,14 +102,16 @@ class WatchButtonDispatcher @Inject constructor(
     }
 
     private suspend fun handleNormalConnection(ready: WatchConnectionSession.Ready) {
+        val calendar = if (WatchInfo.hasReminders) calendarEvents.getEventsFromCalendar() else null
         coordinator.withSession(ready) { checkSession ->
+            val api = this.api.guardWrites(checkSession)
             val kinds = mutableSetOf(SyncKind.CONNECTION)
             val actions = mutableListOf("Normal connection button press")
             var success = true
             var error: String? = null
-            if (WatchInfo.hasReminders) {
+            if (calendar != null) {
                 runCatching {
-                    EventsModel.refresh(calendarEvents.getEventsFromCalendar())
+                    EventsModel.refresh(calendar)
                     checkSession()
                     api.setEvents(EventsModel.events)
                     kinds += SyncKind.EVENTS
@@ -119,7 +123,7 @@ class WatchButtonDispatcher @Inject constructor(
             } else {
                 actions += "No reminder support for this watch"
             }
-            checkSession()
+            confirmWatchWrite(checkSession)
             syncLogger.record(
                 address = ready.address,
                 trigger = SyncTrigger.WATCH_NORMAL_CONNECTION,

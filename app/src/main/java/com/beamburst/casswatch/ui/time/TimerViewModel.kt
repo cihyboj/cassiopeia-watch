@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.time
 
+import com.beamburst.casswatch.pairing.confirmWatchWrite
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.pairing.WatchWriteGuard
 import android.content.Context
@@ -75,7 +76,7 @@ class TimerViewModel @Inject constructor(
                 com.beamburst.casswatch.utils.WatchSyncActivity.track {
                     checkSession()
                     api.setTimer(timer)
-                    checkSession()
+                    confirmWatchWrite(checkSession)
                     saveTimer(timer, ready.address)
                     AppSnackbar(appContext.getString(R.string.timer_set))
                 }
@@ -100,10 +101,12 @@ class TimerViewModel @Inject constructor(
 
         runCatching {
             val ready = connectionSession.matching(addr) ?: return@runCatching
-            val timer = api.getTimer()
-            if (!connectionSession.isCurrent(ready)) return@runCatching
-            _state.value = TimerState(timer = timer)
-            saveTimer(timer, ready.address)
+            writeGuard.runApi(ready, api) { api, confirm ->
+                val timer = api.getTimer()
+                confirm()
+                _state.value = TimerState(timer = timer)
+                saveTimer(timer, ready.address)
+            }
         }.onFailure {
             AppSnackbar(appContext.getString(R.string.api_error))
         }

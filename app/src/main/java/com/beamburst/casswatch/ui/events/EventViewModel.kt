@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.events
 
+import com.beamburst.casswatch.pairing.confirmWatchWrite
 import com.beamburst.casswatch.pairing.WatchWriteGuard
 import com.beamburst.casswatch.utils.WatchSyncActivity
 import android.content.Context
@@ -129,7 +130,7 @@ class EventViewModel @Inject constructor(
                         api.setEvents(ArrayList(sanitizedEvents))
                         checkSession()
                     }
-                    checkSession()
+                    confirmWatchWrite(checkSession)
                     syncLogger.record(
                         address = ready.address,
                         trigger = SyncTrigger.MANUAL_SEND_EVENTS,

@@ -1,5 +1,6 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.pairing.confirmWatchWrite
 import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.pairing.WatchConnectCoordinator
@@ -72,7 +73,10 @@ class AutoSyncCoordinator @Inject constructor(
         actions: List<String>? = null,
     ) {
         val ready = session.ready ?: return
+        val watchTime = watchTimeProvider.nowForWatch(ready.address)
+        val calendar = if (WatchInfo.hasReminders) calendarEvents.getEventsFromCalendar() else null
         coordinator.withSession(ready) { checkSession ->
+            val api = this.api.guardWrites(checkSession)
             WatchSyncActivity.track {
                 val kinds = mutableSetOf<SyncKind>()
                 var success = true
@@ -87,14 +91,13 @@ class AutoSyncCoordinator @Inject constructor(
                     WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession)
                     runCatching { watchTimeWriter.primeCache(api) }
                         .onFailure { Timber.w(it, "Auto-sync cache prime failed") }
-                    val watchTime = watchTimeProvider.nowForWatch(ready.address)
                     val writeResult = watchTimeWriter.writeAfterPrime(api, watchTime, ready, checkSession)
                     kinds += SyncKind.TIME
                     recordedTimeMs = writeResult.timeMs
                     recordedActions += watchTime.syncHistoryActions("Automatic time write", writeResult)
 
-                    if (WatchInfo.hasReminders) {
-                        EventsModel.refresh(calendarEvents.getEventsFromCalendar())
+                    if (calendar != null) {
+                        EventsModel.refresh(calendar)
                         checkSession()
                         api.setEvents(EventsModel.events)
                         kinds += SyncKind.EVENTS
@@ -113,7 +116,7 @@ class AutoSyncCoordinator @Inject constructor(
                     error = it.message
                 }
 
-                checkSession()
+                confirmWatchWrite(checkSession)
                 syncLogger.record(
                     address = ready.address,
                     trigger = trigger,

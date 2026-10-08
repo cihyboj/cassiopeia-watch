@@ -190,7 +190,9 @@ class MainEventHandler(
 
     private fun handleConnectionFailure() {
         Timber.e("Failed to connect to the watch")
-        logConnection(SyncTrigger.CONNECTION_FAILED, false, "Failed to connect", connectionSession.attemptedAddress)
+        connectionEvents.failed { address ->
+            logConnection(SyncTrigger.CONNECTION_FAILED, false, "Failed to connect", address)
+        }
     }
 
     private fun handleError() {
