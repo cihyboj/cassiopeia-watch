@@ -56,11 +56,12 @@ class WatchConnectCoordinator @Inject constructor(
             val result = withTimeoutOrNull(timeoutMs) {
                 val active = connectMutex.withLock {
                     val connected = repository.isConnected()
-                    val state = session.state.value
+                    var state = session.state.value
                     if (state is WatchConnectionSession.Ready && (connected || repository.isConnected())) {
                         if (state.address == requested) return@withLock null
                         if (!takeover) return@withTimeoutOrNull false
                         stopCurrent()
+                        state = session.state.value
                     } else if (state is WatchConnectionSession.Connecting) {
                         if (state.address == requested && attempt != null) return@withLock attempt
                         if (state.address == requested && connected) {
@@ -75,9 +76,19 @@ class WatchConnectCoordinator @Inject constructor(
                         if (state.address != requested) {
                             if (!takeover) return@withTimeoutOrNull false
                             stopCurrent()
+                            state = session.state.value
                         }
                     }
-                    val token = session.begin(session.state.value, requested) as WatchConnectionSession.Connecting
+                    var begun = session.begin(state, requested)
+                    if (begun is WatchConnectionSession.Ready) {
+                        // Setup may publish a new generation after the status check.
+                        // Preserve that compare-and-set result instead of erasing it.
+                        if (begun.address == requested && repository.isConnected()) return@withLock null
+                        if (!takeover) return@withTimeoutOrNull false
+                        stopCurrent()
+                        begun = session.begin(session.state.value, requested)
+                    }
+                    val token = begun as? WatchConnectionSession.Connecting ?: return@withTimeoutOrNull false
                     val job = SupervisorJob()
                     val result = CoroutineScope(currentCoroutineContext() + job).async(start = CoroutineStart.LAZY) {
                         repository.waitForConnection(requested)
@@ -137,9 +148,13 @@ class WatchConnectCoordinator @Inject constructor(
         }
     }
 
-    suspend fun closeRejectedSetup() = connectMutex.withLock {
+    suspend fun closeRejectedSetup(
+        expected: WatchConnectionSession.State = session.state.value,
+        generation: Long = session.lastGeneration,
+    ) = connectMutex.withLock {
+        if (session.state.value != expected || session.lastGeneration != generation) return@withLock
         Timber.w("Closing setup without an accepted connection session")
-        repository.disconnect()
+        stopCurrent()
     }
 
     private fun stopCurrent() {

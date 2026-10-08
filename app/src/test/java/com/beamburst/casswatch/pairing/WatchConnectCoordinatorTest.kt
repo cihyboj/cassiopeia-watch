@@ -182,6 +182,34 @@ class WatchConnectCoordinatorTest {
         assertTrue(t.attempts.isEmpty())
     }
 
+    @Test fun `new setup between transport check and begin preserves accepted generation`() = scenario {
+        val t = Transport(this)
+        val old = t.connectReady(watchA)
+        t.connected = false
+        var accepted: WatchConnectionSession.Ready? = null
+        t.onStatus = {
+            t.onStatus = {
+                t.connected = true
+                accepted = t.handler.setup(watchA, Any())
+            }
+        }
+        assertTrue(t.coordinator.connect(watchA))
+        assertEquals(accepted, t.session.ready)
+        assertTrue(t.session.ready!!.generation > old.generation)
+        assertEquals(listOf(watchA), t.attempts)
+    }
+
+    @Test fun `delayed rejected setup cleanup preserves replacement session`() = scenario {
+        val t = Transport(this)
+        val rejectedState = t.session.state.value
+        val rejectedGeneration = t.session.lastGeneration
+        val ready = t.connectReady(watchB)
+        t.coordinator.closeRejectedSetup(rejectedState, rejectedGeneration)
+        assertEquals(ready, t.session.ready)
+        assertTrue(t.connected)
+        assertEquals(0, t.closes)
+    }
+
     @Test fun `owned attempt waits for library initialization after setup`() = scenario {
         val t = Transport(this)
         val attempt = async { t.coordinator.connect(watchA) }

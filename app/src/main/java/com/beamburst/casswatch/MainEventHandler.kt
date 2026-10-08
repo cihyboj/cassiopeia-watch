@@ -91,7 +91,9 @@ class MainEventHandler(
         val ready = connectionEvents.setup(device.address, device)
         if (ready == null) {
             Timber.w("Rejected late connection setup for %s", device.address)
-            AppScopes.io.launch { connectCoordinator.closeRejectedSetup() }
+            val rejectedState = connectionSession.state.value
+            val rejectedGeneration = connectionSession.lastGeneration
+            AppScopes.io.launch { connectCoordinator.closeRejectedSetup(rejectedState, rejectedGeneration) }
             return
         }
         if (connectionEvents.needsInitialization) {
