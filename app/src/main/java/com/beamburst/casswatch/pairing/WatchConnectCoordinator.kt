@@ -35,7 +35,10 @@ class WatchConnectCoordinator @Inject constructor(
 
     init {
         session.onEnded { ended ->
-            attempt?.takeIf { it.token.generation == ended.generation }?.result?.cancel()
+            attempt?.takeIf { it.token.generation == ended.generation }?.let {
+                attempt = null
+                it.result.cancel()
+            }
         }
     }
 

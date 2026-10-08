@@ -7,6 +7,7 @@ import com.beamburst.casswatch.utils.WatchSyncActivity
 import com.beamburst.casswatch.utils.AppScopes
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.data.local.HourlySignalSettings
@@ -59,6 +60,7 @@ class WeeklyAlarmScheduler @Inject constructor(
         WatchSyncActivity.track {
         val ready = session.ready ?: return
         val watchTime = watchTimeProvider.nowForWatch(ready.address)
+        try {
         connectCoordinator.withSession(ready) { checkSession ->
         val api = this.api.guardWrites(checkSession)
         val addr = ready.address
@@ -80,10 +82,7 @@ class WeeklyAlarmScheduler @Inject constructor(
 
         if (!shouldWrite) return@withSession
 
-        val currentAlarms = runCatching { api.getAlarms() }.getOrElse {
-            Timber.e(it, "Failed to get alarms before applying local schedule")
-            return@withSession
-        }
+        val currentAlarms = api.getAlarms()
 
         val desiredAlarms = storedAlarms?.takeIf { it.isNotEmpty() } ?: currentAlarms
         val now = LocalDateTime.now()
@@ -149,6 +148,18 @@ class WeeklyAlarmScheduler @Inject constructor(
                 AlarmSyncStorage.saveAlarms(context, addr, desiredAlarms, dirty = false, firedAts = firedAts)
             }
         }
+        }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Timber.w(error, "Reconnect synchronization failed for %s", ready.address)
+            syncLogger.record(
+                address = ready.address,
+                trigger = SyncTrigger.AUTO_ON_RECONNECT,
+                kinds = setOf(SyncKind.SETTINGS, SyncKind.ALARMS),
+                success = false,
+                errorMessage = error.message,
+            )
         }
         }
     }

@@ -75,8 +75,8 @@ class WatchConnectionSession @Inject constructor() {
     /** Compare-and-set prevents erasing setup published during a transport status check. */
     fun begin(expected: State, address: String): State = synchronized(lock) {
         if (mutableState.value == expected) {
-            endWork(expected)
             mutableState.value = Connecting(Utils.sanitizeMacAddress(address), ++generation)
+            endWork(expected)
         }
         mutableState.value
     }

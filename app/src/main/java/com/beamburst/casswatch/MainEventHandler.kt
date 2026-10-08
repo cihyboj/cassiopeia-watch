@@ -1,5 +1,7 @@
 package com.beamburst.casswatch
 
+import CachedIO
+
 import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.pairing.WatchConnectionEvents
 import com.beamburst.casswatch.pairing.WatchConnectCoordinator
@@ -93,6 +95,9 @@ class MainEventHandler(
             return
         }
         if (connectionEvents.needsInitialization) {
+            // IO.init is a no-op in the pinned library. Autonomous reconnect has no
+            // waitForConnection caller to guarantee its CachedIO reset before init.
+            CachedIO.clearCache()
             AppScopes.io.launch {
                 runCatching {
                     connectCoordinator.withSession(ready) { check -> repository.guardWrites(check).init() }
