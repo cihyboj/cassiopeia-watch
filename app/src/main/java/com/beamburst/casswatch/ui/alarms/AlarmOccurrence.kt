@@ -62,6 +62,7 @@ internal fun reconcileAlarmState(state: AlarmState, clock: Clock, zone: ZoneId):
     return state.copy(alarms = alarms, dirty = state.dirty || alarms != state.alarms || interrupted,
         writePending = state.writePending.takeUnless { interrupted },
         watchPayloads = if (interrupted) emptyMap() else payloads,
+        confirmedWriteId = state.confirmedWriteId.takeUnless { interrupted || payloads != state.watchPayloads },
         clockNeedsSync = state.clockNeedsSync || payloads.size != state.watchPayloads.size)
         .clearFallbackStatuses { it.fallbackStatusAt?.let { at -> at <= clock.millis() } != false }
 }
@@ -125,7 +126,7 @@ internal fun alarmTimeAtOccurrence(instant: Long, zone: ZoneId): LocalTime =
 
 /** An alarm-only write cannot repair a clock/zone change on a disconnected watch. */
 internal fun alarmStateAfterPhoneClockChange(state: AlarmState): AlarmState =
-    state.copy(watchPayloads = emptyMap(), clockNeedsSync = true)
+    state.copy(watchPayloads = emptyMap(), confirmedWriteId = null, clockNeedsSync = true)
 
 /** Active recovery warnings belong to a future occurrence, not yesterday's attempt. */
 internal fun activeFallbackStatus(alarm: AlarmSyncStorage.StoredAlarm, now: Long): String? =

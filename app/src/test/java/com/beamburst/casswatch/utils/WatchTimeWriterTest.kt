@@ -17,6 +17,8 @@ import java.time.ZoneId
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.startCoroutineUninterceptedOrReturn
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@Suppress("UNCHECKED_CAST")
 class WatchTimeWriterTest {
     private val address = "AA:BB:CC:DD:EE:01"
     private val zone = ZoneId.of("UTC")
@@ -92,7 +94,7 @@ class WatchTimeWriterTest {
                 "getAlarms" -> received
                 "getSettings" -> Settings(hourlyChime = false)
                 "setSettings" -> error("Hourly signal transport failed")
-                "setAlarms" -> { @Suppress("UNCHECKED_CAST") received = args!![0] as ArrayList<Alarm>; Unit }
+                "setAlarms" -> { received = args!![0] as ArrayList<Alarm>; Unit }
                 else -> error("Unexpected ${method.name}")
             }
         } as IGShockAPI

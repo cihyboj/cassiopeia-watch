@@ -2,6 +2,8 @@ package com.beamburst.casswatch.ui.alarms
 
 import CachedIO
 import android.content.Context
+import com.beamburst.casswatch.R
+import com.beamburst.casswatch.pairing.watchOperationError
 import com.beamburst.casswatch.pairing.awaitWatchResponse
 import com.beamburst.casswatch.pairing.WATCH_ALARMS_TIMEOUT_MS
 import com.beamburst.casswatch.pairing.WATCH_RESPONSE_TIMEOUT_MS
@@ -103,7 +105,6 @@ class AlarmPayloadWriter internal constructor(
         checkSession(ready)
         val pending = AlarmWritePending(UUID.randomUUID().toString(), time.clock.millis() + ALARM_WRITE_TIMEOUT_MS)
         var actual = payload
-        var writtenEvidence: Map<Int, WatchAlarmPayload>? = null
         try {
             withTimeout(ALARM_WRITE_TIMEOUT_MS) {
                 coordinator.beginWrite(ready.address, pending)
@@ -121,13 +122,14 @@ class AlarmPayloadWriter internal constructor(
                 val received = awaitWatchResponse(WATCH_ALARMS_TIMEOUT_MS) { readBack() }
                 confirm()
                 checkSession(ready)
-                check(alarmRegistersMatch(actual, received)) { "Alarm readback did not match the sent registers" }
+                if (!alarmRegistersMatch(actual, received)) {
+                    throw AlarmConfirmationException("Alarm readback did not match the sent registers")
+                }
                 val syncZone = time.zone()
                 val evidence = watchPayloadsAfterWrite(ready.address, actual, time.clock, syncZone)
-                writtenEvidence = evidence
                 coordinator.finishWrite(ready.address, pending) { current ->
                     checkSession(ready)
-                    current.copy(watchPayloads = evidence).clearFallbackStatuses()
+                    current.copy(watchPayloads = evidence, confirmedWriteId = pending.id).clearFallbackStatuses()
                 }
                 confirm()
                 checkSession(ready)
@@ -140,8 +142,8 @@ class AlarmPayloadWriter internal constructor(
                 withTimeout(WATCH_RESPONSE_TIMEOUT_MS) {
                     coordinator.update(ready.address) { current ->
                         if (current.writePending == pending ||
-                            (current.writePending == null && writtenEvidence != null && current.watchPayloads == writtenEvidence)) {
-                            current.copy(watchPayloads = emptyMap(), writePending = null, dirty = true)
+                            current.confirmedWriteId == pending.id) {
+                            current.copy(watchPayloads = emptyMap(), confirmedWriteId = null, writePending = null, dirty = true)
                         } else current
                     }
                     record(AlarmPayloadRecord(ready.address, actual, trigger, target, false,
@@ -219,3 +221,9 @@ internal fun alarmRegistersMatch(sent: List<Alarm>, received: List<Alarm>, compa
         expected.hour == actual.hour && expected.minute == actual.minute &&
             expected.enabled == actual.enabled && (!compareChime || expected.hasHourlyChime == actual.hasHourlyChime)
     }
+
+/** Diagnostics belong in history; screen feedback uses the existing translated API error. */
+class AlarmConfirmationException(message: String) : IllegalStateException(message)
+
+fun Context.alarmOperationError(error: Throwable?): String =
+    if (error is AlarmConfirmationException) getString(R.string.api_error) else watchOperationError(error)

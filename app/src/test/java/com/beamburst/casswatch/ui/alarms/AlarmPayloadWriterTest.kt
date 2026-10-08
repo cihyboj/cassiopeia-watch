@@ -147,4 +147,33 @@ class AlarmPayloadWriterTest {
         assertFalse(s.records.single().success)
     }
 
+    @Test fun `expired outcome cannot be reported as a confirmed write`() = runTest {
+        val s = Scenario()
+        assertTrue(runCatching { s.write({
+            s.store.state = s.store.state.copy(writePending = s.store.state.writePending!!.copy(deadline = clock.millis() - 1))
+            s.coordinator.reconcile(address)
+            payload
+        }) }.isFailure)
+        assertTrue(s.store.state.watchPayloads.isEmpty())
+        assertFalse(s.records.single().success)
+    }
+    @Test fun `failed old confirmation cannot erase evidence from a newer writer`() = runTest {
+        val s = Scenario()
+        var newerId: String? = null
+        assertTrue(runCatching { s.write({
+            s.session.ended(s.ready)
+            s.session.begin(s.session.state.value, address)
+            val replacement = s.session.established(address)!!
+            s.writer.write(replacement, payload, s.snapshot, SyncTrigger.MANUAL_SEND_ALARMS, false,
+                {}, { payload }) {}
+            newerId = s.store.state.confirmedWriteId
+            payload
+        }) }.isFailure)
+        assertNotNull(newerId)
+        assertEquals(s.previous, s.store.state.watchPayloads)
+        assertEquals(newerId, s.store.state.confirmedWriteId)
+        assertTrue(s.records.first().success)
+        assertFalse(s.records.last().success)
+    }
+
 }

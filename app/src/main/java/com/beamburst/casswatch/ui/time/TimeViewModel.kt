@@ -1,6 +1,6 @@
 package com.beamburst.casswatch.ui.time
 
-import com.beamburst.casswatch.pairing.watchOperationError
+import com.beamburst.casswatch.ui.alarms.alarmOperationError
 import com.beamburst.casswatch.pairing.confirmWatchWrite
 import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.data.local.WatchConnectionSession
@@ -188,7 +188,7 @@ class TimeViewModel @Inject constructor(
                                 AppSnackbar(appContext.getString(R.string.time_set))
                                 refreshState()
                             } else {
-                                AppSnackbar(appContext.watchOperationError(result.exceptionOrNull()))
+                                AppSnackbar(appContext.alarmOperationError(result.exceptionOrNull()))
                             }
                         }
                     }

@@ -90,7 +90,10 @@ internal class PersistedAlarmSchedulingCoordinator(
     }
 
     override suspend fun finishWrite(address: String, pending: AlarmWritePending, transform: (AlarmState) -> AlarmState) {
-        update(address) { if (it.writePending == pending) transform(it).copy(writePending = null) else it }
+        update(address) {
+            if (it.writePending != pending) throw AlarmConfirmationException("Alarm write expired or was replaced before confirmation")
+            transform(it).copy(writePending = null)
+        }
     }
 
     override suspend fun reconcile(address: String) = serialized {

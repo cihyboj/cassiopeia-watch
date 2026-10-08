@@ -49,6 +49,7 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
         val pending = goAsync()
         AppScopes.io.launch {
             var completed = false
+            var handoffReturned = false
             try {
                 val remaining = alarmReceiverTimeRemaining(receivedAt, SystemClock.elapsedRealtime()) ?: return@launch
                 withTimeout(remaining) {
@@ -73,7 +74,7 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
                                         throw android.content.ActivityNotFoundException("No clock app resolves ACTION_SET_ALARM")
                                     }
                                 },
-                                { context.startActivity(request) })
+                                { context.startActivity(request); handoffReturned = true })
 
                         }
                         if (requested) postFallbackRecovery(context, key, failed = false)
@@ -88,7 +89,7 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
                 completed = true
             } catch (error: Exception) {
                 Timber.e(error, "Phone fallback callback failed for %s", key)
-                if (!expiry) postFallbackRecovery(context, key, failed = true)
+                if (!expiry) postFallbackRecovery(context, key, failed = !handoffReturned, uncertain = handoffReturned)
             } finally {
                 if (!completed) {
                     runCatching { scheduleAlarmReconciliation(context, key.normalizedAddress) }
@@ -120,10 +121,10 @@ internal fun openFallbackClock(context: Context) {
 internal fun postFallbackRecovery(context: Context, key: AlarmKey, failed: Boolean, uncertain: Boolean = false) {
     try {
         val notifications = NotificationManagerCompat.from(context)
-        if (!canPostNotifications(context)) return
         val manager = context.getSystemService(NotificationManager::class.java)
         // Channel importance is immutable. Retire the old HIGH routine-notice channel.
         manager.deleteNotificationChannel("alarm_fallback_recovery")
+        if (!canPostNotifications(context)) return
         val channel = if (failed) "alarm_fallback_failure" else "alarm_fallback_silent"
         val importance = fallbackNotificationImportance(failed)
         manager.createNotificationChannel(NotificationChannel(channel, context.getString(R.string.alarm_fallback_channel), importance).apply {

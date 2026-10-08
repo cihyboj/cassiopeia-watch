@@ -558,7 +558,7 @@ class AlarmViewModel @Inject constructor(
                     AppSnackbar(appContext.getString(R.string.alarms_set_to_watch))
                 }
                 confirm()
-                result.onFailure { ProgressEvents.onNext("Error", it.message ?: "") }
+                result.onFailure { ProgressEvents.onNext("Error", appContext.alarmOperationError(it)) }
             }
         }
     }

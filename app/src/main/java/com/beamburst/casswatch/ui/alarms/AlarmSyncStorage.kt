@@ -25,6 +25,7 @@ data class AlarmState(
     val clockNeedsSync: Boolean = false,
     val writePending: AlarmWritePending? = null,
     val fallbackHistory: List<AlarmFallbackOutcome> = emptyList(),
+    val confirmedWriteId: String? = null,
 ) {
     fun confirmedPayloads(): Map<Int, WatchAlarmPayload> = if (clockNeedsSync) emptyMap() else watchPayloads
     fun watchAlarms(): List<Alarm> = alarms.map { Alarm(it.hour, it.minute, it.enabled, it.hasHourlyChime, it.name) }
@@ -81,6 +82,7 @@ object AlarmSyncStorage {
         put("days", encodeDays(state.days))
         put("dirty", state.dirty)
         put("clockNeedsSync", state.clockNeedsSync)
+        state.confirmedWriteId?.let { put("confirmedWriteId", it) }
         state.writePending?.let { put("writePending", JSONObject().put("id", it.id).put("deadline", it.deadline)) }
         put("watchPayloads", JSONObject().apply {
             state.watchPayloads.forEach { (slot, payload) ->
@@ -122,16 +124,19 @@ object AlarmSyncStorage {
         }
         return AlarmState(decodeAlarms(obj.getString("alarms")), decodeDays(obj.getString("days")),
             obj.getBoolean("dirty"), decoded, obj.optBoolean("clockNeedsSync", false),
-            obj.optJSONObject("writePending")?.let { pending ->
-                AlarmWritePending(pending.getString("id"), pending.getLong("deadline")).also { require(it.deadline >= 0) }
-            }, obj.optJSONArray("fallbackHistory")?.let { history ->
+            (if (obj.has("writePending")) obj.getJSONObject("writePending") else null)?.let { pending ->
+                val deadline = pending.get("deadline")
+                require(deadline is Number && deadline.toDouble() == deadline.toLong().toDouble() && deadline.toLong() >= 0)
+                require(pending.get("id") is String && pending.getString("id").isNotBlank())
+                AlarmWritePending(pending.getString("id"), deadline.toLong())
+            }, (if (obj.has("fallbackHistory")) obj.getJSONArray("fallbackHistory") else null)?.let { history ->
                 (0 until history.length()).map { index ->
                     val entry = history.getJSONObject(index)
                     AlarmFallbackOutcome(entry.getInt("slot"), entry.getString("status"), entry.getLong("occurrence")).also {
                         require(it.slot >= 0 && it.occurrence >= 0 && it.status in setOf("pending", "requested", "failed"))
                     }
                 }.takeLast(50)
-            }.orEmpty())
+            }.orEmpty(), if (obj.has("confirmedWriteId")) obj.getString("confirmedWriteId") else null)
     }
 
     internal fun decodeAlarms(raw: String): List<StoredAlarm> {
