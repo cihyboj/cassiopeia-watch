@@ -1,5 +1,7 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.pairing.WatchConnectionEvents
+import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.utils.AppScopes
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
@@ -41,13 +43,13 @@ class MainEventHandler(
     private val watchSelector: CurrentWatchSelector,
     private val connectionTracker: WatchConnectionTracker,
     private val connectionSession: WatchConnectionSession,
-    private val connectCoordinator: com.beamburst.casswatch.pairing.WatchConnectCoordinator,
+    private val connectCoordinator: WatchConnectCoordinator,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "MainEventHandler"
     }
 
-    private val connectionEvents = com.beamburst.casswatch.pairing.WatchConnectionEvents(connectionSession)
+    private val connectionEvents = WatchConnectionEvents(connectionSession)
 
     /** Generations for which a cache-warm has been dispatched, to keep it one-shot per connect. */
     private val warmedDispatchedFor = mutableSetOf<String>()

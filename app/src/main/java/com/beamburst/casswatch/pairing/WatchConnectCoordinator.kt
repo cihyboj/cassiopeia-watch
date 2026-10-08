@@ -30,6 +30,7 @@ class WatchConnectCoordinator @Inject constructor(
     ): Boolean = connectMutex.withLock {
         val requested = Utils.sanitizeMacAddress(address)
         if (requested.isBlank()) return@withLock false
+        var ownsAttempt = false
         try {
             val result = withTimeoutOrNull(timeoutMs) {
                 val observed = session.state.value
@@ -53,18 +54,23 @@ class WatchConnectCoordinator @Inject constructor(
                 if (session.state.value == WatchConnectionSession.Disconnected) {
                     session.begin(session.state.value, requested)
                 }
+                ownsAttempt = true
                 repository.waitForConnection(requested)
+                if (!repository.isConnected()) return@withTimeoutOrNull false
                 val ready = session.awaitReady()
                 repository.isConnected() && ready.address == requested
             }
-            if (result == null) {
-                Timber.w("Connection to %s timed out after %d ms", requested, timeoutMs)
+            if (result == null || (result == false && ownsAttempt)) {
+                Timber.w("Connection to %s did not become ready within %d ms", requested, timeoutMs)
                 stopCurrent()
             }
             result == true
         } catch (cancelled: CancellationException) {
             stopCurrent()
             throw cancelled
+        } catch (error: Exception) {
+            if (ownsAttempt) stopCurrent()
+            throw error
         }
     }
 

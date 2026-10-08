@@ -1,5 +1,7 @@
 package com.beamburst.casswatch.ui.events
 
+import com.beamburst.casswatch.data.local.WatchConnectionSession
+import com.beamburst.casswatch.pairing.WatchWriteGuard
 import com.beamburst.casswatch.utils.WatchSyncActivity
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -30,7 +32,10 @@ import javax.inject.Inject
 @HiltViewModel
 class EventViewModel @Inject constructor(
     private val api: GShockRepository,
+    private val connectionSession: WatchConnectionSession,
+    private val writeGuard: WatchWriteGuard,
     private val calendarEvents: CalendarEvents,
+    private val watchSelector: com.beamburst.casswatch.data.local.CurrentWatchSelector,
     @param:ApplicationContext private val appContext: Context,
     private val syncLogger: SyncHistoryLogger,
 ) : ViewModel() {
@@ -114,33 +119,40 @@ class EventViewModel @Inject constructor(
     }
 
     fun sendEventsToWatch() {
+        val ready = writeGuard.capture() ?: return
         viewModelScope.launch {
-            WatchSyncActivity.track {
-            // The watch holds at most MAX_REMINDERS reminders; don't send more.
-            val sanitizedEvents = _events.value.take(EventsModel.MAX_REMINDERS).map { event ->
-                event.copy(title = event.title.sanitizeEventTitle())
-            }
-            val result = runCatching {
-                api.setEvents(ArrayList(sanitizedEvents))
-            }
-            syncLogger.record(
-                trigger = SyncTrigger.MANUAL_SEND_EVENTS,
-                kinds = setOf(SyncKind.EVENTS),
-                success = result.isSuccess,
-                errorMessage = result.exceptionOrNull()?.message,
-                details = SyncDetails(
-                    alarmHashes = null,
-                    eventCount = sanitizedEvents.size,
-                    hourlySignalTarget = null,
-                    timeMs = null,
-                    actions = listOf("Events sent from Events screen"),
-                ),
-            )
-            if (result.isSuccess) {
-                AppSnackbar(appContext.getString(R.string.reminders_sent_to_watch))
-            } else {
-                AppSnackbar("Error: ${result.exceptionOrNull()?.message ?: ""}")
-            }
+            writeGuard.run(ready) { checkSession ->
+                WatchSyncActivity.track {
+                    // The watch holds at most MAX_REMINDERS reminders; don't send more.
+                    val sanitizedEvents = _events.value.take(EventsModel.MAX_REMINDERS).map { event ->
+                        event.copy(title = event.title.sanitizeEventTitle())
+                    }
+                    val result = runCatching {
+                        checkSession()
+                        api.setEvents(ArrayList(sanitizedEvents))
+                        checkSession()
+                    }
+                    checkSession()
+                    syncLogger.record(
+                        address = ready.address,
+                        trigger = SyncTrigger.MANUAL_SEND_EVENTS,
+                        kinds = setOf(SyncKind.EVENTS),
+                        success = result.isSuccess,
+                        errorMessage = result.exceptionOrNull()?.message,
+                        details = SyncDetails(
+                            alarmHashes = null,
+                            eventCount = sanitizedEvents.size,
+                            hourlySignalTarget = null,
+                            timeMs = null,
+                            actions = listOf("Events sent from Events screen"),
+                        ),
+                    )
+                    if (result.isSuccess) {
+                        AppSnackbar(appContext.getString(R.string.reminders_sent_to_watch))
+                    } else {
+                        AppSnackbar("Error: ${result.exceptionOrNull()?.message ?: ""}")
+                    }
+                }
             }
         }
     }

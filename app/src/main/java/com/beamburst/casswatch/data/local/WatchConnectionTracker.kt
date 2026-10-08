@@ -85,14 +85,15 @@ class WatchConnectionTracker @Inject constructor(
     fun connectionGeneration(address: String): Long {
         val normalizedAddress = Utils.sanitizeMacAddress(address)
         if (normalizedAddress.isBlank()) return 0L
-        return connectionGenerations.value[normalizedAddress] ?: 0L
+        return session.matching(normalizedAddress)?.generation
+            ?: connectionGenerations.value[normalizedAddress] ?: 0L
     }
 
     fun isCacheWarm(address: String?): Boolean {
         if (address == null) return false
         val normalizedAddress = Utils.sanitizeMacAddress(address)
         if (normalizedAddress.isBlank()) return false
-        val current = _connectionGenerations.value[normalizedAddress] ?: return false
+        val current = session.matching(normalizedAddress)?.generation ?: return false
         val warmed = _cacheWarmGenerations.value[normalizedAddress] ?: return false
         return warmed == current
     }
@@ -108,7 +109,7 @@ class WatchConnectionTracker @Inject constructor(
         if (address == null) return
         val normalizedAddress = Utils.sanitizeMacAddress(address)
         if (normalizedAddress.isBlank()) return
-        val gen = _connectionGenerations.value[normalizedAddress] ?: return
+        val gen = session.matching(normalizedAddress)?.generation ?: return
         _cacheWarmGenerations.update { warm ->
             warm
                 .filterKeys { !it.equals(normalizedAddress, ignoreCase = true) }

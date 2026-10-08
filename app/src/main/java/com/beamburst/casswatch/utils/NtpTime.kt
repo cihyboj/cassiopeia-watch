@@ -1,8 +1,9 @@
 package com.beamburst.casswatch.utils
 
+import com.beamburst.casswatch.pairing.WatchConnectionChangedException
 import android.content.Context
 import android.os.SystemClock
-import com.beamburst.casswatch.data.local.CurrentWatchSelector
+import com.beamburst.casswatch.data.local.WatchConnectionSession
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import java.net.DatagramPacket
@@ -10,9 +11,7 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -151,13 +150,13 @@ internal fun shouldRecordLatencySample(
 class WatchTimeProvider @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val sntpClient: SntpClient,
-    private val watchSelector: CurrentWatchSelector,
+    private val session: WatchConnectionSession,
 ) {
     private val scope = AppScopes.io
 
-    suspend fun nowForWatch(): WatchTime {
+    suspend fun nowForWatch(address: String? = session.address): WatchTime {
         val fineAdjustment = LocalDataStorage.getFineTimeAdjustment(context).toLong()
-        val latencyCompensation = watchSelector.currentAddress()
+        val latencyCompensation = address
             ?.let { LocalDataStorage.getLearnedTimeWriteCompensation(context, it) }
             ?: 0L
         if (!LocalDataStorage.getNtpTimeEnabled(context)) {
@@ -237,7 +236,7 @@ class WatchTimeProvider @Inject constructor(
 @Singleton
 class WatchTimeWriter @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val watchSelector: CurrentWatchSelector,
+    private val session: WatchConnectionSession,
     private val connectionTracker: com.beamburst.casswatch.data.local.WatchConnectionTracker,
     private val syncHistoryLogger: SyncHistoryLogger,
 ) {
@@ -288,12 +287,24 @@ class WatchTimeWriter @Inject constructor(
      * is not yet warm — the 2–4 s Mode-1 round-trip makes pre-aiming useless and would push the
      * arriving packet far past the targeted second anyway.
      */
-    suspend fun write(api: IGShockAPI, watchTime: WatchTime): TimeWriteResult {
-        val address = watchSelector.currentAddress()
+    suspend fun write(
+        api: IGShockAPI,
+        watchTime: WatchTime,
+        ready: WatchConnectionSession.Ready = requireNotNull(session.ready),
+        checkSelection: () -> Unit = {},
+    ): TimeWriteResult {
+        val address = ready.address
+        val checkSession = {
+            checkSelection()
+            if (!session.isCurrent(ready) || !api.isConnected()) {
+                throw WatchConnectionChangedException()
+            }
+        }
+        checkSession()
         return if (connectionTracker.isCacheWarm(address)) {
-            writeAimedAtSecondBoundary(api, watchTime, address, WATCH_ADOPTION_DELAY_MS)
+            writeAimedAtSecondBoundary(api, watchTime, address, checkSession, WATCH_ADOPTION_DELAY_MS)
         } else {
-            writeColdPath(api, watchTime, address)
+            writeColdPath(api, watchTime, address, checkSession)
         }
     }
 
@@ -304,12 +315,24 @@ class WatchTimeWriter @Inject constructor(
      * shorter delay so the +2-boundary-aim's "fire one adoption-delay before target" lands the
      * watch's display update on the NTP boundary instead of ~200 ms early.
      */
-    suspend fun writeAfterPrime(api: IGShockAPI, watchTime: WatchTime): TimeWriteResult {
-        val address = watchSelector.currentAddress()
+    suspend fun writeAfterPrime(
+        api: IGShockAPI,
+        watchTime: WatchTime,
+        ready: WatchConnectionSession.Ready = requireNotNull(session.ready),
+        checkSelection: () -> Unit = {},
+    ): TimeWriteResult {
+        val address = ready.address
+        val checkSession = {
+            checkSelection()
+            if (!session.isCurrent(ready) || !api.isConnected()) {
+                throw WatchConnectionChangedException()
+            }
+        }
+        checkSession()
         return if (connectionTracker.isCacheWarm(address)) {
-            writeAimedAtSecondBoundary(api, watchTime, address, WATCH_ADOPTION_DELAY_POST_PRIME_MS)
+            writeAimedAtSecondBoundary(api, watchTime, address, checkSession, WATCH_ADOPTION_DELAY_POST_PRIME_MS)
         } else {
-            writeColdPath(api, watchTime, address)
+            writeColdPath(api, watchTime, address, checkSession)
         }
     }
 
@@ -323,7 +346,8 @@ class WatchTimeWriter @Inject constructor(
      * already warm or the round-trips finished promptly.
      */
     suspend fun primeCache(api: IGShockAPI): PrimeResult {
-        val address = watchSelector.currentAddress()
+        val ready = requireNotNull(session.ready)
+        val address = ready.address
         val startMs = SystemClock.elapsedRealtime()
         val res = withTimeoutOrNull(PRIME_TIMEOUT_MS) {
             runCatching { api.primeTimeCache() }
@@ -344,12 +368,14 @@ class WatchTimeWriter @Inject constructor(
                 // write is guaranteed Mode-2 regardless of how long the prime itself took.
                 // markCacheWarmIfFast's 300ms threshold is wrong for primeTimeCache (which
                 // legitimately takes 1.4–2.4s); unconditionally mark the generation warm.
+                check(session.isCurrent(ready) && api.isConnected())
                 connectionTracker.markCacheWarmed(address)
                 PrimeResult(PrimeOutcome.OK, durationMs)
             }
         }
         runCatching {
             syncHistoryLogger.record(
+                address = address,
                 trigger = SyncTrigger.CONNECTION_CONNECTED,
                 kinds = setOf(SyncKind.CONNECTION),
                 success = result.outcome == PrimeOutcome.OK,
@@ -377,12 +403,15 @@ class WatchTimeWriter @Inject constructor(
         api: IGShockAPI,
         watchTime: WatchTime,
         address: String?,
+        checkSession: () -> Unit,
     ): TimeWriteResult {
         val timeMs = resolveNowMs(watchTime)
         val cacheWarmAtStart = connectionTracker.isCacheWarm(address)
         val preSendWallMs = System.currentTimeMillis()
         val preSendElapsedMs = SystemClock.elapsedRealtime()
+        checkSession()
         api.setTime(timeMs = timeMs)
+        checkSession()
         val durationMs = SystemClock.elapsedRealtime() - preSendElapsedMs
         connectionTracker.markCacheWarmIfFast(address, durationMs)
         // Mode-1 samples mix cache-miss BLE reads into the latency; do not learn from them.
@@ -411,6 +440,7 @@ class WatchTimeWriter @Inject constructor(
         api: IGShockAPI,
         watchTime: WatchTime,
         address: String?,
+        checkSession: () -> Unit,
         adoptionDelayMs: Long,
     ): TimeWriteResult {
         val cacheWarmAtStart = connectionTracker.isCacheWarm(address)
@@ -431,7 +461,9 @@ class WatchTimeWriter @Inject constructor(
         val preSendWallMs = System.currentTimeMillis()
         val preSendElapsedMs = SystemClock.elapsedRealtime()
         try {
+            checkSession()
             api.setTime(timeMs = target)
+            checkSession()
         } catch (t: Throwable) {
             // Skip sample recording on throw to avoid biasing learned latency.
             throw t

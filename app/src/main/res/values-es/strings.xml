@@ -220,4 +220,5 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="broadcast_how_to_receive">How to receive</string>
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
+    <string name="selected_watch_not_connected">Conecta el reloj seleccionado antes de enviar cambios.</string>
 </resources>

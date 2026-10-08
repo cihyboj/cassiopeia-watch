@@ -39,12 +39,7 @@ class CompanionDevicePresenceMonitor @Inject constructor(
 
             monitorScope.launch {
                 try {
-                    if (!repository.isConnected()) {
-                        Timber.i("$addressValid waitForConnection")
-                        connectCoordinator.connect(addressValid)
-                    } else {
-                        Timber.i("Device already connected. Skipping wait.")
-                    }
+                    connectCoordinator.connect(addressValid)
                 } catch (e: Exception) {
                     Timber.e(e, "Error occurred while waiting for connection to $addressValid")
                 }

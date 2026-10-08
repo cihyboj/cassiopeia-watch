@@ -1,13 +1,12 @@
 package com.beamburst.casswatch.ui.alarms
 
+import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.utils.WatchSyncActivity
 import com.beamburst.casswatch.utils.AppScopes
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.beamburst.casswatch.data.local.CurrentWatchSelector
+import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
@@ -31,7 +30,8 @@ import javax.inject.Singleton
 class WeeklyAlarmScheduler @Inject constructor(
     private val api: GShockRepository,
     private val syncLogger: SyncHistoryLogger,
-    private val watchSelector: CurrentWatchSelector,
+    private val session: WatchConnectionSession,
+    private val connectCoordinator: WatchConnectCoordinator,
     @param:ApplicationContext private val context: Context,
     private val watchTimeProvider: WatchTimeProvider,
     private val watchTimeWriter: WatchTimeWriter,
@@ -55,8 +55,10 @@ class WeeklyAlarmScheduler @Inject constructor(
 
     suspend fun applyTodaySchedule() {
         WatchSyncActivity.track {
-        val addr = watchSelector.currentAddress() ?: return
-        WatchSettingsCache.reconcileOnConnect(context, addr, api)
+        val ready = session.ready ?: return
+        connectCoordinator.withSession(ready) { checkSession ->
+        val addr = ready.address
+        WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession)
 
         val autoTimeSyncEnabled = LocalDataStorage.getOrInitializeAutoSyncOnReconnect(
             context = context,
@@ -64,7 +66,7 @@ class WeeklyAlarmScheduler @Inject constructor(
             seed = WatchSettingsCache.load(context, addr)?.timeAdjustment,
         )
         if (autoTimeSyncEnabled) {
-            runAutoTimeSyncOnReconnect()
+            runAutoTimeSyncOnReconnect(ready, checkSession)
         }
 
         val alarmDays = AlarmSyncStorage.loadDaySelections(context, addr)
@@ -72,11 +74,11 @@ class WeeklyAlarmScheduler @Inject constructor(
         val firedAts = AlarmSyncStorage.loadFiredAts(context, addr)
         val shouldWrite = AlarmSyncStorage.isDirty(context, addr) || !storedAlarms.isNullOrEmpty()
 
-        if (!shouldWrite) return
+        if (!shouldWrite) return@withSession
 
         val currentAlarms = runCatching { api.getAlarms() }.getOrElse {
             Timber.e(it, "Failed to get alarms before applying local schedule")
-            return
+            return@withSession
         }
 
         val desiredAlarms = storedAlarms?.takeIf { it.isNotEmpty() } ?: currentAlarms
@@ -98,12 +100,16 @@ class WeeklyAlarmScheduler @Inject constructor(
 
         if (alarmsToSend != currentAlarms) {
             val setResult = runCatching {
+                checkSession()
                 api.setAlarms(ArrayList(alarmsToSend))
                 if (WatchInfo.chimeInSettings) {
+                    checkSession()
                     applyHourlySignalToWatch(api, signalSettings, now)
                 }
             }
+            checkSession()
             syncLogger.record(
+                address = addr,
                 trigger = SyncTrigger.AUTO_ON_RECONNECT,
                 kinds = alarmSyncHistoryKinds,
                 success = setResult.isSuccess,
@@ -118,10 +124,13 @@ class WeeklyAlarmScheduler @Inject constructor(
             setResult.onFailure {
                 Timber.e(it, "Failed to apply per-alarm day schedule")
             }.onSuccess {
+                checkSession()
                 AlarmSyncStorage.saveAlarms(context, addr, desiredAlarms, dirty = false, firedAts = firedAts)
             }
         } else {
+            checkSession()
             syncLogger.record(
+                address = addr,
                 trigger = SyncTrigger.AUTO_ON_RECONNECT,
                 kinds = alarmSyncHistoryKinds,
                 success = true,
@@ -136,9 +145,10 @@ class WeeklyAlarmScheduler @Inject constructor(
             }
         }
         }
+        }
     }
 
-    private suspend fun runAutoTimeSyncOnReconnect() {
+    private suspend fun runAutoTimeSyncOnReconnect(ready: WatchConnectionSession.Ready, checkSession: () -> Unit) {
         // Firmware-initiated syncs (isAutoTimeStarted) are handled by AutoSyncCoordinator,
         // which primes the cache and calls writeAfterPrime itself. Skip here to avoid
         // a conflicting concurrent time write.
@@ -152,12 +162,15 @@ class WeeklyAlarmScheduler @Inject constructor(
             watchTimeWriter.primeCache(api)
         }.onFailure { Timber.w(it, "Auto-reconnect cache prime failed") }
 
-        val watchTime = watchTimeProvider.nowForWatch()
+        checkSession()
+        val watchTime = watchTimeProvider.nowForWatch(ready.address)
         var writeResult: com.beamburst.casswatch.utils.TimeWriteResult? = null
         val result = runCatching {
-            writeResult = watchTimeWriter.writeAfterPrime(api, watchTime)
+            writeResult = watchTimeWriter.writeAfterPrime(api, watchTime, ready, checkSession)
         }
+        checkSession()
         syncLogger.record(
+            address = ready.address,
             trigger = SyncTrigger.AUTO_ON_RECONNECT,
             kinds = setOf(SyncKind.TIME),
             success = result.isSuccess,

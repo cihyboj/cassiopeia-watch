@@ -482,4 +482,5 @@
     <string name="ble_debug_unlocked" translatable="false">BLE Debug unlocked</string>
     <string name="ble_debug_already_unlocked" translatable="false">BLE Debug already unlocked</string>
     <string name="ble_debug_unlock_remaining" translatable="false">%1$d taps to unlock BLE Debug</string>
+    <string name="selected_watch_not_connected">Connect the selected watch before sending changes.</string>
 </resources>
