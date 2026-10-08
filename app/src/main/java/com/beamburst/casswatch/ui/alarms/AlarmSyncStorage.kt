@@ -91,10 +91,16 @@ object AlarmSyncStorage {
     internal fun decode(raw: String): AlarmState {
         val obj = JSONObject(raw)
         require(obj.get("dirty") is Boolean)
+        if (obj.has("clockNeedsSync")) require(obj.get("clockNeedsSync") is Boolean)
         val payloads = if (obj.has("watchPayloads")) obj.getJSONObject("watchPayloads") else JSONObject()
         val decoded = payloads.keys().asSequence().associate { key ->
             val slot = key.toInt().also { require(it >= 0) }
             val p = payloads.getJSONObject(key)
+            require(p.get("enabled") is Boolean && p.get("daily") is Boolean)
+            for (field in listOf("hour", "minute", "utcOffsetSeconds", "syncedAt")) {
+                val value = p.get(field)
+                require(value is Number && value.toDouble() == value.toLong().toDouble())
+            }
             slot to WatchAlarmPayload(p.getString("address"), p.getInt("hour"), p.getInt("minute"),
                 p.getBoolean("enabled"), p.getBoolean("daily"), p.getString("zoneId"),
                 p.getInt("utcOffsetSeconds"), p.getLong("syncedAt")).also {
@@ -120,6 +126,9 @@ object AlarmSyncStorage {
             if (alarm.has("oneShotLocalDate") && !alarm.isNull("oneShotLocalDate")) {
                 val date = alarm.getString("oneShotLocalDate")
                 require(LocalDate.parse(date).toString() == date)
+            }
+            if (alarm.has("fallbackStatus") && !alarm.isNull("fallbackStatus")) {
+                require(alarm.get("fallbackStatus") is String && alarm.getString("fallbackStatus") in setOf("pending", "requested", "failed"))
             }
             for (field in listOf("firedAt", "fallbackAttemptAt", "fallbackStatusAt")) {
                 if (alarm.has(field) && !alarm.isNull(field)) {

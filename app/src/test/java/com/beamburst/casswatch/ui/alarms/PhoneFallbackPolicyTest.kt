@@ -46,4 +46,10 @@ class PhoneFallbackPolicyTest {
         assertEquals(FallbackAvailability.UNAVAILABLE, attemptExactFallback({ false }) { fail("must not schedule") })
         assertEquals(FallbackAvailability.SCHEDULED, attemptExactFallback({ true }) {})
     }
+    @Test fun `receiver budget includes coroutine dispatch delay and expires before ten seconds`() {
+        assertEquals(8000L, alarmReceiverTimeRemaining(1000, 1000))
+        assertEquals(2000L, alarmReceiverTimeRemaining(1000, 7000))
+        assertNull(alarmReceiverTimeRemaining(1000, 9000))
+        assertNull(alarmReceiverTimeRemaining(1000, 12000))
+    }
 }

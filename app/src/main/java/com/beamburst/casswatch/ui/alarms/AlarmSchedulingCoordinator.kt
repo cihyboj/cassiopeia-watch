@@ -117,6 +117,8 @@ internal class PersistedAlarmSchedulingCoordinator(
             persistence.addresses().forEach { reconcileLocked(it) }
             throw error
         }
+        // Import may replace the multi-watch migration flag and contain global legacy keys.
+        persistence.initialize()
         ((0..4).toSet() + persistence.legacySlots()).forEach(backend::cancelLegacy)
         // Ignore an imported device's migration flag: this installation must rebuild.
         persistence.addresses().forEach { reconcileLocked(it) }

@@ -11,6 +11,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 import org.avmedia.gshockapi.Alarm
@@ -83,10 +86,11 @@ class AlarmPayloadWriter internal constructor(
     suspend fun write(
         ready: WatchConnectionSession.Ready,
         payload: List<Alarm>,
+        snapshot: AlarmState,
         trigger: SyncTrigger,
         target: Boolean,
         confirm: suspend () -> Unit,
-        send: suspend () -> Unit,
+        send: suspend (List<Alarm>) -> Unit,
     ) {
         confirm()
         coordinator.update(ready.address) { current ->
@@ -95,23 +99,45 @@ class AlarmPayloadWriter internal constructor(
         }
         val syncZone = time.zone()
         val syncClock = Clock.fixed(time.clock.instant(), syncZone)
+        var actual = payload
+        var writtenEvidence: Map<Int, WatchAlarmPayload> = emptyMap()
+        suspend fun discardUnconfirmedResult() {
+            if (writtenEvidence.isEmpty()) return
+            // A session can end while the awaited DataStore write commits. Never retain
+            // that result as confirmation; preserve any newer payload from another writer.
+            runCatching {
+                withContext(NonCancellable) {
+                    coordinator.update(ready.address) { current ->
+                        if (current.watchPayloads == writtenEvidence) current.copy(watchPayloads = emptyMap()) else current
+                    }
+                }
+            }.onFailure { Timber.w(it, "Cannot discard unconfirmed alarm write for %s", ready.address) }
+        }
         try {
-            send()
+            // Awaited invalidation/storage must not make an enabled one-time payload stale.
+            actual = payload.mapIndexed { slot, alarm ->
+                if (slot in snapshot.firedAts() || snapshot.oneShotOccurrences()[slot]?.isElapsed(time.clock, time.zone()) == true)
+                    alarm.copy(enabled = false) else alarm
+            }
+            send(actual)
             confirm()
-            val evidence = watchPayloadsAfterWrite(ready.address, payload, syncClock, syncZone)
+            writtenEvidence = watchPayloadsAfterWrite(ready.address, actual, syncClock, syncZone)
             coordinator.update(ready.address) { current ->
                 checkSession(ready)
-                current.copy(watchPayloads = evidence)
+                current.copy(watchPayloads = writtenEvidence)
             }
             confirm()
-            record(AlarmPayloadRecord(ready.address, payload, trigger, target, true))
+            record(AlarmPayloadRecord(ready.address, actual, trigger, target, true))
         } catch (cancelled: CancellationException) {
+            discardUnconfirmedResult()
             throw cancelled
         } catch (changed: WatchConnectionChangedException) {
+            discardUnconfirmedResult()
             throw changed
         } catch (error: Exception) {
+            discardUnconfirmedResult()
             confirm()
-            record(AlarmPayloadRecord(ready.address, payload, trigger, target, false, error.message))
+            record(AlarmPayloadRecord(ready.address, actual, trigger, target, false, error.message))
             throw error
         }
     }
@@ -130,8 +156,8 @@ class AlarmPayloadWriter internal constructor(
     ) {
         val snapshot = coordinator.snapshot(ready.address)
         applyHourlySignalToWatch(api, settings, now, snapshot, time.clock, time.zone()) { payload ->
-            write(ready, payload, trigger, HourlySignalEvaluator.shouldChimeAt(now, settings), confirm) {
-                api.setAlarms(ArrayList(payload))
+            write(ready, payload, snapshot, trigger, HourlySignalEvaluator.shouldChimeAt(now, settings), confirm) { actual ->
+                api.setAlarms(ArrayList(actual))
             }
         }
     }

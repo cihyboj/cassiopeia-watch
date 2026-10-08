@@ -110,9 +110,9 @@ class WeeklyAlarmScheduler @Inject constructor(
         }
 
         // Only an actual alarm write establishes persisted watch confirmation.
-        payloadWriter.write(ready, alarmsToSend, SyncTrigger.AUTO_ON_RECONNECT, hourlySignalTarget,
-            { confirmWatchWrite(checkSession) }) {
-            api.setAlarms(ArrayList(alarmsToSend))
+        payloadWriter.write(ready, alarmsToSend, snapshot, SyncTrigger.AUTO_ON_RECONNECT, hourlySignalTarget,
+            { confirmWatchWrite(checkSession) }) { actual ->
+            api.setAlarms(ArrayList(actual))
         }
         if (WatchInfo.chimeInSettings) {
             payloadWriter.hourlySignal(api, ready, signalSettings, now, SyncTrigger.AUTO_ON_RECONNECT) {
