@@ -211,4 +211,6 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">A módosítások küldése előtt csatlakoztassa a kiválasztott órát.</string>
+    <string name="watch_permission_explanation">Az órával való kommunikációhoz Bluetooth-hozzáférés szükséges. Android 10–11 esetén engedélyezd a helyadatokat a Bluetooth-kereséshez.</string>
+    <string name="sync_notifications_blocked">Az automatikus szinkronizálás értesítései be vannak kapcsolva, de az Android blokkolja őket. Engedélyezd az alkalmazás értesítéseit és a szinkronizálási csatornát a beállításokban.</string>
 </resources>

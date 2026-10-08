@@ -231,4 +231,6 @@ si votre montre est en avance de 2,5 secondes par rapport à l\'heure réelle, d
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">Connectez la montre sélectionnée avant d’envoyer les modifications.</string>
+    <string name="watch_permission_explanation">L’accès Bluetooth est nécessaire pour communiquer avec votre montre. Sous Android 10–11, autorisez la localisation pour la recherche Bluetooth.</string>
+    <string name="sync_notifications_blocked">Les notifications de synchronisation automatique sont activées, mais Android les bloque. Autorisez les notifications de l’application et le canal de synchronisation dans les paramètres.</string>
 </resources>

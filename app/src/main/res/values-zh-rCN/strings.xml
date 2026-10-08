@@ -212,4 +212,6 @@
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">发送更改前，请连接所选手表。</string>
+    <string name="watch_permission_explanation">与手表通信需要蓝牙访问权限。在 Android 10–11 上，请允许位置访问以进行蓝牙扫描。</string>
+    <string name="sync_notifications_blocked">自动同步通知已启用，但被 Android 阻止。请在设置中允许应用通知和同步通知渠道。</string>
 </resources>

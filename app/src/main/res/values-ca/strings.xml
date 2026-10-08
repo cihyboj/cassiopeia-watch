@@ -227,4 +227,6 @@
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">Connecta el rellotge seleccionat abans d’enviar els canvis.</string>
+    <string name="watch_permission_explanation">Cal accés a Bluetooth per comunicar-se amb el rellotge. A Android 10–11, permet la ubicació per cercar dispositius Bluetooth.</string>
+    <string name="sync_notifications_blocked">Les notificacions de sincronització automàtica estan activades, però Android les bloqueja. Permet les notificacions de l’aplicació i el canal de sincronització als ajustos.</string>
 </resources>

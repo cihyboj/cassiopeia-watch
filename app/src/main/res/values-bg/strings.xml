@@ -221,4 +221,6 @@
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">Свържете избрания часовник, преди да изпратите промените.</string>
+    <string name="watch_permission_explanation">За връзка с часовника е нужен достъп до Bluetooth. При Android 10–11 разрешете местоположението за Bluetooth сканиране.</string>
+    <string name="sync_notifications_blocked">Известията за автоматична синхронизация са включени, но Android ги блокира. Разрешете известията на приложението и канала за синхронизация в настройките.</string>
 </resources>

@@ -86,11 +86,11 @@ class MainActivity : ComponentActivity() {
                                 // you can pass 'PaddingValues(0.dp)' or ignore it inside the
                                 // AppContainer.
                                 application.AppContainer(contentPadding)
-                                PopupMessageReceiver()
                             }
                         }
                     }
                 }
+                PopupMessageReceiver()
             }
         }
     }

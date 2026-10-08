@@ -221,4 +221,6 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">Conecta el reloj seleccionado antes de enviar cambios.</string>
+    <string name="watch_permission_explanation">Se necesita acceso a Bluetooth para comunicarse con el reloj. En Android 10–11, permite la ubicación para buscar dispositivos Bluetooth.</string>
+    <string name="sync_notifications_blocked">Las notificaciones de sincronización automática están activadas, pero Android las bloquea. Permite las notificaciones de la app y el canal de sincronización en Ajustes.</string>
 </resources>

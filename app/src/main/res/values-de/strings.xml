@@ -222,4 +222,6 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">Verbinde die ausgewählte Uhr, bevor du Änderungen sendest.</string>
+    <string name="watch_permission_explanation">Bluetooth-Zugriff ist für die Kommunikation mit deiner Uhr erforderlich. Unter Android 10–11 erlaube den Standortzugriff für die Bluetooth-Suche.</string>
+    <string name="sync_notifications_blocked">Benachrichtigungen zur automatischen Synchronisierung sind aktiviert, aber Android blockiert sie. Erlaube App-Benachrichtigungen und den Synchronisierungskanal in den Einstellungen.</string>
 </resources>

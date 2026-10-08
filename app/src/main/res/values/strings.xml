@@ -483,4 +483,6 @@
     <string name="ble_debug_already_unlocked" translatable="false">BLE Debug already unlocked</string>
     <string name="ble_debug_unlock_remaining" translatable="false">%1$d taps to unlock BLE Debug</string>
     <string name="selected_watch_not_connected">Connect the selected watch before sending changes.</string>
+    <string name="watch_permission_explanation">Bluetooth access is needed to communicate with your watch. On Android 10–11, allow location access for Bluetooth scanning.</string>
+    <string name="sync_notifications_blocked">Auto-sync notifications are enabled, but Android is blocking them. Allow app notifications and the sync notification channel in Settings.</string>
 </resources>

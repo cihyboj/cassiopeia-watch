@@ -282,4 +282,6 @@
         <p>Jeśli ten problem będzie się powtarzać, proszę zgłosić go na <a href="https://github.com/cihyboj/cassiopeia-watch/issues">GitHub</a> z modelem urządzenia i zegarka.</p>
     ]]></string>
     <string name="selected_watch_not_connected">Połącz wybrany zegarek przed wysłaniem zmian.</string>
+    <string name="watch_permission_explanation">Dostęp do Bluetooth jest potrzebny do komunikacji z zegarkiem. W Androidzie 10–11 zezwól na lokalizację, aby skanować Bluetooth.</string>
+    <string name="sync_notifications_blocked">Powiadomienia automatycznej synchronizacji są włączone, ale Android je blokuje. Zezwól na powiadomienia aplikacji i kanał synchronizacji w ustawieniach.</string>
 </resources>
