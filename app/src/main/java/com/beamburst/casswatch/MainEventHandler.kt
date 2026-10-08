@@ -134,7 +134,7 @@ class MainEventHandler(
     /**
      * Primes GShockAPI's CachedIO once per fresh connection generation. The first time
      * write on a fresh connection otherwise triggers a 2–4 s slow path (DST + WorldCities
-     * BLE reads). Calling [WatchTimeWriter.primeCache] right after initialization — while
+     * BLE reads). Calling the session-bound primeTimeCache right after initialization — while
      * the watch is still in its connect animation — moves the cost off the user-visible
      * sync path so later `Send Time` writes hit the fast Mode-2 path (~50 ms accuracy)
      * without ever flashing an incorrect time on the watch.

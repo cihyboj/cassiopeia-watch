@@ -52,7 +52,8 @@ class WatchConnectionEvents(private val session: WatchConnectionSession) {
     /** A status observation is ordered with raw events and setup on the same lock. */
     @Synchronized
     fun observeTransport(connected: Boolean, expected: WatchConnectionSession.Ready? = session.ready) {
-        if (!connected) expected?.let { disconnect(it, false) }
+        if (connected) return
+        if (expected == null) lifecycleEpoch++ else disconnect(expected, false)
     }
 
     @Synchronized

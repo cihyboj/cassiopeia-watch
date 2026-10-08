@@ -3,33 +3,48 @@ package com.beamburst.casswatch.pairing
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.data.local.reconcileConnectedSettings
 import java.lang.reflect.Proxy
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.startCoroutineUninterceptedOrReturn
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import org.avmedia.gshockapi.Alarm
+import org.avmedia.gshockapi.Event
 import org.avmedia.gshockapi.IGShockAPI
+import org.avmedia.gshockapi.RepeatPeriod
 import org.avmedia.gshockapi.Settings
+import org.avmedia.gshockapi.WatchInfo
+import org.avmedia.gshockapi.io.TimeAdjustmentInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class WatchConnectCoordinatorTest {
     private val watchA = "AA:BB:CC:DD:EE:01"
     private val watchB = "AA:BB:CC:DD:EE:02"
 
-    private fun scenario(block: suspend CoroutineScope.() -> Unit) = runBlocking {
-        withTimeout(5_000) { block() }
-    }
+    private fun scenario(block: suspend TestScope.() -> Unit) =
+        runTest(StandardTestDispatcher()) { block() }
 
     /** Like ProgressEvents, starts, writes and event dispatch are independent of API callers. */
     private class Transport(private val scope: CoroutineScope) {
@@ -41,6 +56,14 @@ class WatchConnectCoordinatorTest {
         var startGate = CompletableDeferred(Unit)
         var writeGate = CompletableDeferred(Unit)
         var response = CompletableDeferred<Settings>()
+        var responseDelayMs = 0L
+        var adjustmentDelayMs = 0L
+        var opaqueDelayMs = 0L
+        val attemptStarted = CompletableDeferred<Unit>()
+        val writeQueued = CompletableDeferred<Unit>()
+        private val starts = Channel<String>(Channel.UNLIMITED)
+        private val pendingStarts = Channel<String>(Channel.UNLIMITED)
+        val publicReads = mutableListOf<String>()
         var readStarted = CompletableDeferred<Unit>()
         var readCancelled = false
         var onStatus: (() -> Unit)? = null
@@ -71,8 +94,10 @@ class WatchConnectCoordinatorTest {
                         val initialized = initialization
                         val gate = startGate
                         attempts += address
+                        attemptStarted.complete(Unit)
+                        starts.send(address)
                         // This job deliberately survives cancellation of waitForConnection.
-                        scope.launch { gate.await(); pending = address }
+                        scope.launch { gate.await(); pending = address; pendingStarts.send(address) }
                         initialized.await()
                         initialize()
                     }
@@ -89,17 +114,46 @@ class WatchConnectCoordinatorTest {
                     closes++
                     Unit
                 }
-                "getSettings" -> {
+                "getSettings", "getBasicSettings" -> {
                     val read: suspend () -> Settings = {
                         readStarted.complete(Unit)
+                        delay(responseDelayMs)
                         try { response.await() } finally { readCancelled = !response.isCompleted }
                     }
                     read.startCoroutineUninterceptedOrReturn(args!![0] as Continuation<Settings>)
+                }
+                "getTimeAdjustment" -> {
+                    val read: suspend () -> TimeAdjustmentInfo = {
+                        delay(adjustmentDelayMs)
+                        TimeAdjustmentInfo(true, 42)
+                    }
+                    read.startCoroutineUninterceptedOrReturn(args!![0] as Continuation<TimeAdjustmentInfo>)
+                }
+                "getDSTWatchState", "getDSTForWorldCities", "getWorldCities" -> {
+                    val read: suspend () -> String = {
+                        publicReads += method.name
+                        delay(responseDelayMs)
+                        "cached"
+                    }
+                    read.startCoroutineUninterceptedOrReturn(args!!.last() as Continuation<String>)
+                }
+                "getAlarms" -> {
+                    val read: suspend () -> ArrayList<Alarm> = { delay(opaqueDelayMs); arrayListOf() }
+                    read.startCoroutineUninterceptedOrReturn(args!![0] as Continuation<ArrayList<Alarm>>)
+                }
+                "getEventFromWatch" -> {
+                    val read: suspend () -> Event = { delay(opaqueDelayMs); Event("", null, null, RepeatPeriod.NEVER, null, false, false) }
+                    read.startCoroutineUninterceptedOrReturn(args!![1] as Continuation<Event>)
+                }
+                "setTime", "primeTimeCache" -> {
+                    val call: suspend () -> Unit = { delay(opaqueDelayMs) }
+                    call.startCoroutineUninterceptedOrReturn(args!!.last() as Continuation<Unit>)
                 }
                 "setSettings" -> {
                     val value = args!![0] as Settings
                     val gate = writeGate
                     scope.launch { gate.await(); settingsDelivered += session.address to value }
+                    writeQueued.complete(Unit)
                     // Queued connection loss is observed only after the setter returns.
                     afterWrite?.also { afterWrite = null }?.let { action -> scope.launch { action() } }
                     Unit
@@ -117,16 +171,16 @@ class WatchConnectCoordinatorTest {
 
         private suspend fun initialize() {
             initCalls++
-            yield()
+            delay(opaqueDelayMs)
             session.ready?.let { initializationEvents += it.generation }
         }
 
         suspend fun awaitAttempt(address: String) {
-            while (address !in attempts || pending != address) yield()
+            assertEquals(address, starts.receive())
+            assertEquals(address, pendingStarts.receive())
         }
 
         suspend fun setup(address: String, device: Any): WatchConnectionSession.Ready? = scope.async {
-            yield() // asynchronous ProgressEvents dispatch
             val ready = handler.setup(address, device)
             if (ready == null) coordinator.closeRejectedSetup()
             else if (handler.needsInitialization) {
@@ -146,7 +200,6 @@ class WatchConnectCoordinatorTest {
         }
 
         suspend fun disconnectEvent(device: Any) = scope.async {
-            yield()
             val token = handler.disconnectToken(device) ?: return@async
             coordinator.handleDisconnect { handler.disconnect(token, connected) }
         }.await()
@@ -164,8 +217,10 @@ class WatchConnectCoordinatorTest {
         val t = Transport(this)
         t.session.begin(t.session.state.value, watchA)
         t.connected = true
-        val retry = async { t.coordinator.connect(watchA) }
-        yield()
+        val started = CompletableDeferred<Unit>()
+        val retry = async { started.complete(Unit); t.coordinator.connect(watchA) }
+        started.await()
+        runCurrent()
         assertFalse(retry.isCompleted)
         t.setup(watchA, Any())
         assertTrue(retry.await())
@@ -261,9 +316,15 @@ class WatchConnectCoordinatorTest {
     @Test fun `response timeout fails work and releases session serialization`() = scenario {
         val t = Transport(this)
         val ready = t.connectReady(watchA)
-        val failed = runCatching {
-            t.coordinator.withSession(ready) { check -> t.api.guardWrites(check, responseTimeoutMs = 100).getSettings() }
+        val work = async {
+            runCatching {
+                t.coordinator.withSession(ready) { check -> t.api.guardWrites(check, responseTimeoutMs = 100).getSettings() }
+            }
         }
+        t.readStarted.await()
+        advanceTimeBy(100)
+        runCurrent()
+        val failed = work.await()
         assertTrue(failed.exceptionOrNull() is WatchResponseTimeoutException)
         assertTrue(t.readCancelled)
         t.response.complete(Settings())
@@ -276,8 +337,14 @@ class WatchConnectCoordinatorTest {
         val ready = t.connectReady(watchA)
         val read = t.stuckRead(ready)
         var ran = false
-        val queued = async { runCatching { t.coordinator.withSession(ready) { ran = true } } }
-        yield()
+        val queuedStarted = CompletableDeferred<Unit>()
+        val queued = async {
+            queuedStarted.complete(Unit)
+            runCatching { t.coordinator.withSession(ready) { ran = true } }
+        }
+        queuedStarted.await()
+        runCurrent()
+        assertFalse(queued.isCompleted)
         t.coordinator.disconnect()
         assertTrue(read.await().isFailure)
         assertTrue(queued.await().isFailure)
@@ -298,6 +365,21 @@ class WatchConnectCoordinatorTest {
         assertEquals(2, t.initCalls)
         assertEquals(listOf(old.generation, ready.generation), t.initializationEvents)
         assertTrue(runCatching { t.coordinator.withSession(old) {} }.isFailure)
+    }
+
+    @Test fun `observed disconnected transport permits same device reconnect without raw down event`() = scenario {
+        val t = Transport(this)
+        val device = Any()
+        val old = t.connectReady(watchA, device)
+        val work = t.stuckRead(old)
+        t.connected = false
+        t.handler.observeTransport(t.connected, old)
+        t.connected = true
+        val ready = t.setup(watchA, device)!!
+        assertTrue(work.await().isFailure)
+        assertTrue(ready.generation > old.generation)
+        assertEquals(2, t.initCalls)
+        assertEquals(1, t.uiDisconnects)
     }
 
     @Test fun `delayed disconnect after transport reconnect with same device initializes fresh generation`() = scenario {
@@ -369,7 +451,11 @@ class WatchConnectCoordinatorTest {
     @Test fun `detached start after timeout is closed when setup arrives Disconnected`() = scenario {
         val t = Transport(this)
         t.startGate = CompletableDeferred()
-        assertFalse(t.coordinator.connect(watchA, timeoutMs = 1_000))
+        val attempt = async { t.coordinator.connect(watchA, timeoutMs = 1_000) }
+        t.attemptStarted.await()
+        advanceTimeBy(1_000)
+        runCurrent()
+        assertFalse(attempt.await())
         assertNull(t.pending)
         assertEquals(1, t.closes)
         t.startGate.complete(Unit)
@@ -468,12 +554,17 @@ class WatchConnectCoordinatorTest {
         val ready = t.connectReady(watchA)
         var dirty = true
         t.afterWrite = { t.connected = false; t.session.ended(ready) }
-        runCatching {
-            t.coordinator.withSession(ready) { check ->
-                reconcileConnectedSettings(t.api, check, Settings(), dirty,
-                    save = { error("Unexpected read") }, clearDirty = { dirty = false })
+        val work = async {
+            runCatching {
+                t.coordinator.withSession(ready) { check ->
+                    reconcileConnectedSettings(t.api, check, Settings(), dirty,
+                        save = { error("Unexpected read") }, clearDirty = { dirty = false })
+                }
             }
         }
+        t.writeQueued.await()
+        runCurrent()
+        assertTrue(work.await().isFailure)
         assertTrue(dirty)
         assertEquals(1, t.uiDisconnects)
     }
@@ -523,6 +614,200 @@ class WatchConnectCoordinatorTest {
         guard.runApi(old, t.api) { api, _ -> api.setSettings(Settings()) }
         assertEquals(1, refused)
         assertTrue(t.settingsDelivered.isEmpty())
+    }
+
+    @Test fun `settings responses each get a full timeout despite ten seconds total`() = scenario {
+        val t = Transport(this)
+        val ready = t.connectReady(watchA)
+        t.response.complete(Settings())
+        t.responseDelayMs = 5_000
+        t.adjustmentDelayMs = 5_000
+        val work = async { t.coordinator.withSession(ready) { check -> t.api.guardWrites(check).getSettings() } }
+        advanceUntilIdle()
+        assertTrue(work.await().timeAdjustment)
+        assertEquals(42, work.await().adjustmentTimeMinutes)
+        assertEquals(10_000L, testScheduler.currentTime)
+    }
+
+    @Test fun `slow second settings response times out individually and leaves transport connected`() = scenario {
+        val t = Transport(this)
+        val ready = t.connectReady(watchA)
+        t.response.complete(Settings())
+        t.responseDelayMs = 5_000
+        t.adjustmentDelayMs = 9_000
+        val work = async {
+            runCatching { t.coordinator.withSession(ready) { check -> t.api.guardWrites(check).getSettings() } }
+        }
+        advanceUntilIdle()
+        assertTrue(work.await().exceptionOrNull() is WatchResponseTimeoutException)
+        assertEquals(13_000L, testScheduler.currentTime)
+        assertTrue(t.connected)
+        assertEquals(ready, t.session.ready)
+        assertEquals(0, t.closes)
+    }
+
+    @Test fun `opaque initialization and alarms allow two response budgets`() = scenario {
+        val t = Transport(this)
+        val ready = t.connectReady(watchA)
+        t.opaqueDelayMs = 10_000
+        val work = async {
+            t.coordinator.withSession(ready) { check ->
+                val api = t.api.guardWrites(check)
+                assertTrue(api.init())
+                api.getAlarms()
+            }
+        }
+        advanceUntilIdle()
+        assertTrue(work.await().isEmpty())
+        assertEquals(20_000L, testScheduler.currentTime)
+    }
+
+    @Test fun `opaque alarm timeout releases work without ending session`() = scenario {
+        val t = Transport(this)
+        val ready = t.connectReady(watchA)
+        t.opaqueDelayMs = WATCH_ALARMS_TIMEOUT_MS + 1
+        val work = async {
+            runCatching { t.coordinator.withSession(ready) { check -> t.api.guardWrites(check).getAlarms() } }
+        }
+        advanceTimeBy(WATCH_ALARMS_TIMEOUT_MS)
+        runCurrent()
+        assertTrue(work.await().exceptionOrNull() is WatchResponseTimeoutException)
+        assertEquals(ready, t.session.ready)
+    }
+
+    @Test fun `each of five reminders gets its own two response budget`() = scenario {
+        val t = Transport(this)
+        val ready = t.connectReady(watchA)
+        t.opaqueDelayMs = 10_000
+        val work = async { t.coordinator.withSession(ready) { check -> t.api.guardWrites(check).getEventsFromWatch() } }
+        advanceUntilIdle()
+        assertEquals(5, work.await().size)
+        assertEquals(50_000L, testScheduler.currentTime)
+    }
+
+    @Test fun `opaque set time allows all fourteen internal responses`() = scenario {
+        val t = Transport(this)
+        val ready = t.connectReady(watchA)
+        t.opaqueDelayMs = 14 * 7_000L
+        val work = async {
+            t.coordinator.withSession(ready) { check -> t.api.guardWrites(check).setTime("Europe/Warsaw", 0L) }
+        }
+        advanceUntilIdle()
+        work.await()
+        assertEquals(98_000L, testScheduler.currentTime)
+        t.opaqueDelayMs = WATCH_TIME_TIMEOUT_MS + 1
+        val timeout = async {
+            runCatching { t.coordinator.withSession(ready) { check -> t.api.guardWrites(check).setTime("Europe/Warsaw", 0L) } }
+        }
+        advanceUntilIdle()
+        assertTrue(timeout.await().exceptionOrNull() is WatchResponseTimeoutException)
+    }
+
+    @Test fun `time priming bounds each exposed read independently`() = scenario {
+        val t = Transport(this)
+        val ready = t.connectReady(watchA)
+        val oldDstCount = WatchInfo.dstCount
+        val oldCitiesCount = WatchInfo.worldCitiesCount
+        val oldHasCities = WatchInfo.hasWorldCities
+        try {
+            WatchInfo.dstCount = 3
+            WatchInfo.worldCitiesCount = 6
+            WatchInfo.hasWorldCities = true
+            t.responseDelayMs = 5_000
+            val work = async { t.coordinator.withSession(ready) { check -> t.api.guardWrites(check).primeTimeCache() } }
+            advanceUntilIdle()
+            work.await()
+            assertEquals(14, t.publicReads.size)
+            assertEquals(70_000L, testScheduler.currentTime)
+        } finally {
+            WatchInfo.dstCount = oldDstCount
+            WatchInfo.worldCitiesCount = oldCitiesCount
+            WatchInfo.hasWorldCities = oldHasCities
+        }
+    }
+
+    @Test fun `multithreaded coordinator disconnect cancels active and queued work without waiting`() = scenario {
+        withContext(Dispatchers.Default) {
+            val connected = AtomicBoolean(true)
+            val closes = AtomicInteger()
+            val session = WatchConnectionSession()
+            val api = Proxy.newProxyInstance(
+                IGShockAPI::class.java.classLoader,
+                arrayOf(IGShockAPI::class.java),
+            ) { _, method, _ ->
+                when (method.name) {
+                    "isConnected" -> connected.get()
+                    "disconnect" -> { connected.set(false); closes.incrementAndGet(); Unit }
+                    else -> error("Unexpected API call: ${method.name}")
+                }
+            } as IGShockAPI
+            val coordinator = WatchConnectCoordinator(api, session)
+            session.begin(session.state.value, watchA)
+            val ready = coordinator.connectionEvents.setup(watchA, Any())!!
+            val activeStarted = CompletableDeferred<Unit>()
+            val queuedStarted = CompletableDeferred<Unit>()
+            val queuedRan = AtomicBoolean()
+            coroutineScope {
+                val active = async {
+                    runCatching {
+                        coordinator.withSession(ready) {
+                            activeStarted.complete(Unit)
+                            awaitCancellation()
+                        }
+                    }
+                }
+                activeStarted.await()
+                val queued = async {
+                    queuedStarted.complete(Unit)
+                    runCatching { coordinator.withSession(ready) { queuedRan.set(true) } }
+                }
+                queuedStarted.await()
+                coordinator.disconnect()
+                assertTrue(active.await().isFailure)
+                assertTrue(queued.await().isFailure)
+                assertFalse(queuedRan.get())
+                assertEquals(1, closes.get())
+                assertNull(session.ready)
+            }
+        }
+    }
+
+    @Test fun `multithreaded setup and delayed down race end old generation exactly once`() = scenario {
+        withContext(Dispatchers.Default) {
+            repeat(100) {
+                val session = WatchConnectionSession()
+                val events = WatchConnectionEvents(session)
+                val device = Any()
+                session.begin(session.state.value, watchA)
+                val old = events.setup(watchA, device)!!
+                val ends = AtomicInteger()
+                session.onEnded { ends.incrementAndGet() }
+                val start = CompletableDeferred<Unit>()
+                val setupStarted = CompletableDeferred<Unit>()
+                val downStarted = CompletableDeferred<Unit>()
+                coroutineScope {
+                    val setup = async(Dispatchers.Default) {
+                        setupStarted.complete(Unit)
+                        start.await()
+                        events.setup(watchA, device)!!
+                    }
+                    val down = async(Dispatchers.Default) {
+                        downStarted.complete(Unit)
+                        start.await()
+                        events.disconnect(old, transportConnected = true)
+                    }
+                    setupStarted.await()
+                    downStarted.await()
+                    start.complete(Unit)
+                    val ready = setup.await()
+                    down.await()
+                    assertTrue(ready.generation > old.generation)
+                    assertEquals(ready, session.ready)
+                    assertEquals(1, ends.get())
+                    assertTrue(events.needsInitialization)
+                }
+            }
+        }
     }
 
     @Test fun `presence request for B preserves A and normalized A reuses session`() = scenario {
