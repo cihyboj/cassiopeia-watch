@@ -238,21 +238,6 @@ fun PreConnectionScreen(
                         val (connectionSpinner, infoButton, pairButton, deviceList) = createRefs()
 
                         WatchScreen(
-                            imageResId =
-                                when {
-                                    "GA" in watchName || "GMA" in watchName ->
-                                        R.drawable.ga_b2100
-
-                                    "GW" in watchName || "GMW" in watchName ->
-                                        R.drawable.gw_b5600
-
-                                    "DW-H5600" in watchName -> R.drawable.dw_h5600
-                                    "DW" in watchName || "DMW" in watchName ->
-                                        R.drawable.dw_b5600
-
-                                    "ECB" in watchName -> R.drawable.ecb_30d
-                                    else -> R.drawable.gw_b5600
-                                },
                             isAlwaysConnected = "DW-H5600" in watchName || "ECB" in watchName
                         )
 
@@ -475,12 +460,12 @@ fun PairButton(modifier: Modifier = Modifier, onClick: () -> Unit, isFlashing: B
 }
 
 @Composable
-fun WatchScreen(imageResId: Int, isAlwaysConnected: Boolean) {
+fun WatchScreen(isAlwaysConnected: Boolean) {
     Box {
         if (isAlwaysConnected) {
-            WatchImageWithOverlayAlwaysConnected(Modifier, imageResId)
+            WatchImageWithOverlayAlwaysConnected(Modifier)
         } else {
-            WatchImageWithOverlay(Modifier, imageResId, 0.55f)
+            WatchImageWithOverlay(Modifier)
         }
     }
 }
