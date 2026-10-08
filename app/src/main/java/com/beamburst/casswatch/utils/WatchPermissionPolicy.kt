@@ -1,9 +1,12 @@
 package com.beamburst.casswatch.utils
 
 import android.Manifest
+import android.annotation.SuppressLint
 
 internal enum class WatchPermissionDecision { GRANTED, RETRY, SETTINGS }
 
+// These are inlined permission names, selected using the caller-provided SDK version.
+@SuppressLint("InlinedApi")
 internal fun essentialWatchPermissions(sdkInt: Int): List<String> = when {
     sdkInt >= 31 -> listOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
     sdkInt >= 29 -> listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -24,6 +27,7 @@ internal fun watchPermissionDecision(
 }
 
 // Offer notifications with initial watch setup, but never retry or gate setup on them.
+@SuppressLint("InlinedApi")
 internal fun initialWatchPermissionRequest(sdkInt: Int, grants: Map<String, Boolean>): List<String> {
     val required = essentialWatchPermissions(sdkInt)
     if (required.all { grants[it] == true }) return emptyList()
