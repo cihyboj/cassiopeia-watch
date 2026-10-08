@@ -172,7 +172,7 @@ class WatchConnectCoordinatorTest {
         private suspend fun initialize() {
             initCalls++
             delay(opaqueDelayMs)
-            session.ready?.let { initializationEvents += it.generation }
+            session.ready?.let { initializationEvents += it.generation; session.initializationCompleted(it) }
         }
 
         suspend fun awaitAttempt(address: String) {
@@ -211,6 +211,26 @@ class WatchConnectCoordinatorTest {
             readStarted.await()
             return work
         }
+    }
+
+    @Test fun `screen reads wait for actual initialization rather than setup`() = scenario {
+        val t = Transport(this)
+        val selected = { watchA }
+        val guard = WatchWriteGuard(selected, t.session, t.coordinator) {}
+        val connection = async { t.coordinator.connect(watchA) }
+        t.awaitAttempt(watchA)
+        t.connected = true
+        val ready = t.setup(watchA, Any())!!
+        assertNull(guard.capture())
+        var screenRead = false
+        val read = async { guard.readApi(ready, t.api) { _, _ -> screenRead = true } }
+        runCurrent()
+        assertFalse(screenRead)
+        t.initialization.complete(Unit)
+        assertTrue(connection.await())
+        read.await()
+        assertTrue(screenRead)
+        assertEquals(ready, guard.capture())
     }
 
     @Test fun `CONNECTED before identity retry awaits readiness`() = scenario {
