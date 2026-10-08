@@ -14,6 +14,8 @@ concurrency:
 
 jobs:
   validate:
+    # Deleting a tag also fires a push event.
+    if: ${{ !github.event.deleted }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tag
@@ -68,6 +70,37 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
 
+      - name: Refuse duplicate or published releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh api --paginate --slurp "repos/$GH_REPO/releases" > "$RUNNER_TEMP/releases.json"
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          pages = json.loads((Path(os.environ['RUNNER_TEMP']) / 'releases.json').read_text())
+          matches = [release for page in pages for release in page if release['tag_name'] == os.environ['TAG']]
+          if any(not release['draft'] for release in matches):
+              raise SystemExit('Refusing to overwrite a published release')
+          if matches:
+              raise SystemExit('A draft already exists for this tag; refusing to create a duplicate')
+          PY
+
+      - name: Verify the tag still points at this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          # A tag moved after this run started must not get a release built from another commit.
+          # The API resolves annotated tags to their commit; the checkout keeps no credentials.
+          REMOTE=$(gh api "repos/$GH_REPO/commits/tags/$TAG" --jq .sha)
+          [ "$REMOTE" = "$(git rev-parse HEAD)" ] || { echo 'Tag no longer points at the validated commit'; exit 1; }
+
       - name: Decode and verify keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -115,25 +148,16 @@ jobs:
             cp THIRD_PARTY_NOTICES.md dist/
           fi
 
-      - name: Refuse duplicate or published releases
+      - name: Re-verify the tag before creating the release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
         run: |
-          gh api --paginate --slurp "repos/$GH_REPO/releases" > "$RUNNER_TEMP/releases.json"
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          pages = json.loads((Path(os.environ['RUNNER_TEMP']) / 'releases.json').read_text())
-          matches = [release for page in pages for release in page if release['tag_name'] == os.environ['TAG']]
-          if any(not release['draft'] for release in matches):
-              raise SystemExit('Refusing to overwrite a published release')
-          if matches:
-              raise SystemExit('A draft already exists for this tag; refusing to create a duplicate')
-          PY
+          # A tag moved after this run started must not get a release built from another commit.
+          # The API resolves annotated tags to their commit; the checkout keeps no credentials.
+          REMOTE=$(gh api "repos/$GH_REPO/commits/tags/$TAG" --jq .sha)
+          [ "$REMOTE" = "$(git rev-parse HEAD)" ] || { echo 'Tag no longer points at the validated commit'; exit 1; }
 
       - name: Create draft prerelease and upload assets
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2

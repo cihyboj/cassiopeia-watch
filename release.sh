@@ -54,12 +54,31 @@ if [ "$VERSION_CODE" -le "$PREVIOUS_CODE" ]; then
     exit 1
 fi
 
-RELEASE_BRANCH="release/v$VERSION_NAME"
-git switch --no-track -c "$RELEASE_BRANCH" origin/main
-if [ ! -s RELEASE_NOTES_NEXT.md ]; then
-    echo "❌ RELEASE_NOTES_NEXT.md must contain the release notes on main."
+# Check everything that can be checked before creating the branch, so a failed
+# precondition leaves nothing to clean up.
+if [ -z "$(git show origin/main:RELEASE_NOTES_NEXT.md 2>/dev/null)" ]; then
+    echo "❌ RELEASE_NOTES_NEXT.md must contain the release notes on origin/main."
     exit 1
 fi
+RELEASE_BRANCH="release/v$VERSION_NAME"
+if git show-ref --verify --quiet "refs/heads/$RELEASE_BRANCH" ||
+    [ -n "$(git ls-remote --heads origin "$RELEASE_BRANCH")" ]; then
+    echo "❌ Branch $RELEASE_BRANCH already exists locally or on origin."
+    echo "   A previous run stopped partway. Either finish it by hand (push the branch,"
+    echo "   open the PR) or delete it and start again:"
+    echo "     git branch -D $RELEASE_BRANCH; git push origin --delete $RELEASE_BRANCH"
+    exit 1
+fi
+START_REF=$(git symbolic-ref --quiet --short HEAD || git rev-parse HEAD)
+git switch --no-track -c "$RELEASE_BRANCH" origin/main
+
+# From here on a failure leaves the release branch checked out; say how to recover.
+on_failure() {
+    echo "❌ Release preparation stopped on branch $RELEASE_BRANCH."
+    echo "   To start over: git restore --staged --worktree . && git switch $START_REF && git branch -D $RELEASE_BRANCH"
+    echo "   If the branch was already pushed: git push origin --delete $RELEASE_BRANCH"
+}
+trap on_failure ERR
 
 echo "🚀 Preparing release for version $VERSION_NAME (Code: $VERSION_CODE)..."
 echo "🧪 Running tests and lint..."
@@ -85,6 +104,7 @@ git push --set-upstream origin "$RELEASE_BRANCH"
 gh pr create --base main --head "$RELEASE_BRANCH" \
     --title "Prepare release v$VERSION_NAME" --body-file RELEASE_NOTES_NEXT.md
 
+trap - ERR
 echo "✅ Release PR prepared. After merging, verify main's versionName is $VERSION_NAME, then run:"
 printf 'git fetch origin main && git tag -a "v%s" origin/main -m "Release v%s" && git push origin "refs/tags/v%s"\n' \
     "$VERSION_NAME" "$VERSION_NAME" "$VERSION_NAME"
