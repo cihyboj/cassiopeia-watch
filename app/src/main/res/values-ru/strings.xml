@@ -219,4 +219,12 @@
     <string name="phone_alarm_handoff_limits">Запросы отправлены приложению часов; создание будильников не подтверждено. Одноразовый будильник не содержит даты, и это приложение не может отменить его после передачи.</string>
     <string name="watch_permission_explanation">Для связи с часами нужен доступ к Bluetooth. На Android 10–11 разрешите доступ к местоположению для поиска Bluetooth.</string>
     <string name="sync_notifications_blocked">Уведомления автосинхронизации включены, но Android их блокирует. Разрешите уведомления приложения и канал синхронизации в настройках.</string>
+    <string name="alarm_fallback_channel">Восстановление будильников телефона</string>
+    <string name="alarm_fallback_title">Проверьте будильник телефона</string>
+    <string name="alarm_fallback_failed">Запрос будильника не удался. Откройте часы и установите будильник вручную.</string>
+    <string name="alarm_fallback_requested">Будильник запрошен; создание не подтверждено. Проверьте его в приложении часов.</string>
+    <string name="alarm_fallback_open_clock">Открыть часы</string>
+    <string name="alarm_fallback_unlock_limits">После перезагрузки телефона резервные будильники возобновляются только после первой разблокировки.</string>
+    <string name="alarm_one_time_watch_limits">Часы сохраняют одноразовый будильник как ежедневный. После звонка он продолжает звонить каждый день до новой синхронизации или отключения на часах.</string>
+    <string name="alarm_fallback_unconfirmed">Создание будильника не подтверждено. Проверьте или установите его вручную в приложении часов.</string>
 </resources>

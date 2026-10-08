@@ -55,7 +55,11 @@ internal fun reconcileAlarmState(state: AlarmState, clock: Clock, zone: ZoneId):
             if (dated.occurrence()!!.isElapsed(clock, zone)) dated.copy(firedAt = clock.millis()) else dated
         }
     }
-    return state.copy(alarms = alarms, dirty = state.dirty || alarms != state.alarms)
+    val payloads = state.watchPayloads.filterValues {
+        it.zoneId == zone.id && it.utcOffsetSeconds == zone.rules.getOffset(clock.instant()).totalSeconds
+    }
+    return state.copy(alarms = alarms, dirty = state.dirty || alarms != state.alarms, watchPayloads = payloads,
+        clockNeedsSync = state.clockNeedsSync || payloads.size != state.watchPayloads.size)
 }
 
 internal fun editAlarmState(
@@ -85,14 +89,19 @@ internal fun editAlarmState(
         fallbackAttemptAt = if (previous.hour == edited.hour && previous.minute == edited.minute && state.days[slot] == days)
             previous.fallbackAttemptAt else null,
     )
-    return state.copy(alarms = state.alarms.mapIndexed { index, old -> if (index == slot) alarm else old },
+    val withStatus = if (alarm.fallbackAttemptAt != previous.fallbackAttemptAt || rearm || !alarm.enabled ||
+        previous.hour != edited.hour || previous.minute != edited.minute || state.days[slot] != days) {
+        alarm.copy(fallbackStatus = null, fallbackStatusAt = null)
+    } else alarm.copy(fallbackStatus = previous.fallbackStatus, fallbackStatusAt = previous.fallbackStatusAt)
+    return state.copy(alarms = state.alarms.mapIndexed { index, old -> if (index == slot) withStatus else old },
         days = state.days + (slot to days), dirty = true)
 }
 
 internal fun nextAlarmOccurrence(alarm: AlarmSyncStorage.StoredAlarm, days: Set<java.time.DayOfWeek>, clock: Clock, zone: ZoneId): Instant? {
     if (!alarm.enabled || alarm.firedAt != null) return null
     if (days.isEmpty()) return alarm.occurrence()?.resolveInstant(zone)?.takeIf { it.isAfter(clock.instant()) }
-    val after = maxOf(clock.instant(), alarm.fallbackAttemptAt?.let(Instant::ofEpochMilli) ?: Instant.MIN)
+    val resolvedAttempt = if (alarm.fallbackStatus in setOf("requested", "failed")) alarm.fallbackStatusAt else null
+    val after = maxOf(clock.instant(), (alarm.fallbackAttemptAt ?: resolvedAttempt)?.let(Instant::ofEpochMilli) ?: Instant.MIN)
     val date = LocalDateTime.ofInstant(after, zone).toLocalDate()
     return (0L..7L).map { date.plusDays(it).atTime(LocalTime.of(alarm.hour, alarm.minute)) }
         .firstOrNull { it.dayOfWeek in days && it.atZone(zone).toInstant().isAfter(after) }
@@ -101,10 +110,14 @@ internal fun nextAlarmOccurrence(alarm: AlarmSyncStorage.StoredAlarm, days: Set<
 
 /** A successful write cannot acknowledge an edit made while BLE was in flight. Consumption stays persisted. */
 internal fun alarmStateAfterSuccessfulSync(current: AlarmState, sent: AlarmState): AlarmState =
-    if (current == sent) current.copy(dirty = false) else current
+    if (current.copy(watchPayloads = sent.watchPayloads) == sent) current.copy(dirty = false) else current
 
 internal fun alarmIsArmed(enabled: Boolean, firedAt: Long?): Boolean = enabled && firedAt == null
 
 /** The effective time may differ from the draft during a DST gap. Storage remains wall-clock based. */
 internal fun alarmTimeAtOccurrence(instant: Long, zone: ZoneId): LocalTime =
     Instant.ofEpochMilli(instant).atZone(zone).toLocalTime()
+
+/** An alarm-only write cannot repair a clock/zone change on a disconnected watch. */
+internal fun alarmStateAfterPhoneClockChange(state: AlarmState): AlarmState =
+    state.copy(watchPayloads = emptyMap(), clockNeedsSync = true)

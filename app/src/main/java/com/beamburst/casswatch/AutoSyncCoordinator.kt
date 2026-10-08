@@ -17,7 +17,7 @@ import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.services.NotificationProvider
 import com.beamburst.casswatch.ui.alarms.HourlySignalEvaluator
-import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
+import com.beamburst.casswatch.ui.alarms.applyReconciledHourlySignal
 import com.beamburst.casswatch.ui.events.CalendarEvents
 import com.beamburst.casswatch.ui.events.EventsModel
 import com.beamburst.casswatch.utils.LocalDataStorage
@@ -108,7 +108,8 @@ class AutoSyncCoordinator @Inject constructor(
                     val now = LocalDateTime.now()
                     val target = HourlySignalEvaluator.shouldChimeAt(now, signalSettings)
                     checkSession()
-                    applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, now)
+                    applyReconciledHourlySignal(context, api.guardWrites(checkSession), ready,
+                        signalSettings, now, trigger) { confirmWatchWrite(checkSession) }
                     kinds += SyncKind.HOURLY_SIGNAL
                     recordedHourlyTarget = target
                 }.onFailure {

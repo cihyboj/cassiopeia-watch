@@ -220,4 +220,12 @@
     <string name="phone_alarm_handoff_limits">Заявките са изпратени до приложението за часовник; създаването на аларми не е потвърдено. Еднократната аларма няма дата и това приложение не може да я отмени след предаването.</string>
     <string name="watch_permission_explanation">За връзка с часовника е нужен достъп до Bluetooth. При Android 10–11 разрешете местоположението за Bluetooth сканиране.</string>
     <string name="sync_notifications_blocked">Известията за автоматична синхронизация са включени, но Android ги блокира. Разрешете известията на приложението и канала за синхронизация в настройките.</string>
+    <string name="alarm_fallback_channel">Възстановяване на алармите на телефона</string>
+    <string name="alarm_fallback_title">Проверете алармата на телефона</string>
+    <string name="alarm_fallback_failed">Заявката за аларма е неуспешна. Отворете часовника и настройте алармата ръчно.</string>
+    <string name="alarm_fallback_requested">Изпратена е заявка за аларма; създаването не е потвърдено. Проверете в часовника.</string>
+    <string name="alarm_fallback_open_clock">Отвори часовника</string>
+    <string name="alarm_fallback_unlock_limits">След рестартиране на телефона резервните аларми работят едва след първото отключване.</string>
+    <string name="alarm_one_time_watch_limits">Часовникът записва еднократната аларма като ежедневна. След звънене тя продължава всеки ден до нова синхронизация или изключване на часовника.</string>
+    <string name="alarm_fallback_unconfirmed">Създаването на алармата не е потвърдено. Проверете или я настройте ръчно в часовника.</string>
 </resources>

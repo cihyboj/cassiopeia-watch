@@ -220,4 +220,12 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="phone_alarm_handoff_limits">Solicitudes enviadas a la app de reloj; la creación de alarmas no está confirmada. Una alarma única no tiene fecha y esta app no puede cancelarla tras enviarla.</string>
     <string name="watch_permission_explanation">Se necesita acceso a Bluetooth para comunicarse con el reloj. En Android 10–11, permite la ubicación para buscar dispositivos Bluetooth.</string>
     <string name="sync_notifications_blocked">Las notificaciones de sincronización automática están activadas, pero Android las bloquea. Permite las notificaciones de la app y el canal de sincronización en Ajustes.</string>
+    <string name="alarm_fallback_channel">Recuperación de alarmas del teléfono</string>
+    <string name="alarm_fallback_title">Comprueba la alarma del teléfono</string>
+    <string name="alarm_fallback_failed">La solicitud de alarma falló. Abre la app de reloj para configurar la alarma manualmente.</string>
+    <string name="alarm_fallback_requested">Se solicitó una alarma; su creación no está confirmada. Compruébala en la app de reloj.</string>
+    <string name="alarm_fallback_open_clock">Abrir reloj</string>
+    <string name="alarm_fallback_unlock_limits">Tras reiniciar el teléfono, las alarmas de respaldo se reanudan después del primer desbloqueo.</string>
+    <string name="alarm_one_time_watch_limits">El reloj guarda la alarma única como diaria. Tras sonar, seguirá sonando a diario hasta otra sincronización o hasta que la desactives en el reloj.</string>
+    <string name="alarm_fallback_unconfirmed">La creación de la alarma no está confirmada. Compruébala o configúrala manualmente en la app de reloj.</string>
 </resources>

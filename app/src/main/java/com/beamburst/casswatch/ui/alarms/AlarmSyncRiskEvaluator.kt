@@ -1,6 +1,5 @@
 package com.beamburst.casswatch.ui.alarms
 
-import com.beamburst.casswatch.data.local.SyncEntry
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDateTime
@@ -18,14 +17,14 @@ object AlarmSyncRiskEvaluator {
         key: AlarmKey,
         alarm: AlarmSyncStorage.StoredAlarm,
         alarmDays: Set<DayOfWeek>,
-        history: List<SyncEntry>,
+        payloads: Map<Int, WatchAlarmPayload>,
         clock: Clock,
         zone: ZoneId,
         autoSyncEnabled: Boolean,
         adjustmentTimeMinutes: Int,
     ): AlarmSyncRisk? {
         val instant = nextAlarmOccurrence(alarm, alarmDays, clock, zone) ?: return null
-        if (watchHasOccurrence(key, alarm, instant.toEpochMilli(), history, clock.millis(), zone)) return null
+        if (watchHasOccurrence(key, alarm, instant.toEpochMilli(), payloads, clock.millis(), zone)) return null
         val now = LocalDateTime.ofInstant(clock.instant(), zone)
         // A future auto-sync is a useful display hint, never evidence that the watch has this alarm.
         return AlarmSyncRisk(LocalDateTime.ofInstant(instant, zone),

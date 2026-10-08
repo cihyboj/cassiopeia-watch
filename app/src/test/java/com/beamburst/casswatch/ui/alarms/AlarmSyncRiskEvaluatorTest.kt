@@ -15,12 +15,11 @@ class AlarmSyncRiskEvaluatorTest {
     private val address = "AA:BB:CC:DD:EE:01"
     private val zone = ZoneId.of("UTC")
     private val clock = Clock.fixed(Instant.parse("2026-05-06T10:00:00Z"), zone)
-    private fun evaluate(hour: Int = 12, minute: Int = 10, slot: Int = 0, history: List<SyncEntry> = emptyList(), auto: Boolean = true) =
+    private fun evaluate(hour: Int = 12, minute: Int = 10, slot: Int = 0, payloads: Map<Int, WatchAlarmPayload> = emptyMap(), auto: Boolean = true) =
         AlarmSyncRiskEvaluator.evaluate(AlarmKey(address, slot), AlarmSyncStorage.StoredAlarm(hour, minute, true, false, "Lunch"),
-            AlarmSchedulePlanner.AllDays, history, clock, zone, auto, 30)
-    private fun success(address: String = this.address, hashes: List<String> = listOf("12:10:true")) = SyncEntry(
-        clock.millis() - 1000, address, SyncTrigger.MANUAL_SEND_ALARMS, setOf(SyncKind.ALARMS), true, errorMessage = null,
-        details = SyncDetails.Empty.copy(alarmHashes = hashes))
+            AlarmSchedulePlanner.AllDays, payloads, clock, zone, auto, 30)
+    private fun payload(address: String = this.address, hour: Int = 12, minute: Int = 10) =
+        WatchAlarmPayload(address, hour, minute, true, true, zone.id, 0, clock.millis() - 1000)
 
     @Test fun `warns before auto sync`() {
         val risk = evaluate()
@@ -32,15 +31,15 @@ class AlarmSyncRiskEvaluatorTest {
         assertNotNull(evaluate(12, 30))
     }
     @Test fun `actual successful sync in same watch and slot suppresses fallback`() {
-        assertNull(evaluate(history = listOf(success())))
+        assertNull(evaluate(payloads = mapOf(0 to payload())))
     }
     @Test fun `same hash in another slot or watch does not suppress fallback`() {
-        assertNotNull(evaluate(slot = 1, history = listOf(success())))
-        assertNotNull(evaluate(history = listOf(success("AA:BB:CC:DD:EE:02"))))
+        assertNotNull(evaluate(slot = 1, payloads = mapOf(0 to payload())))
+        assertNotNull(evaluate(payloads = mapOf(0 to payload("AA:BB:CC:DD:EE:02"))))
     }
     @Test fun `failed sync and future record do not suppress fallback`() {
-        assertNotNull(evaluate(history = listOf(success().copy(success = false))))
-        assertNotNull(evaluate(history = listOf(success().copy(timestamp = clock.millis() + 1000))))
+        assertNotNull(evaluate(payloads = emptyMap()))
+        assertNotNull(evaluate(payloads = mapOf(0 to payload().copy(syncedAt = clock.millis() + 1000))))
     }
     @Test fun `automatic sync disabled has no prediction`() {
         assertNull(evaluate(auto = false)?.nextAutoSyncAt)
@@ -50,9 +49,9 @@ class AlarmSyncRiskEvaluatorTest {
         val warsaw = ZoneId.of("Europe/Warsaw")
         val beforeGap = Clock.fixed(Instant.parse("2026-03-28T23:00:00Z"), warsaw)
         val draft = AlarmSyncStorage.StoredAlarm(2, 30, true, false, "Gap", oneShotLocalDate = "2026-03-29")
-        val recorded = success(hashes = listOf("03:30:true")).copy(timestamp = beforeGap.millis() - 1000)
-        assertNull(AlarmSyncRiskEvaluator.evaluate(AlarmKey(address, 0), draft, emptySet(), listOf(recorded), beforeGap, warsaw, false, 0))
+        val recorded = payload(hour = 3, minute = 30).copy(zoneId = warsaw.id, utcOffsetSeconds = 7200, syncedAt = beforeGap.millis() - 1000)
+        assertNull(AlarmSyncRiskEvaluator.evaluate(AlarmKey(address, 0), draft, emptySet(), mapOf(0 to recorded), beforeGap, warsaw, false, 0))
         assertNotNull(AlarmSyncRiskEvaluator.evaluate(AlarmKey(address, 0), draft, emptySet(),
-            listOf(recorded.copy(details = recorded.details.copy(alarmHashes = listOf("02:30:true")))), beforeGap, warsaw, false, 0))
+            mapOf(0 to recorded.copy(hour = 2)), beforeGap, warsaw, false, 0))
     }
 }

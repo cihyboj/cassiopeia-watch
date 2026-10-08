@@ -65,25 +65,31 @@ fun AlarmList(alarmViewModel: AlarmViewModel = hiltViewModel()) {
     val alarmDays by alarmViewModel.alarmDays.collectAsState()
     val firedAts by alarmViewModel.firedAts.collectAsState()
     val syncWarnings by alarmViewModel.syncWarnings.collectAsState()
+    val fallbackStatuses by alarmViewModel.fallbackStatuses.collectAsState()
 
     Column(modifier = Modifier.fillMaxWidth()) {
         alarms.forEachIndexed { index, alarm ->
             key(index) {
                 ItemView {
-                    AlarmItem(
-                        hours = alarm.hour,
-                        minutes = alarm.minute,
-                        isAlarmEnabled = alarm.enabled,
-                        showAsEnabled = alarmIsArmed(alarm.enabled, firedAts[index]),
-                        name = alarm.name,
-                        onToggleAlarm = { isEnabled ->
-                            alarmViewModel.toggleAlarm(index, isEnabled)
-                        },
-                        onTap = { alarmViewModel.openEditor(index) },
-                        showDaySelector = true,
-                        selectedDays = alarmDays[index] ?: AlarmSchedulePlanner.AllDays,
-                        syncWarning = syncWarnings[index],
-                    )
+                    Column {
+                        AlarmItem(
+                            hours = alarm.hour,
+                            minutes = alarm.minute,
+                            isAlarmEnabled = alarm.enabled,
+                            showAsEnabled = alarmIsArmed(alarm.enabled, firedAts[index]),
+                            name = alarm.name,
+                            onToggleAlarm = { isEnabled ->
+                                alarmViewModel.toggleAlarm(index, isEnabled)
+                            },
+                            onTap = { alarmViewModel.openEditor(index) },
+                            showDaySelector = true,
+                            selectedDays = alarmDays[index] ?: AlarmSchedulePlanner.AllDays,
+                            syncWarning = listOfNotNull(syncWarnings[index], fallbackStatuses[index]).joinToString("\n").ifBlank { null },
+                        )
+                        if (fallbackStatuses[index] != null) {
+                            AppButton(text = stringResource(R.string.alarm_fallback_open_clock), onClick = alarmViewModel::openPhoneClock)
+                        }
+                    }
                 }
             }
         }
@@ -313,7 +319,12 @@ fun AlarmsScreen(
                 )
 
                 when (activeTab) {
-                    AlarmHubTab.ALARMS -> AlarmList(alarmViewModel)
+                    AlarmHubTab.ALARMS -> {
+                        AlarmList(alarmViewModel)
+                        AppText(text = stringResource(R.string.alarm_fallback_unlock_limits),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(horizontal = Spacing.lg))
+                    }
                     AlarmHubTab.TIMER -> TimerCardContent(
                         modifier = Modifier
                             .fillMaxWidth()

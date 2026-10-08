@@ -210,4 +210,12 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="phone_alarm_handoff_limits">Kérések elküldve az óraalkalmazásnak; az ébresztők létrehozása nincs megerősítve. Az egyszeri ébresztőnek nincs dátuma, és átadás után itt nem törölhető.</string>
     <string name="watch_permission_explanation">Az órával való kommunikációhoz Bluetooth-hozzáférés szükséges. Android 10–11 esetén engedélyezd a helyadatokat a Bluetooth-kereséshez.</string>
     <string name="sync_notifications_blocked">Az automatikus szinkronizálás értesítései be vannak kapcsolva, de az Android blokkolja őket. Engedélyezd az alkalmazás értesítéseit és a szinkronizálási csatornát a beállításokban.</string>
+    <string name="alarm_fallback_channel">Telefonos ébresztők helyreállítása</string>
+    <string name="alarm_fallback_title">Ellenőrizze a telefon ébresztőjét</string>
+    <string name="alarm_fallback_failed">Az ébresztőkérés sikertelen. Nyissa meg az óraalkalmazást, és állítsa be kézzel az ébresztőt.</string>
+    <string name="alarm_fallback_requested">Telefonos ébresztőt kértünk; létrehozása nincs megerősítve. Ellenőrizze az óraalkalmazásban.</string>
+    <string name="alarm_fallback_open_clock">Óra megnyitása</string>
+    <string name="alarm_fallback_unlock_limits">A telefon újraindítása után a tartalék ébresztők csak az első feloldás után működnek.</string>
+    <string name="alarm_one_time_watch_limits">Az óra az egyszeri ébresztőt napi ébresztőként tárolja. Ezután naponta csörög a következő szinkronizálásig vagy az órán történő kikapcsolásig.</string>
+    <string name="alarm_fallback_unconfirmed">Az ébresztő létrehozása nincs megerősítve. Ellenőrizze vagy állítsa be kézzel az óraalkalmazásban.</string>
 </resources>

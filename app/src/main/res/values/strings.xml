@@ -480,4 +480,12 @@
     <string name="phone_alarm_handoff_limits">Requests sent to the clock app; alarm creation is unconfirmed. A one-time alarm has no date, and this app cannot cancel it after hand-off.</string>
     <string name="watch_permission_explanation">Bluetooth access is needed to communicate with your watch. On Android 10–11, allow location access for Bluetooth scanning.</string>
     <string name="sync_notifications_blocked">Auto-sync notifications are enabled, but Android is blocking them. Allow app notifications and the sync notification channel in Settings.</string>
+    <string name="alarm_fallback_channel">Phone alarm recovery</string>
+    <string name="alarm_fallback_title">Check your phone alarm</string>
+    <string name="alarm_fallback_failed">The phone alarm request failed. Open the clock app to set the alarm manually.</string>
+    <string name="alarm_fallback_requested">A phone alarm was requested; creation is unconfirmed. Open the clock app to check it.</string>
+    <string name="alarm_fallback_open_clock">Open clock</string>
+    <string name="alarm_fallback_unlock_limits">After a phone restart, phone alarm fallbacks resume only after the first unlock.</string>
+    <string name="alarm_one_time_watch_limits">The watch stores a one-time alarm as daily. After it rings, it keeps ringing daily until the app syncs again or you turn it off on the watch.</string>
+    <string name="alarm_fallback_unconfirmed">Phone alarm creation is unconfirmed. Open the clock app to check or set it manually.</string>
 </resources>

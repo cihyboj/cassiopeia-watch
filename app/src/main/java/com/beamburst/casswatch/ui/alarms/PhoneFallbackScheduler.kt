@@ -17,6 +17,13 @@ internal enum class FallbackAvailability { SCHEDULED, UNAVAILABLE, ELAPSED }
 internal fun fallbackWakeAt(fireInstant: Long, now: Long): Long? =
     if (fireInstant <= now) null else maxOf(now, fireInstant - 5 * 60 * 1000L)
 
+internal fun fallbackIntent(context: Context, key: AlarmKey, expiry: Boolean = false) = Intent(context, PhoneFallbackReceiver::class.java).apply {
+    data = Uri.parse(if (expiry) "${key.uri}/expiry" else key.uri)
+    if (expiry) action = PhoneFallbackReceiver.ACTION_EXPIRE
+    putExtra(PhoneFallbackReceiver.EXTRA_DEVICE_ADDRESS, key.normalizedAddress)
+    putExtra(PhoneFallbackReceiver.EXTRA_ALARM_INDEX, key.slot)
+}
+
 @Singleton
 internal class PhoneFallbackScheduler @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -27,17 +34,10 @@ internal class PhoneFallbackScheduler @Inject constructor(
     fun canScheduleExactAlarms(): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
 
-    private fun intent(key: AlarmKey, expiry: Boolean = false) = Intent(context, PhoneFallbackReceiver::class.java).apply {
-        data = Uri.parse(if (expiry) "${key.uri}/expiry" else key.uri)
-        if (expiry) action = PhoneFallbackReceiver.ACTION_EXPIRE
-        putExtra(PhoneFallbackReceiver.EXTRA_DEVICE_ADDRESS, key.normalizedAddress)
-        putExtra(PhoneFallbackReceiver.EXTRA_ALARM_INDEX, key.slot)
-    }
-
     override fun schedule(key: AlarmKey, alarm: AlarmSyncStorage.StoredAlarm, instant: Long): FallbackAvailability {
         val wakeAt = fallbackWakeAt(instant, alarmTime.clock.millis()) ?: return FallbackAvailability.ELAPSED
         return attemptExactFallback(::canScheduleExactAlarms) {
-            val intent = intent(key).apply {
+            val intent = fallbackIntent(context, key).apply {
                 putExtra(PhoneFallbackReceiver.EXTRA_EXPECTED_HASH, alarmHash(alarm.hour, alarm.minute, emptySet(), true))
                 putExtra(PhoneFallbackReceiver.EXTRA_FIRE_INSTANT, instant)
             }
@@ -48,9 +48,9 @@ internal class PhoneFallbackScheduler @Inject constructor(
     }
 
     override fun expiry(key: AlarmKey, instant: Long?) {
-        cancelIntent(key.slot, intent(key, expiry = true))
+        cancelIntent(key.slot, fallbackIntent(context, key, expiry = true))
         if (instant == null) return
-        val pending = PendingIntent.getBroadcast(context, key.slot, intent(key, expiry = true),
+        val pending = PendingIntent.getBroadcast(context, key.slot, fallbackIntent(context, key, expiry = true),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         // Expiry must work without exact-alarm permission. Payload construction also checks expiry.
         alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, instant, pending)
@@ -61,7 +61,7 @@ internal class PhoneFallbackScheduler @Inject constructor(
         expiry(key, null)
     }
 
-    override fun cancelFallback(key: AlarmKey) = cancelIntent(key.slot, intent(key))
+    override fun cancelFallback(key: AlarmKey) = cancelIntent(key.slot, fallbackIntent(context, key))
 
     override fun cancelLegacy(slot: Int) = cancelIntent(slot, Intent(context, PhoneFallbackReceiver::class.java))
 

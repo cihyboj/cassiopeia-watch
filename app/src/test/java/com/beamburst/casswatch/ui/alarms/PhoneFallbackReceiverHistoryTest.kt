@@ -1,50 +1,38 @@
 package com.beamburst.casswatch.ui.alarms
 
-import com.beamburst.casswatch.data.local.SyncDetails
-import com.beamburst.casswatch.data.local.SyncEntry
-import com.beamburst.casswatch.data.local.SyncKind
-import com.beamburst.casswatch.data.local.SyncTrigger
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
+import java.time.Instant
+import java.time.ZoneId
 
 class PhoneFallbackReceiverHistoryTest {
+    private val address = "AA:BB:CC:DD:EE:01"
+    private val key = AlarmKey(address, 0)
+    private val zone = ZoneId.of("Europe/Warsaw")
+    private val now = Instant.parse("2026-10-08T12:00:00Z").toEpochMilli()
+    private val alarm = AlarmSyncStorage.StoredAlarm(7, 0, true, false, "Wake")
+    private val payload = WatchAlarmPayload(address, 7, 0, true, true, zone.id, 7200, now)
+    private fun confirms(payloads: Map<Int, WatchAlarmPayload>, date: String = "2026-10-09", zone: ZoneId = this.zone) =
+        watchHasOccurrence(key, alarm, java.time.LocalDate.parse(date).atTime(7, 0).atZone(zone).toInstant().toEpochMilli(), payloads, now, zone)
 
-    private fun syncEntry(alarmHashes: List<String>?, success: Boolean = true) = SyncEntry(
-        timestamp = 1000L,
-        deviceAddress = "AA:BB",
-        trigger = SyncTrigger.MANUAL_SEND_ALARMS,
-        kinds = setOf(SyncKind.ALARMS),
-        success = success,
-        errorMessage = null,
-        details = SyncDetails(alarmHashes = alarmHashes, eventCount = null, hourlySignalTarget = null, timeMs = null),
-    )
-
-    private fun watchTrustsAlarm(entries: List<SyncEntry>, expectedHash: String): Boolean {
-        val lastSuccess = entries.firstOrNull { it.success && SyncKind.ALARMS in it.kinds }
-        return lastSuccess?.details?.alarmHashes?.contains(expectedHash) == true
+    @Test fun `daily payload confirms tomorrow and subsequent days until superseded`() {
+        assertTrue(confirms(mapOf(0 to payload)))
+        assertTrue(confirms(mapOf(0 to payload), "2026-10-10"))
+        assertFalse(confirms(mapOf(0 to payload.copy(enabled = false))))
     }
-
-    @Test
-    fun `trusts watch when expected hash in last successful alarm sync`() {
-        val entries = listOf(syncEntry(listOf("06:30:true", "09:00:false")))
-        assertTrue(watchTrustsAlarm(entries, "06:30:true"))
+    @Test fun `another watch another slot and missing payload never confirm`() {
+        assertFalse(confirms(mapOf(0 to payload.copy(address = "AA:BB:CC:DD:EE:02"))))
+        assertFalse(confirms(mapOf(1 to payload)))
+        assertFalse(confirms(emptyMap()))
     }
-
-    @Test
-    fun `fires fallback when expected hash not in last successful sync`() {
-        val entries = listOf(syncEntry(listOf("09:00:false")))
-        assertFalse(watchTrustsAlarm(entries, "06:30:true"))
+    @Test fun `changed phone zone offset or future receipt cannot confirm`() {
+        assertFalse(confirms(mapOf(0 to payload), zone = ZoneId.of("Europe/London")))
+        assertFalse(confirms(mapOf(0 to payload.copy(utcOffsetSeconds = 3600))))
+        assertFalse(confirms(mapOf(0 to payload.copy(syncedAt = now + 1))))
     }
-
-    @Test
-    fun `fires fallback when last alarm sync was a failure`() {
-        val entries = listOf(syncEntry(listOf("06:30:true"), success = false))
-        assertFalse(watchTrustsAlarm(entries, "06:30:true"))
-    }
-
-    @Test
-    fun `fires fallback when history is empty`() {
-        assertFalse(watchTrustsAlarm(emptyList(), "06:30:true"))
+    @Test fun `changed time or non daily disabled payload cannot confirm`() {
+        assertFalse(confirms(mapOf(0 to payload.copy(hour = 8))))
+        assertFalse(confirms(mapOf(0 to payload.copy(daily = false))))
+        assertFalse(confirms(mapOf(0 to payload.copy(enabled = false))))
     }
 }

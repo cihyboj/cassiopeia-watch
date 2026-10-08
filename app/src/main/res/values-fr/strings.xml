@@ -230,4 +230,12 @@ si votre montre est en avance de 2,5 secondes par rapport à l\'heure réelle, d
     <string name="phone_alarm_handoff_limits">Demandes envoyées à l’application Horloge ; la création des alarmes n’est pas confirmée. Une alarme unique n’a pas de date et cette application ne peut plus l’annuler après transmission.</string>
     <string name="watch_permission_explanation">L’accès Bluetooth est nécessaire pour communiquer avec votre montre. Sous Android 10–11, autorisez la localisation pour la recherche Bluetooth.</string>
     <string name="sync_notifications_blocked">Les notifications de synchronisation automatique sont activées, mais Android les bloque. Autorisez les notifications de l’application et le canal de synchronisation dans les paramètres.</string>
+    <string name="alarm_fallback_channel">Récupération des alarmes du téléphone</string>
+    <string name="alarm_fallback_title">Vérifiez votre alarme</string>
+    <string name="alarm_fallback_failed">La demande d’alarme a échoué. Ouvrez l’application Horloge pour régler l’alarme manuellement.</string>
+    <string name="alarm_fallback_requested">Une alarme a été demandée ; sa création est non confirmée. Vérifiez-la dans l’application Horloge.</string>
+    <string name="alarm_fallback_open_clock">Ouvrir l’horloge</string>
+    <string name="alarm_fallback_unlock_limits">Après un redémarrage du téléphone, les alarmes de secours reprennent seulement après le premier déverrouillage.</string>
+    <string name="alarm_one_time_watch_limits">La montre enregistre une alarme unique comme quotidienne. Elle sonne ensuite chaque jour jusqu’à une nouvelle synchronisation ou sa désactivation sur la montre.</string>
+    <string name="alarm_fallback_unconfirmed">La création de l’alarme est non confirmée. Vérifiez-la ou réglez-la manuellement dans l’application Horloge.</string>
 </resources>

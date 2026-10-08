@@ -1,6 +1,9 @@
 package com.beamburst.casswatch.ui.alarms
 
 import com.google.gson.Gson
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -59,5 +62,50 @@ class AlarmSyncStorageTest {
             mapOf(0 to emptySet()), true,
         )
         assertEquals(state, AlarmSyncStorage.decode(AlarmSyncStorage.encode(state)))
+    }
+    @Test fun `malformed state returns defaults instead of preventing another watch from loading`() {
+        val badAddress = "AA:BB:CC:DD:EE:01"
+        val goodAddress = "AA:BB:CC:DD:EE:02"
+        val good = AlarmState(listOf(AlarmSyncStorage.StoredAlarm(7, 0, true, false, null)))
+        val entries = mapOf(AlarmSyncStorage.stateKey(badAddress) to "broken", AlarmSyncStorage.stateKey(goodAddress) to AlarmSyncStorage.encode(good))
+        assertEquals(AlarmState(), AlarmSyncStorage.readState(badAddress, entries::get))
+        assertEquals(good, AlarmSyncStorage.readState(goodAddress, entries::get))
+    }
+    @Test fun `payload codec preserves address slot enabled daily and clock evidence`() {
+        val address = "AA:BB:CC:DD:EE:01"
+        val state = AlarmState(watchPayloads = mapOf(3 to WatchAlarmPayload(address, 7, 0, true, true, "Europe/Warsaw", 7200, 123)))
+        assertEquals(state, AlarmSyncStorage.decode(AlarmSyncStorage.encode(state)))
+    }
+    @Test(expected = IllegalArgumentException::class) fun `invalid draft time is rejected`() {
+        AlarmSyncStorage.decodeAlarms("""[{"hour":24,"minute":0,"enabled":true,"hasHourlyChime":false}]""")
+    }
+    @Test fun `recovery quarantines original bytes and keeps other watches usable`() = runBlocking {
+        val address = "AA:BB:CC:DD:EE:01"
+        val records = mutableMapOf(AlarmSyncStorage.stateKey(address) to "broken")
+        val state = AlarmSyncStorage.recoverState(address, records::get) { raw ->
+            records["Quarantined${AlarmSyncStorage.stateKey(address)}"] = raw
+            records[AlarmSyncStorage.stateKey(address)] = AlarmSyncStorage.encode(AlarmState())
+        }
+        assertEquals(AlarmState(), state)
+        assertEquals("broken", records["Quarantined${AlarmSyncStorage.stateKey(address)}"])
+        assertEquals(AlarmState(), AlarmSyncStorage.decode(records.getValue(AlarmSyncStorage.stateKey(address))))
+    }
+    @Test fun `identity cancellation discovers sparse slots even with invalid alarm values`() {
+        val records = org.json.JSONObject().put("AlarmState_AA:BB:CC:DD:EE:01",
+            """{"alarms":"[{\"hour\":99}]","days":"{\"17\":[\"INVALID\"]}","dirty":true}""")
+        assertEquals(setOf(0, 17), persistedAlarmSlots(records))
+    }
+    @Test fun `unsynchronized clock invalidates confirmation even after an alarm only write`() {
+        val address = "AA:BB:CC:DD:EE:01"
+        val payload = WatchAlarmPayload(address, 7, 0, true, true, "UTC", 0, 123)
+        val changed = alarmStateAfterPhoneClockChange(AlarmState(watchPayloads = mapOf(0 to payload)))
+        assertTrue(changed.clockNeedsSync)
+        assertTrue(changed.watchPayloads.isEmpty())
+        assertTrue(changed.copy(watchPayloads = mapOf(0 to payload)).confirmedPayloads().isEmpty())
+        assertFalse(changed.copy(watchPayloads = mapOf(0 to payload), clockNeedsSync = false).confirmedPayloads().isEmpty())
+    }
+    @Test fun `malformed clock validity cannot silently restore confirmation`() {
+        val valid = org.json.JSONObject(AlarmSyncStorage.encode(AlarmState())).put("clockNeedsSync", "invalid")
+        assertTrue(runCatching { AlarmSyncStorage.decode(valid.toString()) }.isFailure)
     }
 }
