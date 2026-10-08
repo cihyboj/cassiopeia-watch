@@ -36,8 +36,13 @@ fun CheckPermissions(onPermissionsGranted: @Composable () -> Unit) {
     // Launcher for requesting permissions
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
-        onResult = { permissions ->
-            val decision = watchPermissionDecision(requiredPermissions, permissions) {
+        onResult = { _ ->
+            // A cancelled permission activity can return an empty map. Re-read grants so
+            // dismissing an optional notification prompt cannot undo Bluetooth approval.
+            val grants = requiredPermissions.associateWith {
+                ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+            }
+            val decision = watchPermissionDecision(requiredPermissions, grants) {
                 activity.shouldShowRequestPermissionRationale(it)
             }
             permissionsGranted = decision == WatchPermissionDecision.GRANTED
