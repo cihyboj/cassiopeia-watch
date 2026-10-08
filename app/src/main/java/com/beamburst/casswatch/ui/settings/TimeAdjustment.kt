@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.settings
 
+import com.beamburst.casswatch.utils.rememberSyncNotificationRequest
 import com.beamburst.casswatch.ui.common.AppSwitch
 import com.beamburst.casswatch.ui.common.AppText
 import com.beamburst.casswatch.ui.common.AppTextLink
@@ -39,6 +40,7 @@ fun TimeAdjustment(
 
     var autoAdjust by remember { mutableStateOf(timeAdjustmentSetting.timeAdjustment) }
     var notifyMe by remember { mutableStateOf(timeAdjustmentSetting.timeAdjustmentNotifications) }
+    val requestNotifications = rememberSyncNotificationRequest(notifyMe)
     var adjustmentMinutes by remember { mutableStateOf(timeAdjustmentSetting.adjustmentTimeMinutes.toString()) }
     var fineAdjustment by remember { mutableIntStateOf(timeAdjustmentSetting.fineAdjustment) }
 
@@ -137,7 +139,7 @@ fun TimeAdjustment(
                 checked = notifyMe,
                 onCheckedChange = { newValue ->
                     notifyMe = newValue
-                    timeAdjustmentSetting.timeAdjustmentNotifications = newValue
+                    if (newValue) requestNotifications()
                     onUpdate(timeAdjustmentSetting.copy(timeAdjustmentNotifications = newValue))
                 }
             )
