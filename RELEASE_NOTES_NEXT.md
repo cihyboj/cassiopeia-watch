@@ -6,9 +6,9 @@ This is the first public release of Cassiopeia Watch, an unofficial open-source 
 
 Experimental. Only the Casio ABL-100WE has been tested, by the maintainer. Other models that the GShockAPI library recognises may work but are untested.
 
-## Clean install required
+## Installing over an earlier build
 
-This version is signed with a new key and uses a new storage layout. Uninstall any earlier build of the app before installing. Settings from earlier builds are not carried over.
+This version is signed with a different key than earlier builds, so Android cannot update an existing install in place. In the old build, open Settings and export a backup. Uninstall the old build, install this APK, import the backup in Settings, and pair the watch again.
 
 ## What works
 
@@ -17,7 +17,7 @@ This version is signed with a new key and uses a new storage layout. Uninstall a
 - Automatic sync when the watch reconnects
 - Reading and editing watch alarms and the hourly signal
 - Sending calendar events to the watch as reminders, on watches that support reminders
-- Short and long watch button actions: broadcast intents for automation apps, and find my phone
+- Watch button actions: broadcast intents for automation apps on short and long press, and find my phone on long press
 - Forwarding phone notifications on watches that support it
 - More than one paired watch, sync history, and export/import of app settings
 
@@ -31,10 +31,10 @@ This version is signed with a new key and uses a new storage layout. Uninstall a
 
 ## Verifying the download
 
-Compare the APK's SHA-256 checksum and signing certificate fingerprint with the values published with this release. Licence notices are in the repository and bundled in the app.
+Check `cassiopeia-watch-<version>.apk` against `cassiopeia-watch-<version>.apk.sha256`, and compare the signing certificate digest with `signer-sha256.txt`. Licence notices are in the repository and bundled in the app.
 
 ## Privacy
 
-No accounts, analytics or advertising. The only network traffic is optional NTP time queries. See the privacy policy in `docs/index.html`.
+No accounts, analytics or advertising, and the developers receive nothing automatically. The only network traffic is optional NTP time queries. See the privacy policy in `docs/index.html`.
 
 Report problems at https://github.com/cihyboj/cassiopeia-watch/issues. Report security problems privately, see `SECURITY.md`.

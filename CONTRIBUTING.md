@@ -13,7 +13,7 @@ Requirements: JDK 21 and the Android SDK (compile SDK 36).
 
 Both `test` and `lint` should pass before you open a pull request. Existing lint issues are recorded in `app/lint-baseline.xml`; new lint errors fail the build.
 
-The app builds against a pinned fork of GShockAPI resolved through JitPack, see the README. All communication with the watch goes through `GShockRepository`; the app never talks to BLE directly.
+The app builds against a pinned fork of GShockAPI resolved through JitPack, see the README. In production code, all communication with the watch goes through `GShockRepository`; the app never talks to BLE directly. The one deliberate exception is the BLE debug panel, which exists only in debug builds and uses the library's lower-level API directly.
 
 ## Code conventions
 

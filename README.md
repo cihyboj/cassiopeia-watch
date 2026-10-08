@@ -13,7 +13,7 @@ Status: experimental prerelease. The first version is 40.10.
 - Auto-sync on reconnect: when the watch reconnects, the app can sync it automatically.
 - Alarms: read and edit the watch alarms, in a daily or a weekly view, and schedule the hourly signal (chime). Alarm names are stored in the watch's scratchpad memory.
 - Events: send upcoming events from the phone calendar to the watch as reminders. This tab is shown only for watches that support reminders, and some recurrence rules are marked incompatible.
-- Watch buttons: choose what a short press and a long press on the watch do. The options are sending a broadcast intent that automation apps such as Tasker or MacroDroid can receive, and ringing the phone ("Find my phone").
+- Watch buttons: a short press can send a broadcast intent that automation apps such as Tasker or MacroDroid can receive. A long press can send its own broadcast intent and/or ring the phone ("Find my phone").
 - Notifications: for watches that support app notifications, forward phone notifications to the watch (requires notification access).
 - Watch settings: light, power saving, font, locale and similar options, on models that expose them.
 - Multiple watches: more than one watch can be paired, each with its own sync history.
@@ -42,25 +42,26 @@ The app needs Android 8.0 (API 26) or newer, and a phone with Bluetooth Low Ener
 
 Cassiopeia Watch is distributed only as an APK attached to a GitHub prerelease of this repository. It is not on Google Play or F-Droid. The package name is `com.beamburst.casswatch`.
 
-1. Download the APK, the checksum and the signer fingerprint from the [releases page](https://github.com/cihyboj/cassiopeia-watch/releases).
-2. Check the checksum and compare the output with the published value:
+1. Download these files from the [releases page](https://github.com/cihyboj/cassiopeia-watch/releases): `cassiopeia-watch-<version>.apk`, `cassiopeia-watch-<version>.apk.sha256` and `signer-sha256.txt`. The release also carries `NOTICE`, `LICENSE` and `THIRD_PARTY_NOTICES.md`.
+2. Verify the checksum from the folder that contains both files:
    ```
-   sha256sum <apk file>
+   sha256sum -c cassiopeia-watch-<version>.apk.sha256
    ```
-3. Check the signer with the Android SDK build tools and compare the SHA-256 certificate digest with the published fingerprint:
+3. Verify the signer with the Android SDK build tools. The `signer-sha256.txt` file holds one line, the SHA-256 digest of the signing certificate in upper-case hex without colons. Compare it with the `SHA-256 digest` line printed by:
    ```
-   apksigner verify --print-certs <apk file>
+   apksigner verify --print-certs cassiopeia-watch-<version>.apk
    ```
+   (`apksigner` prints lower-case hex; compare ignoring case.)
 4. Allow your browser or file manager to install unknown apps, then open the APK.
 
-Version 40.10 requires a clean install. If an earlier build of this app is installed, uninstall it first. Settings from earlier builds are not carried over.
+If you already have an earlier build of this app that was signed with a different key, Android cannot update it in place. In the old build, open Settings and export a backup. Then uninstall the old build, install the new APK, import the backup in Settings, and pair the watch again.
 
 ## Permissions
 
 | Permission | Why |
 |---|---|
 | `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT` (Android 12 and newer) | Find and talk to the watch. `BLUETOOTH_SCAN` is declared with `neverForLocation`. |
-| `BLUETOOTH`, `BLUETOOTH_ADMIN` (Android 11 and older) | The same, on older Android versions. |
+| `BLUETOOTH`, `BLUETOOTH_ADMIN` (Android 11 and older; declared with `maxSdkVersion` 30) | The same, on older Android versions. |
 | `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` (fine location only up to Android 11) | Older Android versions require location permission to deliver Bluetooth scan results. The app does not read or store your location. |
 | `REQUEST_COMPANION_PROFILE_WATCH`, `REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE`, `REQUEST_COMPANION_RUN_IN_BACKGROUND`, `REQUEST_COMPANION_USE_DATA_IN_BACKGROUND` | Pair the watch through the Android Companion Device Manager and learn when it comes in range, so the app can connect in the background. |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE` | Keep the connection service alive while the watch is connected. |
@@ -70,8 +71,6 @@ Version 40.10 requires a clean install. If an earlier build of this app is insta
 | Notification access (a special access you grant in system settings) | Forward phone notifications to watches that support it. |
 | `SCHEDULE_EXACT_ALARM`, `com.android.alarm.permission.SET_ALARM` | The best-effort phone alarm fallback described below. |
 | `INTERNET` | Optional NTP time queries over UDP. The app makes no other network connections. |
-
-The manifest also declares `ACCESS_NOTIFICATION_POLICY`, `WAKE_LOCK` and `WRITE_EXTERNAL_STORAGE` (Android 9 and older). No direct use of these was found in the app's own code.
 
 ## Known limitations
 
@@ -94,7 +93,7 @@ The app builds against a fork of the GShockAPI library, `com.github.cihyboj:GSho
 
 ## Privacy
 
-The app has no accounts, analytics, advertising or server of its own. It keeps its data on your device and sends data to your watch over Bluetooth. The only network traffic is optional NTP time queries. See the [privacy policy](docs/index.html).
+The app has no accounts, analytics, advertising or server of its own, and the developers receive nothing automatically. The app keeps its data on your device and sends data to your watch over Bluetooth. The only network traffic is optional NTP time queries. Data can still leave the app in three ways: broadcast intents that you configure for watch buttons go to other apps on the phone; Android auto-backup can store the app's settings with your Google account or transfer them to a new device; and a backup file you export goes wherever the document provider you pick puts it, possibly cloud storage. See the [privacy policy](docs/index.html).
 
 ## Contributing and security
 

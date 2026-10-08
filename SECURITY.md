@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Please report security problems privately through GitHub private vulnerability reporting on this repository: open the repository's Security tab and choose "Report a vulnerability". Do not open a public issue for a vulnerability.
+Please report security problems privately through GitHub private vulnerability reporting on this repository: open the repository's Security tab and choose "Report a vulnerability". If that option is not available, open a public issue that only asks for a private way to report, with no details of the problem. Do not put vulnerability details in a public issue.
 
 Include the app version, your Android version and phone model, a description of the problem, and steps to reproduce it. Do not include real Bluetooth addresses or personal data unless they are needed to reproduce the problem.
 

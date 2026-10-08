@@ -22,7 +22,8 @@
 <p>The app scans for, pairs with and connects to your watch using Bluetooth Low Energy and the Android Companion Device Manager. It exchanges data with the watch to do what you ask: time and time zone, alarms and alarm names, hourly signal, watch settings, calendar reminders, timer values, button presses, battery level and, on supporting models, notifications. This data goes only to your watch. The app stores the Bluetooth addresses and names of your paired watches on your phone.</p>
 
 <h2>Calendar</h2>
-<p>If you open the Events tab and grant calendar permission, the app reads event titles, start and end times, the all-day flag and recurrence rules from your phone's calendars. The events you choose to send are written to the watch as reminders. Calendar data is not uploaded anywhere.</p>
+<p>If you grant calendar permission (requested when you open the Events tab), the app reads, from calendars on your phone, the title, start and end time, all-day flag and recurrence rule of events from today up to two years ahead. On watches that support reminders, the app refreshes this list and writes it to the watch automatically: when the watch reconnects (automatic sync), when you press the watch's normal connection button, and when you send events from the Events tab. You do not have to pick events first.</p>
+<p>The first five events in the list are enabled by default; you can change that in the Events tab. The watch has five reminder slots. Enabled events fill them first, and if fewer than five are enabled, the library used by the app fills the unused slots with data from disabled events. So events you have not switched on can still be written to the watch. What is written is the title, the date and time, and the recurrence. The app does not upload calendar data anywhere else.</p>
 
 <h2>Notifications</h2>
 <p>For watch models that support app notifications, and only if you grant notification access in Android settings, the app forwards new notifications to the watch. For each one it sends the app name, the notification title, text and secondary text, a category derived from the app, and the time it was posted. Ongoing notifications (except incoming calls), group summaries and the app's own notifications are not forwarded. Forwarded content is sent to the watch and is not stored by the app. You can revoke notification access at any time in Android settings.</p>
@@ -37,7 +38,7 @@
 <ul>
   <li>Settings, paired watch addresses and names, alarm drafts and cached watch settings, kept in the app's private storage (DataStore).</li>
   <li>A sync history of recent operations for each watch (for example when time or alarms were sent, and whether it succeeded), kept in the same storage. You can clear it in the app.</li>
-  <li>Crash logs, written to the app's private cache directory when the app crashes. A log contains the app version, the phone manufacturer, model and Android version, the stack trace, and the stored watch addresses and names. The app does not upload crash logs. It shows the latest one on screen after a crash so that you can decide whether to include it in a bug report.</li>
+  <li>Crash logs. An uncaught exception can cause the app to write a log to its private cache directory. A log contains the app version, the phone manufacturer, model and Android version, the stack trace, and the stored watch addresses and names. Logs are not uploaded. On the next launch the app shows the latest log in a dialog only after a crash related to pairing; for other crashes the log stays in the cache directory and is not displayed. In both cases you decide whether to include any of it in a bug report.</li>
 </ul>
 <p>Uninstalling the app removes this data.</p>
 
@@ -50,8 +51,13 @@
 <h2>Diagnostics and sharing</h2>
 <p>The app never sends diagnostics or logs by itself. If you report a problem, you decide what to copy into a GitHub issue. Please remove Bluetooth addresses and anything personal first.</p>
 
-<h2>Sharing and sale of data</h2>
-<p>No data is sold, rented or shared with third parties by the app or its developers, because the developers do not receive any data.</p>
+<h2>What leaves your phone</h2>
+<p>The developers receive nothing automatically: there is no telemetry, no analytics and no crash reporting service. No data is sold. Data can still leave the app along these paths, which you control or which Android controls:</p>
+<ul>
+  <li>Button actions. If you configure a watch button action, the app sends a broadcast intent to other apps on your phone (for example Tasker or MacroDroid) with the extras you configured. Any app on the phone that listens for that action can receive it.</li>
+  <li>Android backup. If automatic backup is enabled on your phone, the app's settings can be stored with your Google account (or your phone maker's backup service) and restored or transferred to a new device. See "Android backup" above.</li>
+  <li>Exported backup files. A file you export is saved wherever the document provider you choose puts it, which may be cloud storage.</li>
+</ul>
 
 <h2>Children</h2>
 <p>The app is not directed at children and collects no personal data from anyone.</p>
