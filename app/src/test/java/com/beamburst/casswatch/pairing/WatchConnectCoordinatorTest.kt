@@ -196,6 +196,10 @@ class WatchConnectCoordinatorTest {
         t.disconnectEvent(device)
         assertEquals(ready, t.session.ready)
         assertEquals(0, t.teardowns)
+        t.connected = false
+        t.disconnectEvent(device)
+        assertNull(t.session.ready)
+        assertEquals(1, t.teardowns)
     }
 
     @Test fun `timeout cancels pending A before takeover B starts`() = runBlocking {

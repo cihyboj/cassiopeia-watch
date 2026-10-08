@@ -9,10 +9,15 @@ class WatchConnectionEvents(private val session: WatchConnectionSession) {
 
     @Synchronized
     fun setup(address: String, device: Any): WatchConnectionSession.Ready? =
-        session.established(address)?.also { devices[device] = it }
+        session.established(address)?.also { ready ->
+            // Older callbacks without a retained token are ignored; retain the preceding
+            // generation for delayed delivery without retaining every past GATT device.
+            devices.entries.removeAll { it.value.generation < ready.generation - 1L }
+            devices[device] = ready
+        }
 
     @Synchronized
-    fun disconnectToken(device: Any): WatchConnectionSession.Ready? = devices.remove(device)
+    fun disconnectToken(device: Any): WatchConnectionSession.Ready? = devices[device]
 
     fun disconnect(
         token: WatchConnectionSession.Ready,
