@@ -6,6 +6,7 @@ import com.beamburst.casswatch.utils.LocalDataStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 
 object MultiWatchMigrator {
 
@@ -26,12 +27,12 @@ object MultiWatchMigrator {
 
     fun perWatchKey(base: String, addr: String) = "${base}_$addr"
 
-    fun migrateIfNeeded(context: Context) {
+    fun migrateIfNeeded(context: Context): Job? {
         val alreadyMigrated = LocalDataStorage.get(context, MIGRATED_FLAG_KEY, "false")?.toBoolean() ?: false
-        if (alreadyMigrated) return
+        if (alreadyMigrated) return null
 
         val addr = LocalDataStorage.get(context, CurrentWatchSelector.LAST_DEVICE_ADDRESS_KEY, null)
-        AppScopes.io.launch {
+        return AppScopes.io.launch {
             if (addr == null) {
                 LocalDataStorage.putAsync(context, MIGRATED_FLAG_KEY, "true")
                 return@launch

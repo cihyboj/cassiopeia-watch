@@ -5,7 +5,6 @@ import java.time.DayOfWeek
 import java.time.Clock
 import java.time.ZoneId
 import java.time.LocalDateTime
-import java.time.LocalTime
 
 object AlarmSchedulePlanner {
     val AllDays: Set<DayOfWeek> = DayOfWeek.entries.toSet()
@@ -20,9 +19,6 @@ object AlarmSchedulePlanner {
         zone: ZoneId = ZoneId.systemDefault(),
         clock: Clock = Clock.fixed(now.atZone(zone).toInstant(), zone),
     ): List<Alarm> {
-        val today = now.dayOfWeek
-        val currentTime = now.toLocalTime()
-
         return alarms.mapIndexed { index, alarm ->
             val selectedDays = alarmDays[index] ?: AllDays
             when {
@@ -33,12 +29,16 @@ object AlarmSchedulePlanner {
                     if (firedAts.containsKey(index) || occurrence == null || occurrence.isElapsed(clock, zone)) {
                         alarm.copy(enabled = false)                  // consumed → disable on watch
                     } else {
-                        alarm                                        // future occurrence; persisted expiry disables subsequent payloads
+                        val instant = occurrence.resolveInstant(zone)
+                        val effective = instant.atZone(zone)
+                        val nextWatchRing = AlarmOccurrence.nextOccurrence(effective.hour, effective.minute, clock, zone).resolveInstant(zone)
+                        alarm.copy(hour = effective.hour, minute = effective.minute, enabled = nextWatchRing == instant)
                     }
                 }
-                else -> alarm.copy(
-                    enabled = selectedDays.contains(alarm.nextPossibleRingDay(today, currentTime))
-                )
+                else -> {
+                    val nextRing = AlarmOccurrence.nextOccurrence(alarm.hour, alarm.minute, clock, zone).resolveInstant(zone).atZone(zone)
+                    alarm.copy(hour = nextRing.hour, minute = nextRing.minute, enabled = nextRing.dayOfWeek in selectedDays)
+                }
             }
         }
     }
@@ -49,8 +49,4 @@ object AlarmSchedulePlanner {
             if (index == 0) alarm.copy(hasHourlyChime = chimeEnabled) else alarm
         }
 
-    private fun Alarm.time(): LocalTime = LocalTime.of(hour, minute)
-
-    private fun Alarm.nextPossibleRingDay(today: DayOfWeek, currentTime: LocalTime): DayOfWeek =
-        if (time().isAfter(currentTime)) today else today.plus(1)
 }

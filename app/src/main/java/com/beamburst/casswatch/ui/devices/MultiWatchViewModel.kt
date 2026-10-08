@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.PerWatchCacheCleaner
+import com.beamburst.casswatch.ui.alarms.AlarmSchedulingCoordinator
 import com.beamburst.casswatch.data.local.SyncHistoryStore
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
@@ -49,6 +50,7 @@ class MultiWatchViewModel @Inject constructor(
     private val syncHistoryStore: SyncHistoryStore,
     private val syncHistoryLogger: SyncHistoryLogger,
     private val deviceAssociationManager: DeviceAssociationManager,
+    private val alarmCoordinator: AlarmSchedulingCoordinator,
     private val connectCoordinator: WatchConnectCoordinator,
     @param:ApplicationContext private val appContext: Context,
 ) : ViewModel() {
@@ -172,10 +174,12 @@ class MultiWatchViewModel @Inject constructor(
             }
 
             runCatching {
-                repository.disassociate(appContext, normalizedAddress)
-                LocalDataStorage.removeDeviceAddress(appContext, normalizedAddress)
-                deviceAssociationManager.syncAssociations()
-                PerWatchCacheCleaner.wipe(appContext, normalizedAddress)
+                alarmCoordinator.forgetWatch(normalizedAddress) {
+                    repository.disassociate(appContext, normalizedAddress)
+                    LocalDataStorage.removeDeviceAddress(appContext, normalizedAddress)
+                    PerWatchCacheCleaner.wipe(appContext, normalizedAddress)
+                }
+                deviceAssociationManager.syncAssociations().join()
             }.onFailure {
                 Timber.e(it, "Failed to forget watch $normalizedAddress")
             }

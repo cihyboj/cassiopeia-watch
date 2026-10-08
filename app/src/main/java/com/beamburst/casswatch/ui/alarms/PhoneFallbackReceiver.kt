@@ -40,10 +40,11 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
                     .alarmSchedulingCoordinator()
                 if (expiry) coordinator.reconcile(key.normalizedAddress)
                 else coordinator.fallback(key, intent.getLongExtra(EXTRA_FIRE_INSTANT, -1), hash!!) { alarm ->
+                    val effectiveTime = alarmTimeAtOccurrence(intent.getLongExtra(EXTRA_FIRE_INSTANT, -1), java.time.ZoneId.systemDefault())
                     // Best-effort hand-off, hour/minute only: no date, creation acknowledgement or cancellation API.
                     context.startActivity(Intent(AlarmClock.ACTION_SET_ALARM).apply {
-                        putExtra(AlarmClock.EXTRA_HOUR, alarm.hour)
-                        putExtra(AlarmClock.EXTRA_MINUTES, alarm.minute)
+                        putExtra(AlarmClock.EXTRA_HOUR, effectiveTime.hour)
+                        putExtra(AlarmClock.EXTRA_MINUTES, effectiveTime.minute)
                         putExtra(AlarmClock.EXTRA_MESSAGE, alarm.name)
                         putExtra(AlarmClock.EXTRA_SKIP_UI, true)
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

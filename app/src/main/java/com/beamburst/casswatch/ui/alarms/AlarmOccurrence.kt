@@ -104,3 +104,7 @@ internal fun alarmStateAfterSuccessfulSync(current: AlarmState, sent: AlarmState
     if (current == sent) current.copy(dirty = false) else current
 
 internal fun alarmIsArmed(enabled: Boolean, firedAt: Long?): Boolean = enabled && firedAt == null
+
+/** The effective time may differ from the draft during a DST gap. Storage remains wall-clock based. */
+internal fun alarmTimeAtOccurrence(instant: Long, zone: ZoneId): LocalTime =
+    Instant.ofEpochMilli(instant).atZone(zone).toLocalTime()

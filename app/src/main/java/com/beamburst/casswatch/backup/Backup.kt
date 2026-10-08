@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.beamburst.casswatch.BuildConfig
 import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.ui.alarms.ALARM_FALLBACK_MIGRATION_FLAG
 import com.beamburst.casswatch.ui.alarms.AlarmKey
 import com.beamburst.casswatch.ui.alarms.AlarmSyncStorage
 import com.beamburst.casswatch.ui.alarms.PhoneFallbackReceiver
@@ -78,9 +79,9 @@ object BackupImporter {
     internal suspend fun parseAndRestore(context: Context, text: String): ImportResult {
         return restoreBackup(text, object : BackupRestoreTarget {
             override suspend fun replace(entries: JSONObject): Int {
+                val restoredEntries = backupEntriesForRestore(entries)
                 coordinator(context).replaceAll {
-                    LocalDataStorage.restoreFromJsonObject(context, entries)
-                    watchSettingsImportKeysToDrop(entries).forEach { LocalDataStorage.deleteAsync(context, it) }
+                    LocalDataStorage.restoreFromJsonObject(context, restoredEntries)
                 }
                 return entries.length()
             }
@@ -179,4 +180,10 @@ internal suspend fun restoreBackup(text: String, target: BackupRestoreTarget): I
         .getOrElse { return ImportResult.Malformed(it.message ?: "invalid backup") }
     return runCatching { ImportResult.Ok(target.replace(entries)) }
         .getOrElse { ImportResult.IoError(it.message ?: "DataStore write failed") }
+}
+
+/** A foreign done-flag cannot complete this installation's migration. Filter settings before the atomic restore. */
+internal fun backupEntriesForRestore(entries: JSONObject): JSONObject = JSONObject(entries.toString()).apply {
+    remove(ALARM_FALLBACK_MIGRATION_FLAG)
+    BackupImporter.watchSettingsImportKeysToDrop(entries).forEach { remove(it) }
 }

@@ -24,22 +24,25 @@ class AlarmBackupImportTest {
         override suspend fun save(address: String, state: AlarmState) { entries.put(AlarmSyncStorage.stateKey(address), AlarmSyncStorage.encode(state)) }
         override suspend fun history(address: String): List<SyncEntry> = emptyList()
         override suspend fun legacySlots() = persistedAlarmSlots(entries)
-        override suspend fun migrationDone() = true
-        override suspend fun finishMigration() = Unit
+        override suspend fun migrationDone() = entries.optString(ALARM_FALLBACK_MIGRATION_FLAG, "false").toBoolean()
+        override suspend fun finishMigration() { entries.put(ALARM_FALLBACK_MIGRATION_FLAG, "true") }
     }
     private class Backend : AlarmScheduleBackend {
         val scheduled = mutableMapOf<AlarmKey, Long>()
+        var failOnce = false
         override fun cancel(key: AlarmKey) { scheduled.remove(key) }
         override fun cancelFallback(key: AlarmKey) = cancel(key)
         override fun cancelLegacy(slot: Int) = Unit
         override fun expiry(key: AlarmKey, instant: Long?) = Unit
         override fun schedule(key: AlarmKey, alarm: AlarmSyncStorage.StoredAlarm, instant: Long): FallbackAvailability {
+            if (failOnce) { failOnce = false; error("interrupted rebuild") }
             scheduled[key] = instant
             return FallbackAvailability.SCHEDULED
         }
     }
     private fun entries(vararg addresses: String) = JSONObject().apply {
         put("DeviceAddresses", addresses.joinToString(","))
+        put(ALARM_FALLBACK_MIGRATION_FLAG, "true")
         addresses.forEach { put(AlarmSyncStorage.stateKey(it), AlarmSyncStorage.encode(AlarmState(listOf(alarm), mapOf(0 to emptySet()), true))) }
     }
     private fun imported(version: Int, consumed: Boolean = false): JSONObject {
@@ -62,7 +65,7 @@ class AlarmBackupImportTest {
             assertTrue(backend.scheduled.containsKey(AlarmKey(b, 0)))
             val result = restoreBackup(imported(version).toString(), object : BackupRestoreTarget {
                 override suspend fun replace(entries: JSONObject): Int {
-                    coordinator.replaceAll { store.entries = JSONObject(entries.toString()) }
+                    coordinator.replaceAll { store.entries = backupEntriesForRestore(entries) }
                     return entries.length()
                 }
             })
@@ -79,7 +82,7 @@ class AlarmBackupImportTest {
             val coordinator = PersistedAlarmSchedulingCoordinator(store, backend, clock) { zone }
             val result = restoreBackup(imported(version, consumed = true).toString(), object : BackupRestoreTarget {
                 override suspend fun replace(entries: JSONObject): Int {
-                    coordinator.replaceAll { store.entries = entries }
+                    coordinator.replaceAll { store.entries = backupEntriesForRestore(entries) }
                     return entries.length()
                 }
             })
@@ -108,5 +111,23 @@ class AlarmBackupImportTest {
         }
         for (data in malformed) assertTrue(restoreBackup(buildBackupJson(data, 0, "test").toString(), target) is ImportResult.Malformed)
         assertEquals(0, mutations)
+    }
+    @Test fun `interrupted import rebuild leaves done flag clear and startup retries`() = runBlocking {
+        val store = Store(entries(b))
+        val backend = Backend()
+        val coordinator = PersistedAlarmSchedulingCoordinator(store, backend, clock) { zone }
+        coordinator.reconcileAll()
+        backend.failOnce = true
+        val result = restoreBackup(imported(2).toString(), object : BackupRestoreTarget {
+            override suspend fun replace(entries: JSONObject): Int {
+                coordinator.replaceAll { store.entries = backupEntriesForRestore(entries) }
+                return entries.length()
+            }
+        })
+        assertTrue(result is ImportResult.IoError)
+        assertFalse(store.migrationDone())
+        coordinator.reconcileAll()
+        assertTrue(store.migrationDone())
+        assertEquals(setOf(AlarmKey(a, 0)), backend.scheduled.keys)
     }
 }

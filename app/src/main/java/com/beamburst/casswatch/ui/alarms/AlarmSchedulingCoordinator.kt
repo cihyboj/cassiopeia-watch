@@ -80,17 +80,19 @@ internal class PersistedAlarmSchedulingCoordinator(
     }
     override suspend fun cancelWatch(address: String) = serialized { cancelLocked(address) }
     override suspend fun snapshot(address: String): AlarmState = serialized {
+        val normalized = AlarmKey.from(address, 0)?.normalizedAddress ?: return@serialized AlarmState()
         migrateLocked()
-        reconcileLocked(address)
-        if (address in persistence.addresses()) persistence.load(address) else AlarmState()
+        reconcileLocked(normalized)
+        if (normalized in persistence.addresses()) persistence.load(normalized) else AlarmState()
     }
     override suspend fun update(address: String, transform: (AlarmState) -> AlarmState): AlarmState? = serialized {
+        val normalized = AlarmKey.from(address, 0)?.normalizedAddress ?: return@serialized null
         migrateLocked()
-        if (address !in persistence.addresses()) return@serialized null
-        val next = transform(persistence.load(address))
-        persistence.save(address, next)
-        reconcileLocked(address)
-        persistence.load(address)
+        if (normalized !in persistence.addresses()) return@serialized null
+        val next = transform(persistence.load(normalized))
+        persistence.save(normalized, next)
+        reconcileLocked(normalized)
+        persistence.load(normalized)
     }
     override suspend fun forgetWatch(address: String, remove: suspend () -> Unit) = serialized {
         cancelLocked(address)
@@ -164,7 +166,7 @@ internal class AndroidAlarmPersistence @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val historyStore: SyncHistoryStore,
 ) : AlarmPersistence {
-    private val migrationFlag = "AlarmFallbackIdentityMigrated"
+    private val migrationFlag = ALARM_FALLBACK_MIGRATION_FLAG
     override suspend fun addresses(): List<String> = LocalDataStorage.getDeviceAddresses(context)
     override suspend fun load(address: String): AlarmState = AlarmSyncStorage.loadState(context, address)
     override suspend fun save(address: String, state: AlarmState) = AlarmSyncStorage.saveState(context, address, state)
@@ -174,15 +176,29 @@ internal class AndroidAlarmPersistence @Inject constructor(
     override suspend fun legacySlots(): Set<Int> = persistedAlarmSlots(LocalDataStorage.toJsonObject(context))
 }
 
+fun interface AlarmZoneProvider {
+    fun currentZone(): ZoneId
+}
+
 @Singleton
-class AlarmSchedulingTime @Inject constructor() {
-    val clock: Clock = Clock.systemUTC()
-    fun zone(): ZoneId = ZoneId.systemDefault()
+class AlarmSchedulingTime @Inject constructor(
+    val clock: Clock,
+    private val zones: AlarmZoneProvider,
+) {
+    fun zone(): ZoneId = zones.currentZone()
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
 internal object AlarmSchedulingModule {
+    @Provides
+    @Singleton
+    fun clock(): Clock = Clock.systemUTC()
+
+    @Provides
+    @Singleton
+    fun zones(): AlarmZoneProvider = AlarmZoneProvider(ZoneId::systemDefault)
+
     @Provides
     @Singleton
     fun coordinator(persistence: AndroidAlarmPersistence, scheduler: PhoneFallbackScheduler, time: AlarmSchedulingTime): AlarmSchedulingCoordinator =

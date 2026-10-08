@@ -20,6 +20,7 @@ internal fun fallbackWakeAt(fireInstant: Long, now: Long): Long? =
 @Singleton
 internal class PhoneFallbackScheduler @Inject constructor(
     @param:ApplicationContext private val context: Context,
+    private val alarmTime: AlarmSchedulingTime,
 ) : AlarmScheduleBackend {
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
@@ -34,7 +35,7 @@ internal class PhoneFallbackScheduler @Inject constructor(
     }
 
     override fun schedule(key: AlarmKey, alarm: AlarmSyncStorage.StoredAlarm, instant: Long): FallbackAvailability {
-        val wakeAt = fallbackWakeAt(instant, System.currentTimeMillis()) ?: return FallbackAvailability.ELAPSED
+        val wakeAt = fallbackWakeAt(instant, alarmTime.clock.millis()) ?: return FallbackAvailability.ELAPSED
         return attemptExactFallback(::canScheduleExactAlarms) {
             val intent = intent(key).apply {
                 putExtra(PhoneFallbackReceiver.EXTRA_EXPECTED_HASH, alarmHash(alarm.hour, alarm.minute, emptySet(), true))

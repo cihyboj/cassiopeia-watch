@@ -20,9 +20,14 @@ data class AlarmState(
     val dirty: Boolean = false,
 ) {
     fun watchAlarms(): List<Alarm> = alarms.map { Alarm(it.hour, it.minute, it.enabled, it.hasHourlyChime, it.name) }
+    fun oneShotOccurrences(): Map<Int, AlarmOccurrence> = alarms.mapIndexedNotNull { i, alarm ->
+        if (days[i]?.isEmpty() == true) alarm.occurrence()?.let { i to it } else null
+    }.toMap()
     fun oneShotLocalDates(): Map<Int, String> = alarms.mapIndexedNotNull { i, a -> a.oneShotLocalDate?.let { i to it } }.toMap()
     fun firedAts(): Map<Int, Long> = alarms.mapIndexedNotNull { i, a -> a.firedAt?.let { i to it } }.toMap()
 }
+
+internal const val ALARM_FALLBACK_MIGRATION_FLAG = "AlarmFallbackIdentityMigrated"
 
 object AlarmSyncStorage {
     private val gson = Gson()

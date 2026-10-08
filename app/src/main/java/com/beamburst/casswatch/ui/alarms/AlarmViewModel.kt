@@ -320,8 +320,7 @@ class AlarmViewModel @Inject constructor(
 
     private fun tickFireOnceAlarms() {
         // Display refresh only. Persisted expiry belongs to the application coordinator.
-        val addr = watchSelector.currentAddress() ?: return
-        loadLocalStateForAddress(addr)
+        refreshSyncRiskState()
     }
 
     private suspend fun hasLocalAppAlarms(localDraft: List<Alarm>?, addr: String?): Boolean {
@@ -484,22 +483,18 @@ class AlarmViewModel @Inject constructor(
     }
 
     fun sendHourlySignalToWatch() = viewModelScope.launch {
-        val addr = watchSelector.currentAddress()
-        if (!api.isConnected()) {
+        val addr = watchSelector.currentAddress() ?: return@launch
+        if (!isSelectedWatchConnected(addr)) {
             AppSnackbar(appContext.getString(R.string.watch_not_connected))
             return@launch
         }
-
-        val settings = if (addr != null) {
-            HourlySignalSettings.load(appContext, addr)
-        } else {
-            HourlySignalSettings.Default
-        }
-        val alarmSnapshot = addr?.let { alarmCoordinator.snapshot(it) }
+        val settings = HourlySignalSettings.load(appContext, addr)
+        val alarmSnapshot = alarmCoordinator.snapshot(addr)
         val syncTime = LocalDateTime.now()
         val hourlySignalTarget = HourlySignalEvaluator.shouldChimeAt(syncTime, settings)
         val result = runCatching {
-            applyHourlySignalToWatch(api, settings, syncTime, consumedSlots = alarmSnapshot?.firedAts()?.keys.orEmpty())
+            applyHourlySignalToWatch(api, settings, syncTime, consumedSlots = alarmSnapshot.firedAts().keys,
+                oneShotOccurrences = alarmSnapshot.oneShotOccurrences(), clock = alarmTime.clock, zone = alarmTime.zone())
         }
         syncLogger.record(
             trigger = SyncTrigger.MANUAL_SEND_ALARMS,
@@ -513,6 +508,7 @@ class AlarmViewModel @Inject constructor(
             ),
         )
         if (result.isSuccess) {
+            alarmCoordinator.reconcile(addr)
             AppSnackbar(appContext.getString(R.string.hourly_signal_sent_to_watch))
         } else {
             ProgressEvents.onNext("Error", result.exceptionOrNull()?.message ?: "")
@@ -650,10 +646,13 @@ class AlarmViewModel @Inject constructor(
                         else -> ArrayList(selectedDays.map { it.toCalendarDay() })
                     }
 
+                    val effectiveTime = state.oneShotOccurrences()[index]?.resolveInstant(alarmTime.zone())?.let {
+                        alarmTimeAtOccurrence(it.toEpochMilli(), alarmTime.zone())
+                    } ?: LocalTime.of(alarm.hour, alarm.minute)
                     val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
                         putExtra(AlarmClock.EXTRA_MESSAGE, alarm.name)
-                        putExtra(AlarmClock.EXTRA_HOUR, alarm.hour)
-                        putExtra(AlarmClock.EXTRA_MINUTES, alarm.minute)
+                        putExtra(AlarmClock.EXTRA_HOUR, effectiveTime.hour)
+                        putExtra(AlarmClock.EXTRA_MINUTES, effectiveTime.minute)
                         putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_TIME)
                         if (days != null) putExtra(AlarmClock.EXTRA_DAYS, days)
                         putExtra(AlarmClock.EXTRA_SKIP_UI, true)

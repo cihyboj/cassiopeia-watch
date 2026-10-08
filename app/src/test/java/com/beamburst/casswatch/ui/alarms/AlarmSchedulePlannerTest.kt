@@ -298,4 +298,24 @@ class AlarmSchedulePlannerTest {
 
     private fun dateFor(day: DayOfWeek): LocalDate =
         LocalDate.of(2026, 5, 4).plusDays((day.value - DayOfWeek.MONDAY.value).toLong())
+    @Test
+    fun `DST gap adjusts effective watch and phone handoff time without changing the draft`() {
+        val zone = java.time.ZoneId.of("Europe/Warsaw")
+        val clock = java.time.Clock.fixed(java.time.Instant.parse("2026-03-29T01:00:00Z"), zone)
+        val alarm = Alarm(2, 30, true, false, null)
+        val payload = AlarmSchedulePlanner.applyWeeklySchedule(listOf(alarm), mapOf(0 to emptySet()),
+            LocalDateTime.ofInstant(clock.instant(), zone), AlarmViewMode.WEEKLY,
+            oneShotLocalDates = mapOf(0 to "2026-03-29"), zone = zone, clock = clock)
+        assertTrue(payload[0].enabled)
+        assertEquals(3, payload[0].hour)
+        assertEquals(2, alarm.hour)
+        assertEquals(java.time.LocalTime.of(3, 30), alarmTimeAtOccurrence(java.time.Instant.parse("2026-03-29T01:30:00Z").toEpochMilli(), zone))
+    }
+    @Test
+    fun `date beyond next daily watch ring does not arm prematurely after zone change`() {
+        val payload = AlarmSchedulePlanner.applyWeeklySchedule(listOf(Alarm(7, 0, true, false, null)), mapOf(0 to emptySet()),
+            LocalDateTime.of(2026, 10, 8, 23, 0), AlarmViewMode.WEEKLY,
+            oneShotLocalDates = mapOf(0 to "2026-10-10"))
+        assertFalse(payload[0].enabled)
+    }
 }

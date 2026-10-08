@@ -46,4 +46,13 @@ class AlarmSyncRiskEvaluatorTest {
         assertNull(evaluate(auto = false)?.nextAutoSyncAt)
         assertNotNull(evaluate(auto = false))
     }
+    @Test fun `DST gap sync evidence matches effective payload rather than missing wall time`() {
+        val warsaw = ZoneId.of("Europe/Warsaw")
+        val beforeGap = Clock.fixed(Instant.parse("2026-03-28T23:00:00Z"), warsaw)
+        val draft = AlarmSyncStorage.StoredAlarm(2, 30, true, false, "Gap", oneShotLocalDate = "2026-03-29")
+        val recorded = success(hashes = listOf("03:30:true")).copy(timestamp = beforeGap.millis() - 1000)
+        assertNull(AlarmSyncRiskEvaluator.evaluate(AlarmKey(address, 0), draft, emptySet(), listOf(recorded), beforeGap, warsaw, false, 0))
+        assertNotNull(AlarmSyncRiskEvaluator.evaluate(AlarmKey(address, 0), draft, emptySet(),
+            listOf(recorded.copy(details = recorded.details.copy(alarmHashes = listOf("02:30:true")))), beforeGap, warsaw, false, 0))
+    }
 }
