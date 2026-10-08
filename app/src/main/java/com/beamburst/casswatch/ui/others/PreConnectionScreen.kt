@@ -99,7 +99,6 @@ fun PreConnectionScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val watchName by ptrConnectionViewModel.watchName.collectAsState()
     val triggerPairing by ptrConnectionViewModel.triggerPairing.collectAsState()
     val pairedDevices by ptrConnectionViewModel.pairedDevices.collectAsState()
     val showPreparing by ptrConnectionViewModel.showPreparing.collectAsState()
@@ -237,9 +236,7 @@ fun PreConnectionScreen(
                     ConstraintLayout(modifier = Modifier.fillMaxSize()) {
                         val (connectionSpinner, infoButton, pairButton, deviceList) = createRefs()
 
-                        WatchScreen(
-                            isAlwaysConnected = "DW-H5600" in watchName || "ECB" in watchName
-                        )
+                        WatchScreen()
 
                         AppConnectionSpinner(
                             modifier =
@@ -460,14 +457,8 @@ fun PairButton(modifier: Modifier = Modifier, onClick: () -> Unit, isFlashing: B
 }
 
 @Composable
-fun WatchScreen(isAlwaysConnected: Boolean) {
-    Box {
-        if (isAlwaysConnected) {
-            WatchImageWithOverlayAlwaysConnected(Modifier)
-        } else {
-            WatchImageWithOverlay(Modifier)
-        }
-    }
+fun WatchScreen() {
+    WatchImage(Modifier)
 }
 
 @Composable
