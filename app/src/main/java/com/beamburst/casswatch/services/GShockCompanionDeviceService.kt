@@ -110,14 +110,17 @@ class GShockCompanionDeviceService : CompanionDeviceService() {
     }
 
     private fun startForegroundServicePromotion() {
-        val channelId = "gshock_companion_channel"
-        val channel = NotificationChannel(
-            channelId,
-            getString(R.string.companion_channel_name),
-            NotificationManager.IMPORTANCE_LOW
-        )
-        val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(channel)
+        // POST_NOTIFICATIONS controls drawer visibility, not foreground-service eligibility.
+        // Always provide the required foreground notification, even when permission is denied.
+        runCatching {
+            val channelId = "gshock_companion_channel"
+            val channel = NotificationChannel(
+                channelId,
+                getString(R.string.companion_channel_name),
+                NotificationManager.IMPORTANCE_LOW
+            )
+            val nm = getSystemService(NotificationManager::class.java)
+            nm.createNotificationChannel(channel)
 
             val notification = NotificationCompat.Builder(this, channelId)
                 .setContentTitle(getString(R.string.companion_notification_title))
@@ -125,18 +128,15 @@ class GShockCompanionDeviceService : CompanionDeviceService() {
                 .setSmallIcon(R.drawable.ic_watch_later_black_24dp)
                 .build()
 
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    startForeground(
-                        1983,
-                        notification,
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
-                    )
-                } else {
-                    startForeground(1983, notification)
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to start foreground service")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(
+                    1983,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+                )
+            } else {
+                startForeground(1983, notification)
             }
+        }.onFailure { Timber.e(it, "Failed to start foreground service") }
     }
 }

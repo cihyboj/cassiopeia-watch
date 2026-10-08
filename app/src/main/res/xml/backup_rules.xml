@@ -2,5 +2,4 @@
 <!-- Pre-API-31 auto-backup: keep DataStore settings, drop local crash logs. -->
 <full-backup-content>
     <include domain="file" path="datastore/" />
-    <exclude domain="file" path="crash_logs/" />
 </full-backup-content>

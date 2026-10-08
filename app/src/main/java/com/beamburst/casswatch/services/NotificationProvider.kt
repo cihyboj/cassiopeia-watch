@@ -7,6 +7,8 @@ import android.app.NotificationManager
 import android.content.Context
 import androidx.core.app.NotificationCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import com.beamburst.casswatch.utils.canPostNotifications
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,21 +32,30 @@ class NotificationProvider @Inject constructor(
 
     sealed interface NotificationResult {
         data object Success : NotificationResult
+        data object Skipped : NotificationResult
         data class Error(val exception: Throwable) : NotificationResult
     }
 
     fun createNotification(
         content: NotificationContent,
         config: NotificationConfig = NotificationConfig()
-    ): NotificationResult =
-        runCatching {
+    ): NotificationResult {
+        if (!canPostNotifications(appContext)) {
+            Timber.d("Skipping notification: notifications are disabled")
+            return NotificationResult.Skipped
+        }
+        return runCatching {
             getNotificationManager()
                 .also { manager -> ensureChannelExists(manager, config) }
                 .also { manager -> showNotification(manager, content, config) }
         }.fold(
             onSuccess = { NotificationResult.Success },
-            onFailure = { NotificationResult.Error(it) }
+            onFailure = {
+                Timber.w(it, "Could not post notification")
+                NotificationResult.Error(it)
+            }
         )
+    }
 
     private fun getNotificationManager(): NotificationManager =
         appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

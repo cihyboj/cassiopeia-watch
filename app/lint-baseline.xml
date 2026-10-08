@@ -13,78 +13,34 @@
     </issue>
 
     <issue
-        id="OldTargetApi"
-        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
-        errorLine1="        targetSdk = 36"
-        errorLine2="        ~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle"
-            line="16"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="FullBackupContent"
-        message="`crash_logs/` is not in an included path"
-        errorLine1="    &lt;exclude domain=&quot;file&quot; path=&quot;crash_logs/&quot; />"
-        errorLine2="                                 ~~~~~~~~~~~">
-        <location
-            file="src/main/res/xml/backup_rules.xml"
-            line="5"
-            column="34"/>
-    </issue>
-
-    <issue
-        id="FullBackupContent"
-        message="`crash_logs/` is not in an included path"
-        errorLine1="        &lt;exclude domain=&quot;file&quot; path=&quot;crash_logs/&quot; />"
-        errorLine2="                                     ~~~~~~~~~~~">
-        <location
-            file="src/main/res/xml/data_extraction_rules.xml"
-            line="10"
-            column="38"/>
-    </issue>
-
-    <issue
-        id="FullBackupContent"
-        message="`crash_logs/` is not in an included path"
-        errorLine1="        &lt;exclude domain=&quot;file&quot; path=&quot;crash_logs/&quot; />"
-        errorLine2="                                     ~~~~~~~~~~~">
-        <location
-            file="src/main/res/xml/data_extraction_rules.xml"
-            line="14"
-            column="38"/>
-    </issue>
-
-    <issue
         id="AndroidGradlePluginVersion"
-        message="A newer version of Gradle than 8.14.3 is available: 8.14.5"
+        message="A newer version of Gradle than 8.14.3 is available: 8.14.6"
         errorLine1="distributionUrl=https\://services.gradle.org/distributions/gradle-8.14.3-bin.zip"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/wrapper/gradle-wrapper.properties"
+            file="../gradle/wrapper/gradle-wrapper.properties"
             line="3"
             column="17"/>
     </issue>
 
     <issue
         id="AndroidGradlePluginVersion"
-        message="A newer version of com.android.application than 8.12.3 is available: 9.3.2"
+        message="A newer version of com.android.application than 8.12.3 is available: 9.4.1"
         errorLine1="agp = &quot;8.12.3&quot;"
         errorLine2="      ~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="2"
             column="7"/>
     </issue>
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.core:core-ktx than 1.18.0 is available: 1.19.0"
+        message="A newer version of androidx.core:core-ktx than 1.18.0 is available: 1.19.1"
         errorLine1="coreKtx = &quot;1.18.0&quot;"
         errorLine2="          ~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="4"
             column="11"/>
     </issue>
@@ -95,7 +51,7 @@
         errorLine1="appcompat = &quot;1.7.1&quot;"
         errorLine2="            ~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="8"
             column="13"/>
     </issue>
@@ -106,7 +62,7 @@
         errorLine1="constraintlayout = &quot;2.2.1&quot;"
         errorLine2="                   ~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="9"
             column="20"/>
     </issue>
@@ -117,7 +73,7 @@
         errorLine1="lifecycleLivedataKtx = &quot;2.10.0&quot;"
         errorLine2="                       ~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="10"
             column="24"/>
     </issue>
@@ -128,29 +84,29 @@
         errorLine1="lifecycleViewmodelKtx = &quot;2.10.0&quot;"
         errorLine2="                        ~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="11"
             column="25"/>
     </issue>
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.navigation:navigation-fragment-ktx than 2.9.7 is available: 2.10.0"
+        message="A newer version of androidx.navigation:navigation-fragment-ktx than 2.9.7 is available: 2.10.2"
         errorLine1="navigationFragmentKtx = &quot;2.9.7&quot;"
         errorLine2="                        ~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="13"
             column="25"/>
     </issue>
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.navigation:navigation-ui-ktx than 2.9.7 is available: 2.10.0"
+        message="A newer version of androidx.navigation:navigation-ui-ktx than 2.9.7 is available: 2.10.2"
         errorLine1="navigationUiKtx = &quot;2.9.7&quot;"
         errorLine2="                  ~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="14"
             column="19"/>
     </issue>
@@ -161,7 +117,7 @@
         errorLine1="hiltCompiler = &quot;1.3.0&quot;"
         errorLine2="               ~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="17"
             column="16"/>
     </issue>
@@ -172,7 +128,7 @@
         errorLine1="hiltCompiler = &quot;1.3.0&quot;"
         errorLine2="               ~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="17"
             column="16"/>
     </issue>
@@ -183,7 +139,7 @@
         errorLine1="hiltNavigationCompose = &quot;1.3.0&quot;"
         errorLine2="                        ~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="21"
             column="25"/>
     </issue>
@@ -194,40 +150,40 @@
         errorLine1="lifecycle = &quot;2.10.0&quot;"
         errorLine2="            ~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="23"
             column="13"/>
     </issue>
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.compose.ui:ui than 1.10.6 is available: 1.12.0"
+        message="A newer version of androidx.compose.ui:ui than 1.10.6 is available: 1.12.1"
         errorLine1="compose-ui = &quot;1.10.6&quot;"
         errorLine2="             ~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="25"
             column="14"/>
     </issue>
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.compose.ui:ui-tooling than 1.10.6 is available: 1.12.0"
+        message="A newer version of androidx.compose.ui:ui-tooling than 1.10.6 is available: 1.12.1"
         errorLine1="compose-ui = &quot;1.10.6&quot;"
         errorLine2="             ~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="25"
             column="14"/>
     </issue>
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.compose.ui:ui-tooling-preview than 1.10.6 is available: 1.12.0"
+        message="A newer version of androidx.compose.ui:ui-tooling-preview than 1.10.6 is available: 1.12.1"
         errorLine1="compose-ui = &quot;1.10.6&quot;"
         errorLine2="             ~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="25"
             column="14"/>
     </issue>
@@ -238,9 +194,20 @@
         errorLine1="constraintlayout-compose = &quot;1.1.1&quot;"
         errorLine2="                           ~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="26"
             column="28"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of com.google.android.datatransport:transport-api than 4.1.1 is available: 5.0.0"
+        errorLine1="transportApi = &quot;4.1.1&quot;"
+        errorLine2="               ~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="33"
+            column="16"/>
     </issue>
 
     <issue
@@ -256,33 +223,33 @@
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of org.jetbrains.kotlin.android than 2.2.0 is available: 2.4.10"
+        message="A newer version of org.jetbrains.kotlin.android than 2.2.0 is available: 2.4.21"
         errorLine1="kotlin = &quot;2.2.0&quot;"
         errorLine2="         ~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="3"
             column="10"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of org.jetbrains.kotlin.kapt than 2.2.0 is available: 2.4.10"
+        message="A newer version of org.jetbrains.kotlin.kapt than 2.2.0 is available: 2.4.21"
         errorLine1="kotlin = &quot;2.2.0&quot;"
         errorLine2="         ~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="3"
             column="10"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of org.jetbrains.kotlin.plugin.compose than 2.2.0 is available: 2.4.10"
+        message="A newer version of org.jetbrains.kotlin.plugin.compose than 2.2.0 is available: 2.4.21"
         errorLine1="kotlin = &quot;2.2.0&quot;"
         errorLine2="         ~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="3"
             column="10"/>
     </issue>
@@ -293,7 +260,7 @@
         errorLine1="hiltAndroid = &quot;2.57.2&quot;"
         errorLine2="              ~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="16"
             column="15"/>
     </issue>
@@ -304,7 +271,7 @@
         errorLine1="hiltAndroid = &quot;2.57.2&quot;"
         errorLine2="              ~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="16"
             column="15"/>
     </issue>
@@ -315,7 +282,7 @@
         errorLine1="hiltAndroid = &quot;2.57.2&quot;"
         errorLine2="              ~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="16"
             column="15"/>
     </issue>
@@ -326,7 +293,7 @@
         errorLine1="gson = &quot;2.13.2&quot;"
         errorLine2="       ~~~~~~~~">
         <location
-            file="$HOME/work/cassiopeia-watch/cassiopeia-watch/gradle/libs.versions.toml"
+            file="../gradle/libs.versions.toml"
             line="18"
             column="8"/>
     </issue>
@@ -426,7 +393,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="14"
+            line="15"
             column="13"/>
     </issue>
 
@@ -437,7 +404,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="15"
+            line="16"
             column="13"/>
     </issue>
 
@@ -448,7 +415,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="52"
+            line="53"
             column="13"/>
     </issue>
 
@@ -459,7 +426,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="178"
+            line="179"
             column="13"/>
     </issue>
 
@@ -470,7 +437,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="206"
+            line="207"
             column="13"/>
     </issue>
 
@@ -481,7 +448,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="207"
+            line="208"
             column="13"/>
     </issue>
 
@@ -492,7 +459,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="208"
+            line="209"
             column="13"/>
     </issue>
 
@@ -503,7 +470,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="209"
+            line="210"
             column="13"/>
     </issue>
 
@@ -514,7 +481,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="210"
+            line="211"
             column="13"/>
     </issue>
 
@@ -525,7 +492,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="211"
+            line="212"
             column="13"/>
     </issue>
 
@@ -536,7 +503,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="212"
+            line="213"
             column="13"/>
     </issue>
 
@@ -547,7 +514,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="213"
+            line="214"
             column="13"/>
     </issue>
 
@@ -558,7 +525,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="214"
+            line="215"
             column="13"/>
     </issue>
 
@@ -569,7 +536,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="215"
+            line="216"
             column="13"/>
     </issue>
 
@@ -580,7 +547,7 @@
         errorLine2="            ~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="216"
+            line="217"
             column="13"/>
     </issue>
 
@@ -591,7 +558,7 @@
         errorLine2="            ~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="217"
+            line="218"
             column="13"/>
     </issue>
 
@@ -602,7 +569,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="218"
+            line="219"
             column="13"/>
     </issue>
 
@@ -613,7 +580,7 @@
         errorLine2="            ~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="219"
+            line="220"
             column="13"/>
     </issue>
 
@@ -624,7 +591,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="220"
+            line="221"
             column="13"/>
     </issue>
 
@@ -635,7 +602,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="251"
+            line="252"
             column="13"/>
     </issue>
 
@@ -646,7 +613,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="254"
+            line="255"
             column="13"/>
     </issue>
 
@@ -657,7 +624,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="255"
+            line="256"
             column="13"/>
     </issue>
 
@@ -668,7 +635,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="289"
+            line="290"
             column="13"/>
     </issue>
 
@@ -679,7 +646,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="290"
+            line="291"
             column="13"/>
     </issue>
 
@@ -690,7 +657,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="313"
+            line="314"
             column="13"/>
     </issue>
 
@@ -701,7 +668,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="314"
+            line="315"
             column="13"/>
     </issue>
 
@@ -712,7 +679,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="315"
+            line="316"
             column="13"/>
     </issue>
 
@@ -723,7 +690,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="316"
+            line="317"
             column="13"/>
     </issue>
 
@@ -734,7 +701,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="317"
+            line="318"
             column="13"/>
     </issue>
 
@@ -745,7 +712,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="318"
+            line="319"
             column="13"/>
     </issue>
 
@@ -756,7 +723,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="327"
+            line="328"
             column="13"/>
     </issue>
 
@@ -767,7 +734,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="328"
+            line="329"
             column="13"/>
     </issue>
 
@@ -778,7 +745,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="329"
+            line="330"
             column="13"/>
     </issue>
 
@@ -789,7 +756,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="330"
+            line="331"
             column="13"/>
     </issue>
 
@@ -800,7 +767,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="331"
+            line="332"
             column="13"/>
     </issue>
 
@@ -811,7 +778,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="332"
+            line="333"
             column="13"/>
     </issue>
 
@@ -822,7 +789,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="333"
+            line="334"
             column="13"/>
     </issue>
 
@@ -833,7 +800,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="334"
+            line="335"
             column="13"/>
     </issue>
 
@@ -844,7 +811,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="335"
+            line="336"
             column="13"/>
     </issue>
 
@@ -855,7 +822,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="336"
+            line="337"
             column="13"/>
     </issue>
 
@@ -866,7 +833,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="337"
+            line="338"
             column="13"/>
     </issue>
 
@@ -877,7 +844,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="338"
+            line="339"
             column="13"/>
     </issue>
 
@@ -888,7 +855,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="339"
+            line="340"
             column="13"/>
     </issue>
 
@@ -2494,7 +2461,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="54"
+            line="55"
             column="5"/>
     </issue>
 
@@ -2505,7 +2472,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="202"
+            line="203"
             column="5"/>
     </issue>
 
@@ -2516,7 +2483,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="203"
+            line="204"
             column="5"/>
     </issue>
 
@@ -2527,7 +2494,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="297"
+            line="298"
             column="5"/>
     </issue>
 
@@ -2538,7 +2505,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="299"
+            line="300"
             column="5"/>
     </issue>
 
@@ -2549,488 +2516,19 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="318"
+            line="319"
             column="5"/>
     </issue>
 
     <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-zh-rCN/strings.xml"
-            line="153"
-            column="5"/>
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;taps&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;ble_debug_unlock_remaining&quot; translatable=&quot;false&quot;>%1$d taps to unlock BLE Debug&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="200"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-zh-rCN/strings.xml"
-            line="155"
+            line="484"
             column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="202"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-zh-rCN/strings.xml"
-            line="156"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="203"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-hu/strings.xml"
-            line="157"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="200"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-hu/strings.xml"
-            line="159"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="202"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-hu/strings.xml"
-            line="160"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="203"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="161"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="200"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="163"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="202"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="164"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="203"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ru/strings.xml"
-            line="166"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="200"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-bg/strings.xml"
-            line="167"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="200"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-es/strings.xml"
-            line="167"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="200"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ru/strings.xml"
-            line="168"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="202"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-de/strings.xml"
-            line="168"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="200"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-bg/strings.xml"
-            line="169"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="202"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-es/strings.xml"
-            line="169"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="202"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ru/strings.xml"
-            line="169"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="203"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-de/strings.xml"
-            line="170"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="202"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-bg/strings.xml"
-            line="170"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="203"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-es/strings.xml"
-            line="170"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="203"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-de/strings.xml"
-            line="171"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="203"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ca/strings.xml"
-            line="173"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="200"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ja/strings.xml"
-            line="173"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="200"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ca/strings.xml"
-            line="175"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="202"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ja/strings.xml"
-            line="175"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="202"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ca/strings.xml"
-            line="176"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="203"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ja/strings.xml"
-            line="176"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="203"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_last_sync`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_last_sync&quot;>Last sync: %1&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-fr/strings.xml"
-            line="177"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="200"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_active`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_active&quot;>%1 active&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-fr/strings.xml"
-            line="179"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="202"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Inconsistent number of arguments in formatting string `footer_disabled`; found both 0 here and 1 in values/strings.xml"
-        errorLine1="    &lt;string name=&quot;footer_disabled&quot;>%1 disabled&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-fr/strings.xml"
-            line="180"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="203"
-            column="5"
-            message="Conflicting number of arguments (1) here"/>
     </issue>
 
     <issue
@@ -3219,7 +2717,7 @@
         errorLine2="            ~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="9"
+            line="10"
             column="13"/>
     </issue>
 
@@ -3230,7 +2728,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="11"
+            line="12"
             column="13"/>
     </issue>
 
@@ -3241,7 +2739,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="12"
+            line="13"
             column="13"/>
     </issue>
 
@@ -3252,7 +2750,7 @@
         errorLine2="            ~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="16"
+            line="17"
             column="13"/>
     </issue>
 
@@ -3263,7 +2761,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="17"
+            line="18"
             column="13"/>
     </issue>
 
@@ -3274,7 +2772,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="33"
+            line="34"
             column="13"/>
     </issue>
 
@@ -3285,7 +2783,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="36"
+            line="37"
             column="13"/>
     </issue>
 
@@ -3296,7 +2794,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="39"
+            line="40"
             column="13"/>
     </issue>
 
@@ -3307,7 +2805,7 @@
         errorLine2="            ~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="40"
+            line="41"
             column="13"/>
     </issue>
 
@@ -3318,7 +2816,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="41"
+            line="42"
             column="13"/>
     </issue>
 
@@ -3329,7 +2827,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="42"
+            line="43"
             column="13"/>
     </issue>
 
@@ -3340,7 +2838,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="43"
+            line="44"
             column="13"/>
     </issue>
 
@@ -3351,7 +2849,7 @@
         errorLine2="            ~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="45"
+            line="46"
             column="13"/>
     </issue>
 
@@ -3362,7 +2860,7 @@
         errorLine2="            ~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="46"
+            line="47"
             column="13"/>
     </issue>
 
@@ -3373,7 +2871,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="47"
+            line="48"
             column="13"/>
     </issue>
 
@@ -3384,7 +2882,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="48"
+            line="49"
             column="13"/>
     </issue>
 
@@ -3395,7 +2893,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="53"
+            line="54"
             column="13"/>
     </issue>
 
@@ -3406,7 +2904,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="54"
+            line="55"
             column="13"/>
     </issue>
 
@@ -3417,7 +2915,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="55"
+            line="56"
             column="13"/>
     </issue>
 
@@ -3428,7 +2926,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="56"
+            line="57"
             column="13"/>
     </issue>
 
@@ -3439,7 +2937,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="57"
+            line="58"
             column="13"/>
     </issue>
 
@@ -3450,7 +2948,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="65"
+            line="66"
             column="13"/>
     </issue>
 
@@ -3461,7 +2959,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="74"
+            line="75"
             column="13"/>
     </issue>
 
@@ -3472,7 +2970,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="77"
+            line="78"
             column="13"/>
     </issue>
 
@@ -3483,7 +2981,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="79"
+            line="80"
             column="13"/>
     </issue>
 
@@ -3494,7 +2992,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="80"
+            line="81"
             column="13"/>
     </issue>
 
@@ -3505,7 +3003,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="82"
+            line="83"
             column="13"/>
     </issue>
 
@@ -3516,7 +3014,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="94"
+            line="95"
             column="13"/>
     </issue>
 
@@ -3527,7 +3025,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="95"
+            line="96"
             column="13"/>
     </issue>
 
@@ -3538,7 +3036,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="101"
+            line="102"
             column="13"/>
     </issue>
 
@@ -3549,7 +3047,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="105"
+            line="106"
             column="13"/>
     </issue>
 
@@ -3560,7 +3058,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="106"
+            line="107"
             column="13"/>
     </issue>
 
@@ -3571,7 +3069,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="114"
+            line="115"
             column="13"/>
     </issue>
 
@@ -3582,7 +3080,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="115"
+            line="116"
             column="13"/>
     </issue>
 
@@ -3593,7 +3091,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="116"
+            line="117"
             column="13"/>
     </issue>
 
@@ -3604,7 +3102,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="117"
+            line="118"
             column="13"/>
     </issue>
 
@@ -3615,7 +3113,7 @@
         errorLine2="            ~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="119"
+            line="120"
             column="13"/>
     </issue>
 
@@ -3626,7 +3124,7 @@
         errorLine2="            ~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="120"
+            line="121"
             column="13"/>
     </issue>
 
@@ -3637,7 +3135,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="125"
+            line="126"
             column="13"/>
     </issue>
 
@@ -3648,7 +3146,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="127"
+            line="128"
             column="13"/>
     </issue>
 
@@ -3659,7 +3157,7 @@
         errorLine2="            ~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="128"
+            line="129"
             column="13"/>
     </issue>
 
@@ -3670,7 +3168,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="129"
+            line="130"
             column="13"/>
     </issue>
 
@@ -3681,7 +3179,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="131"
+            line="132"
             column="13"/>
     </issue>
 
@@ -3692,7 +3190,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="132"
+            line="133"
             column="13"/>
     </issue>
 
@@ -3703,7 +3201,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="133"
+            line="134"
             column="13"/>
     </issue>
 
@@ -3714,7 +3212,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="135"
+            line="136"
             column="13"/>
     </issue>
 
@@ -3725,7 +3223,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="141"
+            line="142"
             column="13"/>
     </issue>
 
@@ -3736,7 +3234,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="142"
+            line="143"
             column="13"/>
     </issue>
 
@@ -3747,7 +3245,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="143"
+            line="144"
             column="13"/>
     </issue>
 
@@ -3758,7 +3256,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="144"
+            line="145"
             column="13"/>
     </issue>
 
@@ -3769,7 +3267,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="149"
+            line="150"
             column="13"/>
     </issue>
 
@@ -3780,7 +3278,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="150"
+            line="151"
             column="13"/>
     </issue>
 
@@ -3791,7 +3289,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="151"
+            line="152"
             column="13"/>
     </issue>
 
@@ -3802,7 +3300,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="153"
+            line="154"
             column="13"/>
     </issue>
 
@@ -3813,7 +3311,7 @@
         errorLine2="            ~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="154"
+            line="155"
             column="13"/>
     </issue>
 
@@ -3824,7 +3322,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="174"
+            line="175"
             column="13"/>
     </issue>
 
@@ -3835,7 +3333,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="175"
+            line="176"
             column="13"/>
     </issue>
 
@@ -3846,7 +3344,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="176"
+            line="177"
             column="13"/>
     </issue>
 
@@ -3857,7 +3355,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="179"
+            line="180"
             column="13"/>
     </issue>
 
@@ -3868,7 +3366,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="181"
+            line="182"
             column="13"/>
     </issue>
 
@@ -3879,7 +3377,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="190"
+            line="191"
             column="13"/>
     </issue>
 
@@ -3890,7 +3388,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="191"
+            line="192"
             column="13"/>
     </issue>
 
@@ -3901,7 +3399,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="192"
+            line="193"
             column="13"/>
     </issue>
 
@@ -3912,7 +3410,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="193"
+            line="194"
             column="13"/>
     </issue>
 
@@ -3923,7 +3421,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="235"
+            line="236"
             column="13"/>
     </issue>
 
@@ -3934,7 +3432,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="242"
+            line="243"
             column="13"/>
     </issue>
 
@@ -3945,7 +3443,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="247"
+            line="248"
             column="13"/>
     </issue>
 
@@ -3956,7 +3454,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="248"
+            line="249"
             column="13"/>
     </issue>
 
@@ -3967,7 +3465,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="249"
+            line="250"
             column="13"/>
     </issue>
 
@@ -3978,7 +3476,7 @@
         errorLine2="            ~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="279"
+            line="280"
             column="13"/>
     </issue>
 
@@ -3989,7 +3487,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="280"
+            line="281"
             column="13"/>
     </issue>
 
@@ -4000,7 +3498,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="286"
+            line="287"
             column="13"/>
     </issue>
 
@@ -4011,7 +3509,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="307"
+            line="308"
             column="13"/>
     </issue>
 
@@ -4022,7 +3520,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="330"
+            line="331"
             column="13"/>
     </issue>
 
@@ -4033,7 +3531,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="336"
+            line="337"
             column="13"/>
     </issue>
 

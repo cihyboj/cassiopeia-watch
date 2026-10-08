@@ -1,12 +1,10 @@
 package com.beamburst.casswatch.utils
 
-import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,31 +26,7 @@ fun CheckPermissions(onPermissionsGranted: @Composable () -> Unit) {
     val context = LocalContext.current
     val activity = context as Activity
 
-    fun getRequiredPermissions(): Array<String> {
-        return mutableListOf<String>().apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                addAll(
-                    listOf(
-                        Manifest.permission.BLUETOOTH_SCAN,
-                        Manifest.permission.BLUETOOTH_CONNECT,
-                    )
-                )
-                add(Manifest.permission.REQUEST_COMPANION_PROFILE_WATCH)
-            } else {
-                add(Manifest.permission.ACCESS_COARSE_LOCATION)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    // Android 10-11 deliver BLE scan results only with FINE location;
-                    // with COARSE alone the fallback scan silently never fires.
-                    add(Manifest.permission.ACCESS_FINE_LOCATION)
-                }
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }.toTypedArray()
-    }
-
-    val initialPermissions = getRequiredPermissions()
+    val requiredPermissions = remember { essentialWatchPermissions(Build.VERSION.SDK_INT) }
 
     // State to track if permissions are granted
     var permissionsGranted by remember { mutableStateOf(false) }
@@ -62,25 +36,31 @@ fun CheckPermissions(onPermissionsGranted: @Composable () -> Unit) {
     // Launcher for requesting permissions
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
-        onResult = { permissions ->
-            permissionsGranted = permissions.values.all { it }
-            showRationaleDialog = permissions.any { (permission, granted) ->
-                !granted && activity.shouldShowRequestPermissionRationale(permission)
+        onResult = { _ ->
+            // A cancelled permission activity can return an empty map. Re-read grants so
+            // dismissing an optional notification prompt cannot undo Bluetooth approval.
+            val grants = requiredPermissions.associateWith {
+                ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
             }
-            permanentlyDenied = !permissionsGranted && !showRationaleDialog
+            val decision = watchPermissionDecision(requiredPermissions, grants) {
+                activity.shouldShowRequestPermissionRationale(it)
+            }
+            permissionsGranted = decision == WatchPermissionDecision.GRANTED
+            showRationaleDialog = decision == WatchPermissionDecision.RETRY
+            permanentlyDenied = decision == WatchPermissionDecision.SETTINGS
         }
     )
 
     // Check permissions before launching the request
     LaunchedEffect(Unit) {
-        val arePermissionsGranted = initialPermissions.all {
+        val granted = requiredPermissions.associateWith {
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
-
-        if (arePermissionsGranted) {
+        val request = initialWatchPermissionRequest(Build.VERSION.SDK_INT, granted)
+        if (request.isEmpty()) {
             permissionsGranted = true
         } else {
-            launcher.launch(initialPermissions)
+            launcher.launch(request.toTypedArray())
         }
     }
 
@@ -99,7 +79,8 @@ fun CheckPermissions(onPermissionsGranted: @Composable () -> Unit) {
                 AppButton(
                     stringResource(R.string.retry),
                     onClick = {
-                        launcher.launch(initialPermissions)
+                        showRationaleDialog = false
+                        launcher.launch(requiredPermissions.toTypedArray())
                     })
             },
             dismissButton = {
