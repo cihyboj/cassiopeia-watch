@@ -133,10 +133,7 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="sorry_your_device_does_not_support_bluetooth_exiting">Ezen az eszközön nincs Bluetooth. Az alkalmazás nem használható.</string>
     <string name="permission_required_to_turn_on_bluetooth">Bluetooth-használati engedély szükséges.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">Bluetooth-használati engedély megtagadva. A Bluetooth-t kézzel kell bekapcsolni.</string>
-    <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Az engedélyek nincsenek megadva. Az alkamazás beállításainál lehet az engedélyeket megadni.</string>
     <string name="timer_set">Időzítő beállítva.</string>
-    <string name="press_and_hold_for_3_seconds">Kapcsolódás:\nTartsa nyomva\n3 másodpercig</string>
-    <string name="short_press_to_run_actions">Ezzel a\ngombbal lehet\nfeladatot futtatni</string>
     <string name="app_is_running">Cassiopeia Watch fut.</string>
     <string name="preventing_the_app_from_closing">…akadályozza az alkalmazás bezárását.</string>
     <string name="app_is_not_running">Cassiopeia Watch nem fut.</string>
@@ -145,7 +142,6 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="cover_hold_to_unlock">Feloldáshoz tartsa lenyomva</string>
     <string name="cover_connected">Csatlakoztatva</string>
     <!-- "ó" is short for "óra" (hour) -->
-    <string name="find_phone_instruction">A műveletek végrehajtásához indítsa el az „Telefon keresése” funkciót az órán</string>
     <string name="press_and_hold_connection_button_to_continue">A párosításhoz tartsa lenyomva a CONNECTION gombot (általában a BAL ALSÓ gombot) az óráján 3 másodpercig.</string>
     <string name="looking_for_a_device">Eszköz keresése.</string>
     <string name="add_watch">Óra hozzáadása</string>
@@ -212,4 +208,6 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">A módosítások küldése előtt csatlakoztassa a kiválasztott órát.</string>
     <string name="phone_alarm_handoff_limits">Kérések elküldve az óraalkalmazásnak; az ébresztők létrehozása nincs megerősítve. Az egyszeri ébresztőnek nincs dátuma, és átadás után itt nem törölhető.</string>
+    <string name="watch_permission_explanation">Az órával való kommunikációhoz Bluetooth-hozzáférés szükséges. Android 10–11 esetén engedélyezd a helyadatokat a Bluetooth-kereséshez.</string>
+    <string name="sync_notifications_blocked">Az automatikus szinkronizálás értesítései be vannak kapcsolva, de az Android blokkolja őket. Engedélyezd az alkalmazás értesítéseit és a szinkronizálási csatornát a beállításokban.</string>
 </resources>

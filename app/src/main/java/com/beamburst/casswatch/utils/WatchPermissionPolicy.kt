@@ -26,10 +26,6 @@ internal fun watchPermissionDecision(
     }
 }
 
-// Offer notifications with initial watch setup, but never retry or gate setup on them.
-@SuppressLint("InlinedApi")
-internal fun initialWatchPermissionRequest(sdkInt: Int, grants: Map<String, Boolean>): List<String> {
-    val required = essentialWatchPermissions(sdkInt)
-    if (required.all { grants[it] == true }) return emptyList()
-    return if (sdkInt >= 33) required + Manifest.permission.POST_NOTIFICATIONS else required
-}
+// Watch setup requests only the permissions needed to communicate with the watch.
+internal fun initialWatchPermissionRequest(sdkInt: Int, grants: Map<String, Boolean>): List<String> =
+    essentialWatchPermissions(sdkInt).filter { grants[it] != true }

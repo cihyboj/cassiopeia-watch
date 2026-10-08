@@ -184,10 +184,7 @@
     <string name="sorry_your_device_does_not_support_bluetooth_exiting">Sorry, your device does not support Bluetooth. Exiting…</string>
     <string name="permission_required_to_turn_on_bluetooth">Permission required to turn on Bluetooth.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">You have no permissions to turn on Bluetooth. Please turn it on manually.</string>
-    <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Permissions are permanently denied. Please enable them in the app settings.</string>
     <string name="timer_set">Timer Set</string>
-    <string name="press_and_hold_for_3_seconds">Press and\nhold for 3\nseconds</string>
-    <string name="short_press_to_run_actions">Short-press\nto run\nActions</string>
     <string name="app_is_running">Cassiopeia Watch is running</string>
     <string name="preventing_the_app_from_closing">Preventing the app from closing</string>
     <string name="app_is_not_running">Cassiopeia Watch is not running.</string>
@@ -213,9 +210,7 @@
     <string name="open_settings">Open Settings</string>
     <string name="watch_disconnected_snackbar">%1$s disconnected</string>
     <string name="permissions_required_title">Permissions Required</string>
-    <string name="permissions_required_body">This app needs location and Bluetooth permissions to function properly.</string>
     <string name="retry">Retry</string>
-    <string name="exit">Exit</string>
     <string name="api_error">Api Error</string>
     <string name="dismiss">Dismiss</string>
     <string name="time_set_notification">Time set at %1$s for %2$s watch</string>
@@ -224,7 +219,6 @@
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
 
-    <string name="find_phone_instruction">To run actions, start the \"Find Phone\" function on the watch</string>
     <string name="press_and_hold_connection_button_to_continue">Press and hold the CONNECTION button (usually BOTTOM-LEFT) on your watch for 3 seconds to pair.</string>
     <string name="looking_for_a_device">Looking for a device.</string>
     <string name="add_watch">Add Watch</string>
@@ -484,4 +478,6 @@
     <string name="ble_debug_unlock_remaining" translatable="false">%1$d taps to unlock BLE Debug</string>
     <string name="selected_watch_not_connected">Connect the selected watch before sending changes.</string>
     <string name="phone_alarm_handoff_limits">Requests sent to the clock app; alarm creation is unconfirmed. A one-time alarm has no date, and this app cannot cancel it after hand-off.</string>
+    <string name="watch_permission_explanation">Bluetooth access is needed to communicate with your watch. On Android 10–11, allow location access for Bluetooth scanning.</string>
+    <string name="sync_notifications_blocked">Auto-sync notifications are enabled, but Android is blocking them. Allow app notifications and the sync notification channel in Settings.</string>
 </resources>

@@ -143,10 +143,7 @@
     <string name="sorry_your_device_does_not_support_bluetooth_exiting">Извинете, вашето устройство не поддържа Bluetooth. Излизане…</string>
     <string name="permission_required_to_turn_on_bluetooth">Необходими са разрешения за включване на Bluetooth.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">Нямате разрешения за включване на Bluetooth. Моля, включете го ръчно.</string>
-    <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Разрешенията са постоянно отказани. Моля, активирайте ги в настройките на приложението.</string>
     <string name="timer_set">Таймерът е настроен</string>
-    <string name="press_and_hold_for_3_seconds">Задръж\n3 сек</string>
-    <string name="short_press_to_run_actions">Натисни за\nдействия</string>
 
     <string name="app_is_running">Cassiopeia Watch работи</string>
     <string name="app_is_not_running">Cassiopeia Watch не работи.</string>
@@ -155,7 +152,6 @@
     <string name="cover_hold_to_unlock">Задръжте, за да отключите</string>
     <string name="cover_connected">Свързан</string>
     <!-- "h" as in hours = "часа", abbreviated as "ч" -->
-    <string name="find_phone_instruction">За да изпълните действията, стартирайте функцията „Намиране телефон“ на часовника</string>
     <string name="press_and_hold_connection_button_to_continue">Натиснете и задръжте бутона CONNECTION (обикновено ДОЛУ ВЛЯВО) на часовника си за 3 секунди, за да го сдвоите.</string>
     <string name="looking_for_a_device">Търсене на устройство.</string>
     <string name="add_watch">Добавяне на часовник</string>
@@ -222,4 +218,6 @@
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">Свържете избрания часовник, преди да изпратите промените.</string>
     <string name="phone_alarm_handoff_limits">Заявките са изпратени до приложението за часовник; създаването на аларми не е потвърдено. Еднократната аларма няма дата и това приложение не може да я отмени след предаването.</string>
+    <string name="watch_permission_explanation">За връзка с часовника е нужен достъп до Bluetooth. При Android 10–11 разрешете местоположението за Bluetooth сканиране.</string>
+    <string name="sync_notifications_blocked">Известията за автоматична синхронизация са включени, но Android ги блокира. Разрешете известията на приложението и канала за синхронизация в настройките.</string>
 </resources>

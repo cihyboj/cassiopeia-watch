@@ -65,16 +65,28 @@ class WatchPermissionPolicyTest {
     }
 
     @Test
+    fun `Settings grant replaces denial decisions on resume`() {
+        for (sdk in listOf(29, 30, 33)) {
+            val required = essentialWatchPermissions(sdk)
+            assertEquals(WatchPermissionDecision.SETTINGS, watchPermissionDecision(required, emptyMap()) { false })
+            assertEquals(WatchPermissionDecision.RETRY, watchPermissionDecision(required, emptyMap()) { true })
+            assertEquals(WatchPermissionDecision.GRANTED, watchPermissionDecision(required, required.associateWith { true }) {
+                error("Stale rationale must not be consulted")
+            })
+        }
+    }
+
+    @Test
     fun `notification denial does not prompt again when Bluetooth is granted`() {
         val grants = essentialWatchPermissions(33).associateWith { true } + (Manifest.permission.POST_NOTIFICATIONS to false)
         assertTrue(initialWatchPermissionRequest(33, grants).isEmpty())
     }
 
     @Test
-    fun `initial request includes all essential permissions and optionally notifications`() {
+    fun `initial request includes only missing essential permissions`() {
         assertEquals(essentialWatchPermissions(32), initialWatchPermissionRequest(32, emptyMap()))
         val request = initialWatchPermissionRequest(33, mapOf(Manifest.permission.BLUETOOTH_SCAN to true))
-        assertEquals(essentialWatchPermissions(33) + Manifest.permission.POST_NOTIFICATIONS, request)
+        assertEquals(listOf(Manifest.permission.BLUETOOTH_CONNECT), request)
         assertFalse(essentialWatchPermissions(33).contains(Manifest.permission.POST_NOTIFICATIONS))
     }
 }

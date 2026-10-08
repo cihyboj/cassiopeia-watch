@@ -87,12 +87,12 @@ class WatchButtonDispatcher @Inject constructor(
             actions += "Broadcast disabled"
         }
         if (cards.findPhone.enabled) {
-            PhoneFinder.ring(
+            PhoneFinder.toggle(
                 context = context,
                 volumePercent = cards.findPhone.volumePercent,
                 melody = cards.findPhone.melody
             )
-            actions += "Find my phone started: ${cards.findPhone.melody.name.lowercase()} at ${cards.findPhone.volumePercent}%"
+            actions += "Find my phone toggled: ${cards.findPhone.melody.name.lowercase()} at ${cards.findPhone.volumePercent}%"
         } else {
             actions += "Find my phone disabled"
         }

@@ -24,7 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
@@ -108,7 +108,7 @@ fun WatchRow(
 
 @Composable
 private fun PairedWatch.subtitle(): String {
-    val context = LocalContext.current
+    val resources = LocalResources.current
     return formatWatchRowSubtitle(
         state = state,
         snapshot = snapshot,
@@ -119,7 +119,7 @@ private fun PairedWatch.subtitle(): String {
         connectionErrorLabel = stringResource(R.string.connection_error),
         disconnectedLabel = stringResource(R.string.status_disconnected),
         connectToReadWatchLabel = stringResource(R.string.connect_to_read_watch),
-        cachedPrefix = { context.getString(R.string.cached_prefix, it) },
+        cachedPrefix = { resources.getString(R.string.cached_prefix, it) },
     )
 }
 

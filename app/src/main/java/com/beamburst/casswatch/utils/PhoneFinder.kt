@@ -19,12 +19,21 @@ import timber.log.Timber
 object PhoneFinder {
     private var player: MediaPlayer? = null
     private val handler = Handler(Looper.getMainLooper())
+    private val stopAfterTimeout = Runnable { stop() }
     private var audioManager: AudioManager? = null
     private var savedVolume: Int? = null
     private var appContext: Context? = null
 
     private const val CHANNEL_ID = "find_phone"
     private const val NOTIFICATION_ID = 4242
+
+    // Watch events can arrive on a background dispatcher. Serialize the toggle with
+    // playback and timeout cleanup on the main looper.
+    fun toggle(context: Context, volumePercent: Int = 100, melody: FindPhoneMelody = FindPhoneMelody.ALARM) {
+        handler.post {
+            if (shouldStopPhoneFinder(player != null)) stop() else ring(context, volumePercent, melody)
+        }
+    }
 
     fun ring(context: Context, volumePercent: Int = 100, melody: FindPhoneMelody = FindPhoneMelody.ALARM) {
         stop()
@@ -61,7 +70,7 @@ object PhoneFinder {
             // Ringing and the 30-second timeout work even without a stop notification.
             runCatching { showStopNotification(context.applicationContext) }
                 .onFailure { Timber.w(it, "Could not show find-phone stop notification") }
-            handler.postDelayed({ stop() }, 30_000)
+            handler.postDelayed(stopAfterTimeout, 30_000)
         }.onFailure { e ->
             Timber.e(e, "PhoneFinder ring failed")
             stop()
@@ -69,7 +78,7 @@ object PhoneFinder {
     }
 
     fun stop() {
-        handler.removeCallbacksAndMessages(null)
+        handler.removeCallbacks(stopAfterTimeout)
         runCatching { player?.stop(); player?.release() }
         runCatching {
             val manager = audioManager
@@ -118,3 +127,5 @@ object PhoneFinder {
         manager.cancel(NOTIFICATION_ID)
     }
 }
+
+internal fun shouldStopPhoneFinder(isRinging: Boolean): Boolean = isRinging

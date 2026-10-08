@@ -144,10 +144,7 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="sorry_your_device_does_not_support_bluetooth_exiting">Lo siento, su dispositivo no soporta Bluetooth. Saliendo…</string>
     <string name="permission_required_to_turn_on_bluetooth">Se requieren permisos para activar Bluetooth.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">No tiene permisos para activar Bluetooth. Por favor, actívelo manualmente.</string>
-    <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Los permisos están permanentemente denegados. Habilítelos en la configuración de la aplicación.</string>
     <string name="timer_set">Temporizador configurado</string>
-    <string name="press_and_hold_for_3_seconds">Mantén\n3 seg</string>
-    <string name="short_press_to_run_actions">Pulsar para\nacciones</string>
     <string name="app_is_running">Cassiopeia Watch está en funcionamiento</string>
     <string name="app_is_not_running">Cassiopeia Watch no está en ejecución.</string>
     <string name="preventing_the_app_from_closing">Evitando que la aplicación se cierre</string>
@@ -155,7 +152,6 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="cover_hold_to_unlock">Mantén presionado para desbloquear</string>
     <string name="cover_connected">Conectado</string>
     <!-- "h" is commonly used for "hora" in Spanish as well -->
-    <string name="find_phone_instruction">Para ejecutar acciones, inicia la función "Buscar teléfono" en el reloj</string>
     <string name="press_and_hold_connection_button_to_continue">Mantén pulsado el botón de CONEXIÓN (normalmente el inferior izquierdo) de tu reloj durante 3 segundos para emparejarlo.</string>
     <string name="looking_for_a_device">Buscando un dispositivo.</string>
     <string name="add_watch">Añadir reloj</string>
@@ -222,4 +218,6 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">Conecta el reloj seleccionado antes de enviar cambios.</string>
     <string name="phone_alarm_handoff_limits">Solicitudes enviadas a la app de reloj; la creación de alarmas no está confirmada. Una alarma única no tiene fecha y esta app no puede cancelarla tras enviarla.</string>
+    <string name="watch_permission_explanation">Se necesita acceso a Bluetooth para comunicarse con el reloj. En Android 10–11, permite la ubicación para buscar dispositivos Bluetooth.</string>
+    <string name="sync_notifications_blocked">Las notificaciones de sincronización automática están activadas, pero Android las bloquea. Permite las notificaciones de la app y el canal de sincronización en Ajustes.</string>
 </resources>

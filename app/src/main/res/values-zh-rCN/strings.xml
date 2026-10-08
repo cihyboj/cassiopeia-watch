@@ -131,17 +131,13 @@
     <string name="sorry_your_device_does_not_support_bluetooth_exiting">抱歉，您的设备不支持蓝牙。正在退出…</string>
     <string name="permission_required_to_turn_on_bluetooth">需要权限才能开启蓝牙。</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">您没有权限开启蓝牙，请手动开启。</string>
-    <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">权限已被永久拒绝，请在应用设置中启用。</string>
     <string name="timer_set">定时器已设置</string>
-    <string name="press_and_hold_for_3_seconds">长按\n3秒</string>
-    <string name="short_press_to_run_actions">短按\n执行</string>
     <string name="app_is_running">Cassiopeia Watch 正在运行</string>
     <string name="app_is_not_running">Cassiopeia Watch 未运行</string>
     <string name="preventing_the_app_from_closing">正在防止应用关闭</string>
     <string name="health_connect_not_available">“Health Connect”不可用。请安装它。</string>
     <string name="cover_hold_to_unlock">按住以解锁</string>
     <string name="cover_connected">已连接</string>
-    <string name="find_phone_instruction">要运行操作，请在手表上启动“查找手机”功能。</string>
     <string name="press_and_hold_connection_button_to_continue">按住手表上的连接按钮（通常是左下角）3 秒钟以进行配对。</string>
     <string name="looking_for_a_device">正在寻找设备。</string>
     <string name="add_watch">添加手表</string>
@@ -213,4 +209,6 @@
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">发送更改前，请连接所选手表。</string>
     <string name="phone_alarm_handoff_limits">已向时钟应用发送请求；尚未确认闹钟已创建。一次性闹钟不包含日期，发送后本应用无法取消。</string>
+    <string name="watch_permission_explanation">与手表通信需要蓝牙访问权限。在 Android 10–11 上，请允许位置访问以进行蓝牙扫描。</string>
+    <string name="sync_notifications_blocked">自动同步通知已启用，但被 Android 阻止。请在设置中允许应用通知和同步通知渠道。</string>
 </resources>

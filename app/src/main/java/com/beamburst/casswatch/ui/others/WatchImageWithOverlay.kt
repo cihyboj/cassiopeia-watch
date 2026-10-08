@@ -9,7 +9,7 @@ import androidx.compose.ui.res.painterResource
 import com.beamburst.casswatch.R
 
 @Composable
-fun WatchImageWithOverlay(
+fun WatchImage(
     modifier: Modifier = Modifier,
     imageResId: Int = R.drawable.cassiopeia_watch
 ) {
@@ -21,12 +21,4 @@ fun WatchImageWithOverlay(
         modifier = modifier.fillMaxSize(),
         contentScale = ContentScale.Fit
     )
-}
-
-@Composable
-fun WatchImageWithOverlayAlwaysConnected(
-    modifier: Modifier = Modifier,
-    imageResId: Int = R.drawable.cassiopeia_watch,
-) {
-    WatchImageWithOverlay(modifier, imageResId)
 }

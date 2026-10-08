@@ -151,17 +151,13 @@
     <string name="sorry_your_device_does_not_support_bluetooth_exiting">Ho sentim, el teu dispositiu no admet Bluetooth. Sortint…</string>
     <string name="permission_required_to_turn_on_bluetooth">Es necessita permís per activar el Bluetooth.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">No tens permisos per activar el Bluetooth. Activa\'l manualment, si us plau.</string>
-    <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Els permisos estan denegats permanentment. Activa\'ls a la configuració de l\'aplicació.</string>
     <string name="timer_set">Temporitzador configurat</string>
-    <string name="press_and_hold_for_3_seconds">Prem i mantén\npremut durant 3\nsegons</string>
-    <string name="short_press_to_run_actions">Pressió curta\nper executar\naccions</string>
     <string name="app_is_running">Cassiopeia Watch està actiu</string>
     <string name="preventing_the_app_from_closing">S\'està evitant el tancament de l\'aplicació</string>
     <string name="app_is_not_running">Cassiopeia Watch no està actiu.</string>
     <string name="health_connect_not_available">\"Health Connect\" no està disponible. Si us plau, instal·la\'l.</string>
     <string name="cover_hold_to_unlock">Mantén premut per desbloquejar</string>
     <string name="cover_connected">Connectat</string>
-    <string name="find_phone_instruction">Per executar accions, inicia la funció \"Troba el telèfon\" al rellotge</string>
     <string name="press_and_hold_connection_button_to_continue">Manteniu premut el botó CONNECTION (normalment a baix a l\'esquerra) del rellotge durant 3 segons per vincular-lo.</string>
     <string name="looking_for_a_device">Buscant un dispositiu.</string>
     <string name="add_watch">Afegir rellotge</string>
@@ -228,4 +224,6 @@
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">Connecta el rellotge seleccionat abans d’enviar els canvis.</string>
     <string name="phone_alarm_handoff_limits">Peticions enviades a l’aplicació de rellotge; la creació d’alarmes no està confirmada. Una alarma única no té data i aquesta aplicació no la pot cancel·lar després d’enviar-la.</string>
+    <string name="watch_permission_explanation">Cal accés a Bluetooth per comunicar-se amb el rellotge. A Android 10–11, permet la ubicació per cercar dispositius Bluetooth.</string>
+    <string name="sync_notifications_blocked">Les notificacions de sincronització automàtica estan activades, però Android les bloqueja. Permet les notificacions de l’aplicació i el canal de sincronització als ajustos.</string>
 </resources>
