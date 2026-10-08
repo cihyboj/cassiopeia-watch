@@ -88,7 +88,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## Fonts and artwork
+## Artwork
 
 The app icon and the in-app artwork are original to Cassiopeia Watch. Some vector
 drawables (calendar, alarm and clock icons) originate from CasioGShockSmartSync;
