@@ -58,7 +58,9 @@ object PhoneFinder {
                 prepare()
                 start()
             }
-            showStopNotification(context.applicationContext)
+            // Ringing and the 30-second timeout work even without a stop notification.
+            runCatching { showStopNotification(context.applicationContext) }
+                .onFailure { Timber.w(it, "Could not show find-phone stop notification") }
             handler.postDelayed({ stop() }, 30_000)
         }.onFailure { e ->
             Timber.e(e, "PhoneFinder ring failed")
@@ -83,6 +85,10 @@ object PhoneFinder {
     }
 
     private fun showStopNotification(context: Context) {
+        if (!canPostNotifications(context)) {
+            Timber.d("Find-phone stop notification unavailable: notifications are disabled")
+            return
+        }
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(
             NotificationChannel(CHANNEL_ID, "Find phone", NotificationManager.IMPORTANCE_HIGH)
