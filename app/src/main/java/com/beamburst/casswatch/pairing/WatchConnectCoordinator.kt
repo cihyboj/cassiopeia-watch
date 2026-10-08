@@ -16,6 +16,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 import org.avmedia.gshockapi.IGShockAPI
+import org.avmedia.gshockapi.ProgressEvents
+import org.avmedia.gshockapi.EventAction
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -36,6 +38,11 @@ class WatchConnectCoordinator @Inject constructor(
     @Volatile private var attempt: Attempt? = null
 
     init {
+        ProgressEvents.runEventActions("WatchConnectCoordinator-initialization", arrayOf(
+            EventAction("WatchInitializationCompleted") {
+                session.ready?.let(session::initializationCompleted)
+            },
+        ))
         session.onEnded { ended ->
             attempt?.takeIf { it.token.generation == ended.generation }?.let {
                 attempt = null
@@ -62,7 +69,7 @@ class WatchConnectCoordinator @Inject constructor(
                     connectionEvents.observeTransport(connected || (observed != null && repository.isConnected()), observed)
                     var state = session.state.value
                     if (state is WatchConnectionSession.Ready && (connected || repository.isConnected())) {
-                        if (state.address == requested) return@withLock null
+                        if (state.address == requested) return@withLock attempt.takeIf { !session.isInitialized(state) }
                         if (!takeover) return@withTimeoutOrNull false
                         stopCurrent()
                         state = session.state.value
@@ -72,6 +79,7 @@ class WatchConnectCoordinator @Inject constructor(
                             val job = SupervisorJob()
                             val result = CoroutineScope(currentCoroutineContext() + job).async(start = CoroutineStart.LAZY) {
                                 val ready = session.awaitReady()
+                                session.awaitInitialized(ready)
                                 repository.isConnected() && ready.address == requested
                             }
                             result.invokeOnCompletion { job.cancel() }
@@ -97,12 +105,17 @@ class WatchConnectCoordinator @Inject constructor(
                     val result = CoroutineScope(currentCoroutineContext() + job).async(start = CoroutineStart.LAZY) {
                         repository.waitForConnection(requested)
                         val ready = session.awaitReady()
+                        if (ready.generation == token.generation) session.initializationCompleted(ready)
                         repository.isConnected() && ready.address == requested && ready.generation == token.generation
                     }
                     result.invokeOnCompletion { job.cancel() }
                     Attempt(token, result).also { attempt = it; owned = it }
                 }
-                if (active == null) return@withTimeoutOrNull true
+                if (active == null) {
+                    val ready = session.ready ?: return@withTimeoutOrNull false
+                    session.awaitInitialized(ready)
+                    return@withTimeoutOrNull true
+                }
                 active.result.await()
             } ?: false
             accepted = result

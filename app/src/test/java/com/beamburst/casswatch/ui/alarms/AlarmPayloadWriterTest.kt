@@ -1,10 +1,13 @@
 package com.beamburst.casswatch.ui.alarms
 
+import CachedIO
 import com.beamburst.casswatch.data.local.SyncEntry
 import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.local.WatchConnectionSession
-import com.beamburst.casswatch.pairing.WatchConnectionChangedException
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.async
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runTest
 import org.avmedia.gshockapi.Alarm
 import org.junit.Assert.*
 import org.junit.Test
@@ -13,109 +16,164 @@ import java.time.Instant
 import java.time.ZoneId
 
 class AlarmPayloadWriterTest {
-    private val a = "AA:BB:CC:DD:EE:01"
-    private val b = "AA:BB:CC:DD:EE:02"
+    private val address = "AA:BB:CC:DD:EE:01"
     private val zone = ZoneId.of("UTC")
     private val clock = Clock.fixed(Instant.parse("2026-10-09T06:58:00Z"), zone)
-    private class Store(val states: MutableMap<String, AlarmState>) : AlarmPersistence {
-        var beforeSave: () -> Unit = {}
-        override suspend fun addresses() = states.keys.toList()
-        override suspend fun load(address: String) = states.getValue(address)
-        override suspend fun save(address: String, state: AlarmState) { beforeSave(); states[address] = state }
+    private val payload = listOf(Alarm(7, 0, true, false, "Wake"))
+    private class Store(var state: AlarmState, val address: String) : AlarmPersistence {
+        var beforeSave: (AlarmState) -> Unit = {}
+        override suspend fun addresses() = listOf(address)
+        override suspend fun load(address: String) = state
+        override suspend fun save(address: String, state: AlarmState) { beforeSave(state); this.state = state }
         override suspend fun history(address: String): List<SyncEntry> = emptyList()
         override suspend fun legacySlots(): Set<Int> = emptySet()
         override suspend fun migrationDone() = true
         override suspend fun finishMigration() = Unit
     }
     private class Backend : AlarmScheduleBackend {
-        override fun cancel(key: AlarmKey) = Unit
-        override fun cancelFallback(key: AlarmKey) = Unit
+        val scheduled = mutableMapOf<AlarmKey, Long>()
+        override fun cancel(key: AlarmKey) { scheduled.remove(key) }
+        override fun cancelFallback(key: AlarmKey) = cancel(key)
         override fun cancelLegacy(slot: Int) = Unit
         override fun expiry(key: AlarmKey, instant: Long?) = Unit
-        override fun schedule(key: AlarmKey, alarm: AlarmSyncStorage.StoredAlarm, instant: Long) = FallbackAvailability.SCHEDULED
+        override fun schedule(key: AlarmKey, alarm: AlarmSyncStorage.StoredAlarm, instant: Long): FallbackAvailability {
+            scheduled[key] = instant
+            return FallbackAvailability.SCHEDULED
+        }
     }
-    private fun scenario(timeClock: Clock = clock, block: suspend (AlarmPayloadWriter, Store, WatchConnectionSession, WatchConnectionSession.Ready, MutableList<AlarmPayloadRecord>) -> Unit) = runBlocking {
-        val alarms = listOf(Alarm(7, 0, true, false, "Wake"))
-        val previous = watchPayloadsAfterWrite(a, alarms, clock, zone)
-        val store = Store(mutableMapOf(a to AlarmState(watchPayloads = previous), b to AlarmState()))
-        val coordinator = PersistedAlarmSchedulingCoordinator(store, Backend(), timeClock) { zone }
+    private inner class Scenario {
+        val previous = watchPayloadsAfterWrite(address, payload, clock, zone)
+        val snapshot = AlarmState(listOf(AlarmSyncStorage.StoredAlarm(7, 0, true, false, "Wake")), dirty = true, watchPayloads = previous)
+        val store = Store(snapshot, address)
+        val backend = Backend()
+        val coordinator = PersistedAlarmSchedulingCoordinator(store, backend, clock) { zone }
         val session = WatchConnectionSession()
-        session.begin(session.state.value, a)
-        val ready = session.established(a)!!
+        val ready = session.run {
+            begin(state.value, this@AlarmPayloadWriterTest.address)
+            established(this@AlarmPayloadWriterTest.address)!!
+        }
         val records = mutableListOf<AlarmPayloadRecord>()
-        val writer = AlarmPayloadWriter(coordinator, AlarmSchedulingTime(timeClock) { zone }, session) { records += it }
-        block(writer, store, session, ready, records)
+        val writer = AlarmPayloadWriter(coordinator, AlarmSchedulingTime(clock) { zone }, session) { records += it }
+        suspend fun write(read: suspend () -> List<Alarm>, send: suspend (List<Alarm>) -> Unit = {}) =
+            writer.write(ready, payload, snapshot, SyncTrigger.MANUAL_SEND_ALARMS, false, {}, read, send)
     }
-    @Test fun `actual successful payload is recorded under captured connection address and exact slots`() = scenario { writer, store, _, ready, records ->
-        val payload = listOf(Alarm(7, 0, false, true, "Consumed"), Alarm(8, 0, true, false, "Daily"))
-        writer.write(ready, payload, AlarmState(), SyncTrigger.MANUAL_SEND_ALARMS, true, {}) {
-            assertTrue(store.states[a]!!.watchPayloads.isEmpty())
-        }
-        assertEquals(a, records.single().address)
-        assertEquals(payload, records.single().payload)
-        assertFalse(store.states[a]!!.watchPayloads.getValue(0).enabled)
-        assertEquals(8, store.states[a]!!.watchPayloads.getValue(1).hour)
-        assertTrue(store.states[b]!!.watchPayloads.isEmpty())
+    @Test fun `confirmation requires matching fresh readback and ignores scratchpad names`() = runTest {
+        val s = Scenario()
+        CachedIO.put("GET_ALARMS", payload)
+        s.write({
+            assertTrue(runCatching { CachedIO.get<List<Alarm>>("GET_ALARMS") }.isFailure)
+            assertNotNull(s.store.state.writePending)
+            assertEquals(s.previous, s.store.state.watchPayloads)
+            assertTrue(s.records.isEmpty())
+            payload.map { it.copy(name = "") }
+        })
+        assertNull(s.store.state.writePending)
+        assertEquals(7, s.store.state.watchPayloads.getValue(0).hour)
+        assertTrue(s.records.single().success)
     }
-    @Test fun `failed alarm write invalidates previously confirmed enabled payload`() = scenario { writer, store, _, ready, records ->
-        assertTrue(runCatching {
-            writer.write(ready, listOf(Alarm(7, 0, false, false, "")), AlarmState(), SyncTrigger.MANUAL_SEND_ALARMS, false, {}) { error("Transport failure") }
-        }.isFailure)
-        assertTrue(store.states[a]!!.watchPayloads.isEmpty())
-        assertFalse(records.single().success)
-    }
-    @Test fun `changed session after send cannot confirm or record under replacement watch`() = scenario { writer, store, session, ready, records ->
-        val confirm: suspend () -> Unit = { if (!session.isCurrent(ready)) throw WatchConnectionChangedException() }
-        val result = runCatching {
-            writer.write(ready, listOf(Alarm(7, 0, true, false, "")), AlarmState(), SyncTrigger.MANUAL_SEND_ALARMS, false, confirm) {
-                session.ended(ready)
-                session.begin(session.state.value, b)
-                session.established(b)
-            }
-        }
-        assertTrue(result.exceptionOrNull() is WatchConnectionChangedException)
-        assertTrue(records.isEmpty())
-        assertTrue(store.states[a]!!.watchPayloads.isEmpty())
-        assertTrue(store.states[b]!!.watchPayloads.isEmpty())
-    }
-    @Test fun `consumed snapshot shared payload does not reenable elapsed one time alarm`() {
-        val old = AlarmState(listOf(AlarmSyncStorage.StoredAlarm(6, 0, true, false, "Wake", oneShotLocalDate = "2026-10-09")), mapOf(0 to emptySet()))
-        val snapshot = reconcileAlarmState(old, clock, zone)
-        val payload = hourlySignalAlarmPayload(snapshot.watchAlarms(), true, snapshot.firedAts().keys, snapshot.oneShotOccurrences(), clock, zone)
-        assertFalse(payload.single().enabled)
-        assertTrue(payload.single().hasHourlyChime)
-    }
-    @Test fun `shared writer disables one time alarm elapsed during awaited invalidation`() {
-        var instant = clock.instant()
-        val moving = object : Clock() {
-            override fun getZone() = ZoneId.of("UTC")
-            override fun withZone(zone: ZoneId) = this
-            override fun instant() = instant
-        }
-        scenario(moving) { writer, store, _, ready, records ->
-            val snapshot = AlarmState(listOf(AlarmSyncStorage.StoredAlarm(7, 0, true, false, "Wake",
-                oneShotLocalDate = "2026-10-09")), mapOf(0 to emptySet()))
-            store.states[a] = snapshot
-            store.beforeSave = { instant = Instant.parse("2026-10-09T07:01:00Z") }
-            writer.write(ready, snapshot.watchAlarms(), snapshot, SyncTrigger.MANUAL_SEND_ALARMS, false, {}) { actual ->
-                assertFalse(actual.single().enabled)
-            }
-            assertFalse(records.single().payload.single().enabled)
-            assertFalse(store.states[a]!!.watchPayloads.getValue(0).enabled)
+    @Test fun `mismatch timeout and changed generation discard evidence and record failure`() = runTest {
+        for (outcome in listOf("mismatch", "timeout", "generation")) {
+            val s = Scenario()
+            val result = runCatching { s.write({
+                when (outcome) {
+                    "timeout" -> delay(ALARM_WRITE_TIMEOUT_MS + 1)
+                    "generation" -> s.session.ended(s.ready)
+                }
+                payload.map { it.copy(minute = 1) }
+            }) }
+            assertTrue(result.isFailure)
+            assertTrue(s.store.state.watchPayloads.isEmpty())
+            assertTrue(s.store.state.dirty)
+            assertNull(s.store.state.writePending)
+            assertFalse(s.records.single().success)
+            assertTrue(s.records.single().error!!.contains("unconfirmed"))
         }
     }
-    @Test fun `session changed during confirmation persistence discards the committed evidence`() = scenario { writer, store, session, ready, records ->
-        var saves = 0
-        store.beforeSave = {
-            saves++
-            if (saves == 2) session.ended(ready)
-        }
-        val confirm: suspend () -> Unit = { if (!session.isCurrent(ready)) throw WatchConnectionChangedException() }
-        val result = runCatching {
-            writer.write(ready, listOf(Alarm(7, 0, true, false, "Wake")), AlarmState(), SyncTrigger.MANUAL_SEND_ALARMS, false, confirm) {}
-        }
-        assertTrue(result.exceptionOrNull() is WatchConnectionChangedException)
-        assertTrue(store.states[a]!!.watchPayloads.isEmpty())
-        assertTrue(records.isEmpty())
+    @Test fun `reconnect at two minutes before ring defers fallback until bounded outcome`() = runTest {
+        val s = Scenario()
+        val reading = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val write = async { s.write({ reading.complete(Unit); release.await(); payload }) }
+        reading.await()
+        assertEquals(s.previous, s.store.state.watchPayloads)
+        val key = AlarmKey(address, 0)
+        assertFalse(s.backend.scheduled.containsKey(key))
+        assertFalse(s.coordinator.fallback(key, clock.millis() + 120_000, "07:00:true") { fail("Handed off during write") })
+        release.complete(Unit)
+        write.await()
+        assertFalse(s.backend.scheduled.containsKey(key))
     }
+    @Test fun `confirmed daily evidence suppresses fallbacks on following days`() = runTest {
+        val s = Scenario()
+        s.write({ payload })
+        val tomorrow = Clock.fixed(clock.instant().plusSeconds(86_400), zone)
+        val coordinator = PersistedAlarmSchedulingCoordinator(s.store, s.backend, tomorrow) { zone }
+        coordinator.reconcile(address)
+        assertTrue(s.backend.scheduled.isEmpty())
+    }
+    @Test fun `interrupted write expires old evidence and reconciles fallback after process death`() = runTest {
+        val s = Scenario()
+        s.store.state = s.snapshot.copy(writePending = AlarmWritePending("interrupted", clock.millis() - 1))
+        s.coordinator.reconcile(address)
+        assertNull(s.store.state.writePending)
+        assertTrue(s.store.state.watchPayloads.isEmpty())
+        assertTrue(s.backend.scheduled.containsKey(AlarmKey(address, 0)))
+    }
+    @Test fun `readback compares enabled and hourly chime bits`() {
+        assertFalse(alarmRegistersMatch(payload, payload.map { it.copy(enabled = false) }))
+        assertFalse(alarmRegistersMatch(payload, payload.map { it.copy(hasHourlyChime = true) }))
+        assertFalse(alarmRegistersMatch(payload, emptyList()))
+    }
+    @Test fun `confirmed readback clears current warning and retains the outcome as history`() = runTest {
+        val s = Scenario()
+        val due = clock.millis() + 120_000
+        s.store.state = s.snapshot.copy(alarms = s.snapshot.alarms.map {
+            it.copy(fallbackStatus = "pending", fallbackStatusAt = due)
+        })
+        s.write({ payload })
+        assertNull(s.store.state.alarms[0].fallbackStatus)
+        assertEquals(AlarmFallbackOutcome(0, "pending", due), s.store.state.fallbackHistory.single())
+        assertEquals(due, s.store.state.alarms[0].fallbackAttemptAt)
+    }
+
+    @Test fun `generation ending during confirmation persistence discards committed evidence`() = runTest {
+        val s = Scenario()
+        s.store.beforeSave = { state ->
+            if (state.writePending == null && state.watchPayloads.isNotEmpty()) s.session.ended(s.ready)
+        }
+        assertTrue(runCatching { s.write({ payload }) }.isFailure)
+        assertTrue(s.store.state.watchPayloads.isEmpty())
+        assertTrue(s.store.state.dirty)
+        assertFalse(s.records.single().success)
+    }
+
+    @Test fun `expired outcome cannot be reported as a confirmed write`() = runTest {
+        val s = Scenario()
+        assertTrue(runCatching { s.write({
+            s.store.state = s.store.state.copy(writePending = s.store.state.writePending!!.copy(deadline = clock.millis() - 1))
+            s.coordinator.reconcile(address)
+            payload
+        }) }.isFailure)
+        assertTrue(s.store.state.watchPayloads.isEmpty())
+        assertFalse(s.records.single().success)
+    }
+    @Test fun `failed old confirmation cannot erase evidence from a newer writer`() = runTest {
+        val s = Scenario()
+        var newerId: String? = null
+        assertTrue(runCatching { s.write({
+            s.session.ended(s.ready)
+            s.session.begin(s.session.state.value, address)
+            val replacement = s.session.established(address)!!
+            s.writer.write(replacement, payload, s.snapshot, SyncTrigger.MANUAL_SEND_ALARMS, false,
+                {}, { payload }) {}
+            newerId = s.store.state.confirmedWriteId
+            payload
+        }) }.isFailure)
+        assertNotNull(newerId)
+        assertEquals(s.previous, s.store.state.watchPayloads)
+        assertEquals(newerId, s.store.state.confirmedWriteId)
+        assertTrue(s.records.first().success)
+        assertFalse(s.records.last().success)
+    }
+
 }

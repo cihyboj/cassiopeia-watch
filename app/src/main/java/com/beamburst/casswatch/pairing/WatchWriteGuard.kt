@@ -34,7 +34,7 @@ class WatchWriteGuard internal constructor(
         { AppSnackbar(context.getString(R.string.selected_watch_not_connected)) },
     )
 
-    fun capture(): WatchConnectionSession.Ready? = session.matching(selectedAddress()).also {
+    fun capture(): WatchConnectionSession.Ready? = session.matching(selectedAddress())?.takeIf(session::isInitialized).also {
         if (it == null) refused()
     }
 
@@ -43,6 +43,7 @@ class WatchWriteGuard internal constructor(
         block: suspend (check: () -> Unit) -> Unit,
     ) {
         try {
+            session.awaitInitialized(expected)
             coordinator.withSession(expected, selectedAddress, block)
         } catch (_: WatchConnectionChangedException) {
             refused()
@@ -56,6 +57,7 @@ class WatchWriteGuard internal constructor(
         block: suspend (api: org.avmedia.gshockapi.IGShockAPI, confirm: suspend () -> Unit) -> Unit,
     ) {
         try {
+            session.awaitInitialized(expected)
             coordinator.withSession(expected, selectedAddress) { check ->
                 block(api.guardWrites(check)) { confirmWatchWrite(check) }
             }

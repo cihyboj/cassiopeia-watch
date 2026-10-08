@@ -24,6 +24,8 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.withContext
 import org.avmedia.gshockapi.Alarm
 import org.avmedia.gshockapi.Event
@@ -44,7 +46,10 @@ class WatchConnectCoordinatorTest {
     private val watchB = "AA:BB:CC:DD:EE:02"
 
     private fun scenario(block: suspend TestScope.() -> Unit) =
-        runTest(StandardTestDispatcher()) { block() }
+        runTest(StandardTestDispatcher()) {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            try { block() } finally { Dispatchers.resetMain() }
+        }
 
     /** Like ProgressEvents, starts, writes and event dispatch are independent of API callers. */
     private class Transport(private val scope: CoroutineScope) {
@@ -137,6 +142,10 @@ class WatchConnectCoordinatorTest {
                     }
                     read.startCoroutineUninterceptedOrReturn(args!!.last() as Continuation<String>)
                 }
+                "getScratchpadData" -> {
+                    publicReads += method.name
+                    byteArrayOf(0, 0, 0)
+                }
                 "getAlarms" -> {
                     val read: suspend () -> ArrayList<Alarm> = { delay(opaqueDelayMs); arrayListOf() }
                     read.startCoroutineUninterceptedOrReturn(args!![0] as Continuation<ArrayList<Alarm>>)
@@ -172,7 +181,7 @@ class WatchConnectCoordinatorTest {
         private suspend fun initialize() {
             initCalls++
             delay(opaqueDelayMs)
-            session.ready?.let { initializationEvents += it.generation }
+            session.ready?.let { initializationEvents += it.generation; session.initializationCompleted(it) }
         }
 
         suspend fun awaitAttempt(address: String) {
@@ -213,6 +222,30 @@ class WatchConnectCoordinatorTest {
         }
     }
 
+    @Test fun `screen reads wait for actual initialization rather than setup`() = scenario {
+        val t = Transport(this)
+        val selected = { watchA }
+        val guard = WatchWriteGuard(selected, t.session, t.coordinator) {}
+        val connection = async { t.coordinator.connect(watchA) }
+        t.awaitAttempt(watchA)
+        t.connected = true
+        val ready = t.setup(watchA, Any())!!
+        assertNull(guard.capture())
+        var screenRead = false
+        val read = async { guard.readApi(ready, t.api) { watch, _ ->
+            watch.getScratchpadData(0, 3)
+            screenRead = true
+        } }
+        runCurrent()
+        assertFalse(screenRead)
+        assertFalse(t.publicReads.contains("getScratchpadData"))
+        t.initialization.complete(Unit)
+        assertTrue(connection.await())
+        read.await()
+        assertTrue(screenRead)
+        assertEquals(ready, guard.capture())
+    }
+
     @Test fun `CONNECTED before identity retry awaits readiness`() = scenario {
         val t = Transport(this)
         t.session.begin(t.session.state.value, watchA)
@@ -222,7 +255,8 @@ class WatchConnectCoordinatorTest {
         started.await()
         runCurrent()
         assertFalse(retry.isCompleted)
-        t.setup(watchA, Any())
+        val ready = t.setup(watchA, Any())!!
+        t.session.initializationCompleted(ready)
         assertTrue(retry.await())
         assertTrue(t.attempts.isEmpty())
         assertEquals(0, t.closes)
@@ -231,7 +265,10 @@ class WatchConnectCoordinatorTest {
     @Test fun `setup racing connectivity status is retained`() = scenario {
         val t = Transport(this)
         t.session.begin(t.session.state.value, watchA)
-        t.onStatus = { t.connected = true; t.handler.setup(watchA, Any()) }
+        t.onStatus = {
+            t.connected = true
+            t.handler.setup(watchA, Any())?.let(t.session::initializationCompleted)
+        }
         assertTrue(t.coordinator.connect(watchA))
         assertEquals(watchA, t.session.address)
         assertTrue(t.attempts.isEmpty())
@@ -246,6 +283,7 @@ class WatchConnectCoordinatorTest {
             t.onStatus = {
                 t.connected = true
                 accepted = t.handler.setup(watchA, Any())
+                accepted?.let(t.session::initializationCompleted)
             }
         }
         assertTrue(t.coordinator.connect(watchA))

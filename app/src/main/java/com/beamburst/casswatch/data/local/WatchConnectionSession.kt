@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,6 +32,19 @@ class WatchConnectionSession @Inject constructor() {
         val mutex = Mutex()
     }
     private var work: Work? = null
+    private val initializedState = MutableStateFlow<Ready?>(null)
+    val initialized: StateFlow<Ready?> = initializedState.asStateFlow()
+
+    fun initializationCompleted(expected: Ready) = synchronized(lock) {
+        if (mutableState.value == expected) initializedState.value = expected
+    }
+
+    fun isInitialized(expected: Ready): Boolean = isCurrent(expected) && initializedState.value == expected
+
+    suspend fun awaitInitialized(expected: Ready) {
+        combine(state, initialized) { current, initialized -> current != expected || initialized == expected }.first { it }
+        if (!isInitialized(expected)) throw com.beamburst.casswatch.pairing.WatchConnectionChangedException()
+    }
     private val endListeners = mutableListOf<(Ready) -> Unit>()
 
     fun onEnded(listener: (Ready) -> Unit) = synchronized(lock) {
@@ -63,6 +77,7 @@ class WatchConnectionSession @Inject constructor() {
     }
 
     private fun endWork(current: State) {
+        initializedState.value = null
         work?.job?.cancel()
         work = null
         if (current is Ready) endListeners.forEach { it(current) }

@@ -103,8 +103,9 @@ class AlarmCoordinatorTest {
         store.beforeSave = { moving.now = Instant.parse("2026-10-09T07:00:00Z") }
         val due = moving.now.plusSeconds(120).toEpochMilli()
         assertFalse(coordinator.fallback(AlarmKey(a, 0), due, "07:00:true") { fail("Expired during storage") })
-        assertEquals("failed", store.states[a]!!.alarms[0].fallbackStatus)
-        assertNull(store.states[a]!!.alarms[0].fallbackAttemptAt)
+        assertNull(store.states[a]!!.alarms[0].fallbackStatus)
+        assertEquals(AlarmFallbackOutcome(0, "failed", due), store.states[a]!!.fallbackHistory.single())
+        assertEquals(due, store.states[a]!!.alarms[0].fallbackAttemptAt)
         assertEquals(due + 86_400_000, backend.scheduled[AlarmKey(a, 0)])
     }
     @Test fun `failed handoff persists failure without success receipt and keeps next daily fallback`() = runBlocking {
@@ -124,7 +125,7 @@ class AlarmCoordinatorTest {
         val coordinator = PersistedAlarmSchedulingCoordinator(store, Backend(), moving) { ZoneId.of("UTC") }
         val due = moving.now.plusSeconds(120).toEpochMilli()
         assertTrue(coordinator.fallback(AlarmKey(a, 0), due, "07:00:true") {
-            assertNull(store.states[a]!!.alarms[0].fallbackAttemptAt)
+            assertEquals(due, store.states[a]!!.alarms[0].fallbackAttemptAt)
             assertEquals("pending", store.states[a]!!.alarms[0].fallbackStatus)
         })
         assertEquals(due, store.states[a]!!.alarms[0].fallbackAttemptAt)
@@ -183,4 +184,43 @@ class AlarmCoordinatorTest {
         assertEquals(emptySet<java.time.DayOfWeek>(), restored.days[0])
         assertEquals("2026-10-10", restored.alarms[0].oneShotLocalDate)
     }
+    @Test fun `pending receipt recovered after interrupted handoff is never replayed`() = runBlocking {
+        val moving = MovingClock(Instant.parse("2026-10-09T06:58:00Z"))
+        val due = moving.millis() + 120_000
+        val alarm = initial.alarms[0].copy(oneShotLocalDate = null, fallbackStatus = "pending", fallbackStatusAt = due)
+        val store = Store(mutableMapOf(a to AlarmState(listOf(alarm))))
+        val backend = Backend()
+        val coordinator = PersistedAlarmSchedulingCoordinator(store, backend, moving) { ZoneId.of("UTC") }
+        coordinator.reconcile(a)
+        assertEquals(due + 86_400_000, backend.scheduled[AlarmKey(a, 0)])
+        assertFalse(coordinator.fallback(AlarmKey(a, 0), due, "07:00:true") { fail("Replayed uncertain attempt") })
+        assertEquals("pending", activeFallbackStatus(store.states[a]!!.alarms[0], moving.millis()))
+    }
+    @Test fun `requested persistence interruption retains pending attempt and cannot hand off twice`() = runBlocking {
+        val moving = MovingClock(Instant.parse("2026-10-09T06:58:00Z"))
+        val due = moving.millis() + 120_000
+        val store = Store(mutableMapOf(a to AlarmState(listOf(initial.alarms[0].copy(oneShotLocalDate = null)))))
+        val coordinator = PersistedAlarmSchedulingCoordinator(store, Backend(), moving) { ZoneId.of("UTC") }
+        var launches = 0
+        store.beforeSave = {
+            if (store.states[a]!!.alarms[0].fallbackStatus == "pending") throw kotlinx.coroutines.CancellationException("Killed after launch")
+        }
+        assertTrue(runCatching { coordinator.fallback(AlarmKey(a, 0), due, "07:00:true") { launches++ } }.isFailure)
+        store.beforeSave = {}
+        assertEquals("pending", store.states[a]!!.alarms[0].fallbackStatus)
+        assertFalse(coordinator.fallback(AlarmKey(a, 0), due, "07:00:true") { launches++ })
+        assertEquals(1, launches)
+    }
+    @Test fun `past occurrence warnings expire into separate history during reconciliation`() = runBlocking {
+        val due = clock.millis() - 3_600_000
+        val old = initial.alarms[0].copy(oneShotLocalDate = null, fallbackStatus = "failed", fallbackStatusAt = due)
+        assertNull(activeFallbackStatus(old, clock.millis()))
+        val store = Store(mutableMapOf(a to AlarmState(listOf(old))))
+        val coordinator = PersistedAlarmSchedulingCoordinator(store, Backend(), clock) { ZoneId.of("UTC") }
+        coordinator.reconcile(a)
+        assertNull(store.states[a]!!.alarms[0].fallbackStatus)
+        assertEquals(AlarmFallbackOutcome(0, "failed", due), store.states[a]!!.fallbackHistory.single())
+        assertEquals(due, store.states[a]!!.alarms[0].fallbackAttemptAt)
+    }
+
 }

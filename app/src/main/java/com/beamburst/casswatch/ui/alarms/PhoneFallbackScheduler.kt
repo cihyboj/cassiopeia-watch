@@ -34,6 +34,10 @@ internal class PhoneFallbackScheduler @Inject constructor(
     fun canScheduleExactAlarms(): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
 
+    override fun uncertain(key: AlarmKey) = postFallbackRecovery(context, key, failed = false, uncertain = true)
+
+    override fun recovery(address: String, instant: Long) = scheduleAlarmReconciliation(context, address, instant)
+
     override fun schedule(key: AlarmKey, alarm: AlarmSyncStorage.StoredAlarm, instant: Long): FallbackAvailability {
         val wakeAt = fallbackWakeAt(instant, alarmTime.clock.millis()) ?: return FallbackAvailability.ELAPSED
         return attemptExactFallback(::canScheduleExactAlarms) {
@@ -83,4 +87,16 @@ internal fun attemptExactFallback(allowed: () -> Boolean, schedule: () -> Unit):
 } catch (error: SecurityException) {
     Timber.w(error, "Exact alarm permission revoked while scheduling fallback")
     FallbackAvailability.UNAVAILABLE
+}
+
+/** Durable, non-exact recovery; this broadcast only reconciles and never hands off directly. */
+internal fun scheduleAlarmReconciliation(context: Context, address: String, instant: Long = System.currentTimeMillis() + 5_000L) {
+    val key = AlarmKey.from(address, 0) ?: return
+    val intent = fallbackIntent(context, key).apply {
+        action = PhoneFallbackReceiver.ACTION_RECONCILE
+        data = Uri.parse("${key.uri}/reconcile")
+    }
+    val pending = PendingIntent.getBroadcast(context, 0, intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    context.getSystemService(AlarmManager::class.java).setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, instant, pending)
 }

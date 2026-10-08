@@ -1,7 +1,7 @@
 // Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE.
 package com.beamburst.casswatch.ui.settings
 
-import com.beamburst.casswatch.pairing.watchOperationError
+import com.beamburst.casswatch.ui.alarms.alarmOperationError
 import com.beamburst.casswatch.pairing.confirmWatchWrite
 import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.data.local.WatchConnectionSession
@@ -605,7 +605,7 @@ constructor(
                     if (result.isSuccess) {
                         AppSnackbar(appContext.getString(R.string.time_sent_to_watch))
                     } else {
-                        AppSnackbar(appContext.watchOperationError(result.exceptionOrNull()))
+                        AppSnackbar(appContext.alarmOperationError(result.exceptionOrNull()))
                     }
                 }
             }
@@ -635,7 +635,7 @@ constructor(
                         errorMessage = result.exceptionOrNull()?.message,
                         details = SyncDetails.Empty.copy(actions = listOf("Watch settings sent")),
                     )
-                    result.onFailure { e -> AppSnackbar(appContext.watchOperationError(e)) }
+                    result.onFailure { e -> AppSnackbar(appContext.alarmOperationError(e)) }
                 }
             }
         }

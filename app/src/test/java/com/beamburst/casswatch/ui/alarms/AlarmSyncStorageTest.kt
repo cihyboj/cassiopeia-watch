@@ -108,4 +108,10 @@ class AlarmSyncStorageTest {
         val valid = org.json.JSONObject(AlarmSyncStorage.encode(AlarmState())).put("clockNeedsSync", "invalid")
         assertTrue(runCatching { AlarmSyncStorage.decode(valid.toString()) }.isFailure)
     }
+    @Test fun `in flight deadline and past outcomes survive process restart`() {
+        val state = AlarmState(writePending = AlarmWritePending("generation-write", 1_234),
+            fallbackHistory = listOf(AlarmFallbackOutcome(0, "pending", 1_000)), confirmedWriteId = "previous-confirmation")
+        assertEquals(state, AlarmSyncStorage.decode(AlarmSyncStorage.encode(state)))
+    }
+
 }

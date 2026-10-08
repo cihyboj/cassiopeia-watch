@@ -542,7 +542,7 @@ class AlarmViewModel @Inject constructor(
                 val payload = if (WatchInfo.chimeInSettings) scheduled else AlarmSchedulePlanner.mirrorChime(scheduled, target)
                 val result = runCatching {
                     watch.setScratchpadData(alarmNameStorage.getBuffer().copyOf(), alarmNameStorage.getStorageOffset())
-                    payloadWriter.write(ready, payload, snapshot, SyncTrigger.MANUAL_SEND_ALARMS, target, confirm) { actual ->
+                    payloadWriter.write(ready, payload, snapshot, SyncTrigger.MANUAL_SEND_ALARMS, target, confirm, { watch.getAlarms() }) { actual ->
                         watch.setAlarms(ArrayList(actual))
                     }
                     if (WatchInfo.chimeInSettings) {
@@ -558,7 +558,7 @@ class AlarmViewModel @Inject constructor(
                     AppSnackbar(appContext.getString(R.string.alarms_set_to_watch))
                 }
                 confirm()
-                result.onFailure { ProgressEvents.onNext("Error", it.message ?: "") }
+                result.onFailure { ProgressEvents.onNext("Error", appContext.alarmOperationError(it)) }
             }
         }
     }
@@ -670,7 +670,7 @@ class AlarmViewModel @Inject constructor(
         val adjustmentTimeMinutes = settings?.adjustmentTimeMinutes ?: 0
         val state = AlarmSyncStorage.loadState(appContext, addr)
         _fallbackStatuses.value = state.alarms.mapIndexedNotNull { slot, alarm ->
-            when (alarm.fallbackStatus) {
+            when (activeFallbackStatus(alarm, alarmTime.clock.millis())) {
                 "failed" -> slot to appContext.getString(R.string.alarm_fallback_failed)
                 "pending" -> slot to appContext.getString(R.string.alarm_fallback_unconfirmed)
                 "requested" -> slot to appContext.getString(R.string.alarm_fallback_requested)
