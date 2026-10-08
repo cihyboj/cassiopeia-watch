@@ -71,6 +71,27 @@ class AlarmPayloadWriterTest {
         assertEquals(7, s.store.state.watchPayloads.getValue(0).hour)
         assertTrue(s.records.single().success)
     }
+    @Test fun `old registers overtaking SET retry uncached and confirm only the fresh match`() = runTest {
+        val s = Scenario()
+        var reads = 0
+        var sends = 0
+        s.write({
+            assertTrue(runCatching { CachedIO.get<List<Alarm>>("GET_ALARMS") }.isFailure)
+            assertNotNull(s.store.state.writePending)
+            assertNull(s.store.state.confirmedWriteId)
+            assertTrue(s.records.isEmpty())
+            reads++
+            val received = if (reads == 1) payload.map { it.copy(minute = 1) } else payload
+            CachedIO.put("GET_ALARMS", received)
+            received
+        }, { sends++ })
+        assertEquals(2, reads)
+        assertEquals(1, sends)
+        assertTrue(s.session.isCurrent(s.ready))
+        assertNotNull(s.store.state.confirmedWriteId)
+        assertTrue(s.records.single().success)
+    }
+
     @Test fun `mismatch timeout and changed generation discard evidence and record failure`() = runTest {
         for (outcome in listOf("mismatch", "timeout", "generation")) {
             val s = Scenario()

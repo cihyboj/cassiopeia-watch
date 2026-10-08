@@ -8,10 +8,12 @@ import com.beamburst.casswatch.pairing.awaitWatchResponse
 import com.beamburst.casswatch.pairing.WATCH_ALARMS_TIMEOUT_MS
 import com.beamburst.casswatch.pairing.WATCH_RESPONSE_TIMEOUT_MS
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.delay
 import java.util.UUID
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncTrigger
+import com.beamburst.casswatch.pairing.WatchResponseTimeoutException
 import com.beamburst.casswatch.pairing.WatchConnectionChangedException
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import dagger.hilt.EntryPoint
@@ -118,12 +120,24 @@ class AlarmPayloadWriter internal constructor(
                 checkSession(ready)
                 // AlarmsIO.request uses this cache key. Remove it after queuing SETs,
                 // immediately before GETs, under the guarded generation's I/O mutex.
-                CachedIO.remove("GET_ALARMS")
-                val received = awaitWatchResponse(WATCH_ALARMS_TIMEOUT_MS) { readBack() }
-                confirm()
-                checkSession(ready)
-                if (!alarmRegistersMatch(actual, received)) {
-                    throw AlarmConfirmationException("Alarm readback did not match the sent registers")
+                var mismatched = false
+                try {
+                    awaitWatchResponse(WATCH_ALARMS_TIMEOUT_MS) {
+                        while (true) {
+                            CachedIO.remove("GET_ALARMS")
+                            val received = readBack()
+                            confirm()
+                            checkSession(ready)
+                            if (alarmRegistersMatch(actual, received)) break
+                            mismatched = true
+                            // Detached GETs may overtake SETs. Keep evidence pending until
+                            // a fresh match, without extending the confirmation deadline.
+                            delay(200)
+                        }
+                    }
+                } catch (error: WatchResponseTimeoutException) {
+                    if (mismatched) throw AlarmConfirmationException("Alarm readback did not match the sent registers")
+                    throw error
                 }
                 val syncZone = time.zone()
                 val evidence = watchPayloadsAfterWrite(ready.address, actual, time.clock, syncZone)
