@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.settings
 
+import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.pairing.WatchWriteGuard
 import com.beamburst.casswatch.utils.WatchSyncActivity
@@ -580,7 +581,7 @@ constructor(
                     val result = runCatching {
                         writeResult = watchTimeWriter.write(api, watchTime, ready, checkSession)
                         checkSession()
-                        applyHourlySignalToWatch(api, signalSettings, now)
+                        applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, now)
                     }
                     checkSession()
                     syncLogger.record(

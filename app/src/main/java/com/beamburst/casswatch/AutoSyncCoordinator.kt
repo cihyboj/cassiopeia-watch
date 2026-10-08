@@ -1,5 +1,6 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.R
@@ -104,7 +105,7 @@ class AutoSyncCoordinator @Inject constructor(
                     val now = LocalDateTime.now()
                     val target = HourlySignalEvaluator.shouldChimeAt(now, signalSettings)
                     checkSession()
-                    applyHourlySignalToWatch(api, signalSettings, now)
+                    applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, now)
                     kinds += SyncKind.HOURLY_SIGNAL
                     recordedHourlyTarget = target
                 }.onFailure {

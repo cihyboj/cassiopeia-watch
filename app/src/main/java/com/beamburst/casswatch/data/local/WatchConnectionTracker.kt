@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.data.local
 
+import com.beamburst.casswatch.utils.AppScopes
 import com.beamburst.casswatch.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,13 +36,21 @@ class WatchConnectionTracker @Inject constructor(
     }
 
     init {
-        com.beamburst.casswatch.utils.AppScopes.io.launch {
+        AppScopes.io.launch {
             var previous: String? = null
             session.state.collect { state ->
                 val address = when (state) {
                     is WatchConnectionSession.Ready -> state.address
                     is WatchConnectionSession.Connecting -> state.address
                     else -> null
+                }
+                val connected = (state as? WatchConnectionSession.Ready)?.address
+                _states.update { states ->
+                    states.mapValues { (watch, status) ->
+                        if (status == ConnectionState.CONNECTED && watch != connected) {
+                            ConnectionState.DISCONNECTED
+                        } else status
+                    }
                 }
                 if (previous != address) mark(previous, ConnectionState.DISCONNECTED)
                 when (state) {
@@ -61,9 +70,15 @@ class WatchConnectionTracker @Inject constructor(
         if (address == null) return
         val normalizedAddress = Utils.sanitizeMacAddress(address)
         if (normalizedAddress.isBlank()) return
+        if (state == ConnectionState.CONNECTED && session.matching(normalizedAddress) == null) return
         _states.update { states ->
             states
                 .filterKeys { !it.equals(normalizedAddress, ignoreCase = true) }
+                .mapValues { (_, current) ->
+                    if (state == ConnectionState.CONNECTED && current == ConnectionState.CONNECTED) {
+                        ConnectionState.DISCONNECTED
+                    } else current
+                }
                 .plus(normalizedAddress to state)
         }
     }

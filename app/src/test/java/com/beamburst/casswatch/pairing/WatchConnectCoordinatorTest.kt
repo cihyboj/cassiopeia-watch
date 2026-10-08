@@ -331,4 +331,37 @@ class WatchConnectCoordinatorTest {
         assertEquals(1, refused)
         assertTrue(t.settingsWritten.isEmpty())
     }
+
+    @Test fun `nested helper write after suspension also rechecks selection`() = runBlocking {
+        val t = Transport()
+        t.connectReady(watchA)
+        var selected = watchA
+        var refused = 0
+        val guard = WatchWriteGuard({ selected }, t.session, t.coordinator) { refused++ }
+        val ready = guard.capture()!!
+        val finishRead = CompletableDeferred<Unit>()
+        val write = async(start = CoroutineStart.UNDISPATCHED) {
+            guard.run(ready) { check ->
+                val boundApi = t.api.guardWrites(check)
+                // A helper such as the hourly-signal applier reads before writing.
+                finishRead.await()
+                boundApi.setSettings(Settings())
+            }
+        }
+        selected = watchB
+        finishRead.complete(Unit)
+        write.await()
+        assertEquals(1, refused)
+        assertTrue(t.settingsWritten.isEmpty())
+    }
+
+    @Test fun `presence request for B preserves connected A and normalized A reuses it`() = runBlocking {
+        val t = Transport()
+        val ready = t.connectReady(watchA)
+        assertFalse(t.coordinator.connect(watchB))
+        assertTrue(t.coordinator.connect(watchA.lowercase().replace(':', '-')))
+        assertEquals(ready, t.session.ready)
+        assertEquals(listOf(watchA), t.attempts)
+        assertEquals(0, t.cancellations)
+    }
 }

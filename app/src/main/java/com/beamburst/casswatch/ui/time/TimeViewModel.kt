@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.time
 
+import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.pairing.WatchWriteGuard
 import com.beamburst.casswatch.utils.WatchSyncActivity
@@ -189,7 +190,7 @@ class TimeViewModel @Inject constructor(
                                 val addr = ready.address
                                 val signalSettings = HourlySignalSettings.load(appContext, addr)
                                 checkSession()
-                                applyHourlySignalToWatch(api, signalSettings, LocalDateTime.now())
+                                applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, LocalDateTime.now())
                             }
                             checkSession()
                             syncLogger.record(

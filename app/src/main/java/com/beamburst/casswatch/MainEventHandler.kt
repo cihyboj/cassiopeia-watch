@@ -77,6 +77,7 @@ class MainEventHandler(
 
     @SuppressLint("MissingPermission")
     private fun handleConnectionSetup() {
+        if (!repository.isConnected()) return
         val device = ProgressEvents.getPayload("ConnectionSetupComplete") as? BluetoothDevice
         val ready = device?.let { connectionEvents.setup(it.address, it) } ?: return
         logConnection(SyncTrigger.CONNECTION_CONNECTED, true, address = ready.address)

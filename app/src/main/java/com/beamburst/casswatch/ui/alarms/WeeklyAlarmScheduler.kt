@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.alarms
 
+import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.utils.WatchSyncActivity
 import com.beamburst.casswatch.utils.AppScopes
@@ -104,7 +105,7 @@ class WeeklyAlarmScheduler @Inject constructor(
                 api.setAlarms(ArrayList(alarmsToSend))
                 if (WatchInfo.chimeInSettings) {
                     checkSession()
-                    applyHourlySignalToWatch(api, signalSettings, now)
+                    applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, now)
                 }
             }
             checkSession()

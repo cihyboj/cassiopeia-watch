@@ -50,11 +50,12 @@ class WatchButtonDispatcher @Inject constructor(
     }
 
     private suspend fun onPress() {
+        val ready = session.ready ?: return
         when {
-            api.isActionButtonPressed()              -> handleShort()
-            api.isFindPhoneButtonPressed()           -> handleLong()
+            api.isActionButtonPressed()              -> handleShort(ready)
+            api.isFindPhoneButtonPressed()           -> handleLong(ready)
             api.isAutoTimeStarted()                  -> { /* AutoSyncCoordinator handles this */ }
-            api.isNormalButtonPressed()              -> handleNormalConnection()
+            api.isNormalButtonPressed()              -> handleNormalConnection(ready)
             api.isAlwaysConnectedConnectionPressed() -> autoSyncCoordinator.runChain(
                 trigger = SyncTrigger.WATCH_ALWAYS_CONNECTED,
                 actions = listOf("Always-connected button press"),
@@ -62,7 +63,7 @@ class WatchButtonDispatcher @Inject constructor(
         }
     }
 
-    private suspend fun handleShort() {
+    private suspend fun handleShort(ready: WatchConnectionSession.Ready) {
         val cards = cardRepository.shortPress()
         val actions = mutableListOf("Short button press")
         if (cards.broadcast.enabled) {
@@ -72,10 +73,10 @@ class WatchButtonDispatcher @Inject constructor(
         } else {
             actions += "Broadcast disabled"
         }
-        recordWatchAction(SyncTrigger.WATCH_SHORT_PRESS, actions)
+        recordWatchAction(SyncTrigger.WATCH_SHORT_PRESS, actions, ready.address)
     }
 
-    private suspend fun handleLong() {
+    private suspend fun handleLong(ready: WatchConnectionSession.Ready) {
         val cards = cardRepository.longPress()
         val actions = mutableListOf("Long button press / Find Phone function")
         if (cards.broadcast.enabled) {
@@ -95,11 +96,10 @@ class WatchButtonDispatcher @Inject constructor(
         } else {
             actions += "Find my phone disabled"
         }
-        recordWatchAction(SyncTrigger.WATCH_LONG_PRESS, actions)
+        recordWatchAction(SyncTrigger.WATCH_LONG_PRESS, actions, ready.address)
     }
 
-    private suspend fun handleNormalConnection() {
-        val ready = session.ready ?: return
+    private suspend fun handleNormalConnection(ready: WatchConnectionSession.Ready) {
         coordinator.withSession(ready) { checkSession ->
             val kinds = mutableSetOf(SyncKind.CONNECTION)
             val actions = mutableListOf("Normal connection button press")
@@ -138,8 +138,9 @@ class WatchButtonDispatcher @Inject constructor(
         }
     }
 
-    private suspend fun recordWatchAction(trigger: SyncTrigger, actions: List<String>) {
+    private suspend fun recordWatchAction(trigger: SyncTrigger, actions: List<String>, address: String) {
         syncLogger.record(
+            address = address,
             trigger = trigger,
             kinds = setOf(SyncKind.ACTION),
             success = true,

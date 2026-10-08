@@ -38,7 +38,9 @@ class WatchConnectCoordinator @Inject constructor(
                 // not evidence of a different watch, and must never be cleared here.
                 if (repository.isConnected()) {
                     val current = session.ready ?: session.awaitReady()
-                    if (current.address == requested) return@withTimeoutOrNull true
+                    if (current.address == requested) {
+                        return@withTimeoutOrNull repository.isConnected() && session.isCurrent(current)
+                    }
                     if (!takeover) return@withTimeoutOrNull false
                     stopCurrent()
                 }
