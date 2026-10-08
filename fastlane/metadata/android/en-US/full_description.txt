@@ -1,76 +1,16 @@
-Cassiopeia Watch
+Cassiopeia Watch is an unofficial, open-source Android app for Casio G-Shock, Edifice and Pro Trek Bluetooth watches. It works without a Casio account. It is a derivative of CasioGShockSmartSync by Ivo Zivkov and is not affiliated with Casio.
 
-What is it?
------------
-This is an unofficial app for Casio G-Shock, Edifice, and Pro Trek watches. It allows you to control your watch, sync data, and configure settings without a Casio ID. It offers a faster, privacy-focused, and more powerful alternative to the official Casio app.
+Experimental prerelease. Only the ABL-100WE has been tested by the maintainer.
 
-Key Features check
-------------------
-- No Account Required: Skip the Casio ID login entirely.
-- Calendar Sync: Push your calendar events (Google, Samsung, etc.) to your watch as reminders.
-- Auto Timezone: Automatically adjusts watch time when you travel.
-- Remote Control: Use your watch buttons to take photos, control music, or launch voice assistants.
-- Alarm Sync: Configure watch alarms easily from your phone.
-- Phone Finder: Trigger a loud alarm on your phone to find it.
+Features
+- Send the phone time, time zone and DST setting to the watch, optionally using an NTP time source
+- Read and edit watch alarms and the hourly signal
+- Send phone calendar events to the watch as reminders (watches that support reminders)
+- Choose what a short or long watch button press does: send a broadcast intent for automation apps, or ring the phone
+- Forward phone notifications to watches that support it
+- Pair more than one watch; local sync history
+- Export and import app settings
 
-Supported Watches
------------------
-The app works with many Bluetooth-enabled G-Shock, Edifice, and Pro Trek models.
+The app has no accounts, analytics or ads, and no server of its own. The only network traffic is optional NTP time queries.
 
-- Square: GW-B5600, GMW-B5000, GW-5000, DW-B5600
-- CasiOak: GA-B2100, GBM-2100
-- G-Steel: GST-B500, GST-B400, GST-B200
-- Edifice: ECB-10, ECB-20, ECB-30
-- Others: GBD-800, GBD-H1000, GG-B100
-
-Note: While these watches connect, not all specific hardware features (like fitness tracking steps on GBD models) may be fully supported yet.
-
-App Walkthrough
----------------
-
-1. Connection Screen
-This is the first screen you see. It handles the Bluetooth connection to your watch.
-- Status: Shows generic connection status.
-- Scan/Connect: Automatically scans for your watch.
-- Paired Devices: Lists your previously connected watches for quick access.
-Connection is typically much faster than the official app (~3.5s vs 12s).
-
-2. Time Setting
-Manage your watch's timekeeping effortlessly.
-- Local Time: Displays the current time from your phone.
-- Send to Watch: Tap the button to sync your phone's time, timezone, and DST settings to the watch immediately.
-- Home Time: Shows the 'Home' city configured on the watch.
-- Battery: Displays the current battery level of the watch.
-
-3. Alarms
-Read and configure the alarms stored on your watch.
-- View Alarms: See the current settings for all 5 alarms and the hourly signal (Chime).
-- Edit: Tap any alarm to change its time.
-- Sync: You can send these alarm settings to the watch.
-
-4. Events (Calendar Sync)
-Sync your phone's calendar to your watch!
-- Upcoming Events: Lists future events from your phone's calendar.
-- Send to Watch: Pushes these events to the watch's Reminder feature.
-- Compatibility: Supports one-time and simple recurring events. Complex recurrence rules might show as "Incompatible".
-
-5. Actions (Remote Control)
-Turn your watch into a remote control. Assign actions to button presses on the watch.
-- Find Phone: Make your phone ring loudly.
-- Take Photo: Snap a picture with your phone's camera.
-- Next Track: Skip music tracks on your phone.
-- Voice Assist: Launch Google Assistant.
-How to use: Short-press the lower-right button on the watch (when in Time mode) to trigger the selected action.
-
-6. Settings
-Configure app and watch preferences.
-- Watch Settings: Adjust specific watch configurations (light duration, power saving, etc.).
-- App Settings: Configure theme, behavior, and advanced options.
-
-Where are my World Cities?
---------------------------
-Using an app to manually swap between Home Time and World Time is a bit silly. Your phone already knows where you are. When setting time, this app will also set the Home Time, Timezone, and DST state to your current location. So when travelling to another timezone, just set time and you are good to go.
-
-Open Source
------------
-Cassiopeia Watch is open source. The source code, issue tracker, and the underlying GShockAPI library are available at: https://github.com/cihyboj/cassiopeia-watch
+Source code, issues and privacy policy: https://github.com/cihyboj/cassiopeia-watch

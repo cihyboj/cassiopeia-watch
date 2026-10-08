@@ -64,12 +64,22 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
+    sourceSets {
+        main.assets.srcDir(layout.buildDirectory.dir('generated/noticeAssets'))
+    }
     lint {
         disable 'TypographyFractions', 'TypographyQuotes'
         // Pre-existing issues are grandfathered here; new lint errors still fail the build.
         baseline = file('lint-baseline.xml')
     }
 }
+
+// Bundle licence notices into the APK assets without duplicating them in the source tree.
+def copyNoticeAssets = tasks.register('copyNoticeAssets', Copy) {
+    from(rootProject.files('LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md'))
+    into(layout.buildDirectory.dir('generated/noticeAssets'))
+}
+tasks.matching { it.name == 'preBuild' }.configureEach { dependsOn(copyNoticeAssets) }
 
 dependencies {
     implementation(libs.gshockapi)

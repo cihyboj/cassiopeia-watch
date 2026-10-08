@@ -84,3 +84,8 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 .worktrees/
+
+# IDE / local run configuration
+.idea/
+.vscode/
+.run/

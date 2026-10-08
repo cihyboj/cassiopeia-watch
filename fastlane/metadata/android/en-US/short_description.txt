@@ -1,1 +1,1 @@
-Add powerful sync and control features for supported Bluetooth watches.
+Unofficial app to sync Casio Bluetooth watches without a Casio account.
