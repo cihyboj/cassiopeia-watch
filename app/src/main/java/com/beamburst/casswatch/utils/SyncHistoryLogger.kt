@@ -23,11 +23,16 @@ class SyncHistoryLogger @Inject constructor(
         address: String? = session.address,
     ) {
         val addr = address ?: return
+        // WatchTimeWriter's cache-prime diagnostics use the legacy connected trigger.
+        // Keep those results in history without presenting another lifecycle event.
+        val historyTrigger = if (trigger == SyncTrigger.CONNECTION_CONNECTED && details.actions != null) {
+            SyncTrigger.AUTO_ON_RECONNECT
+        } else trigger
         store.append(
             SyncEntry(
                 timestamp = System.currentTimeMillis(),
                 deviceAddress = addr,
-                trigger = trigger,
+                trigger = historyTrigger,
                 kinds = kinds,
                 success = success,
                 errorMessage = errorMessage?.take(200),
