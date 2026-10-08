@@ -1,5 +1,6 @@
 package com.beamburst.casswatch
 
+import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.pairing.WatchConnectionEvents
 import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.utils.AppScopes
@@ -54,6 +55,11 @@ class MainEventHandler(
     private val warmedLock = Any()
 
     fun setupEventSubscription() {
+        connectionSession.onEnded { ended ->
+            sessionUiBridge.emitDisconnected()
+            connectionTracker.mark(ended.address, WatchConnectionTracker.ConnectionState.DISCONNECTED)
+            logConnection(SyncTrigger.CONNECTION_DISCONNECTED, true, address = ended.address)
+        }
         val eventActions = arrayOf(
             EventAction("ConnectionSetupComplete") { safely("ConnectionSetupComplete") { handleConnectionSetup() } },
             EventAction("WatchInitializationCompleted") { safely("WatchInitializationCompleted") { handleWatchInitialization() } },
@@ -79,7 +85,23 @@ class MainEventHandler(
     private fun handleConnectionSetup() {
         if (!repository.isConnected()) return
         val device = ProgressEvents.getPayload("ConnectionSetupComplete") as? BluetoothDevice
-        val ready = device?.let { connectionEvents.setup(it.address, it) } ?: return
+        if (device == null) return
+        val ready = connectionEvents.setup(device.address, device)
+        if (ready == null) {
+            Timber.w("Rejected late connection setup for %s", device.address)
+            AppScopes.io.launch { connectCoordinator.closeRejectedSetup() }
+            return
+        }
+        if (connectionEvents.needsInitialization) {
+            AppScopes.io.launch {
+                runCatching {
+                    connectCoordinator.withSession(ready) { check -> repository.guardWrites(check).init() }
+                }.onFailure {
+                    Timber.w(it, "Reconnect initialization failed for %s", ready.address)
+                    if (connectionSession.isCurrent(ready)) connectCoordinator.disconnect(ready.address)
+                }
+            }
+        }
         logConnection(SyncTrigger.CONNECTION_CONNECTED, true, address = ready.address)
     }
 
@@ -125,8 +147,8 @@ class MainEventHandler(
                 synchronized(warmedLock) {
                     if (!warmedDispatchedFor.add(key)) return@runCatching
                 }
-                connectCoordinator.withSession(ready) {
-                    watchTimeWriter.primeCache(repository)
+                connectCoordinator.withSession(ready) { check ->
+                    watchTimeWriter.primeCache(repository.guardWrites(check))
                 }
             }.onFailure { Timber.w(it, "Cache-warm dispatch failed") }
         }
@@ -154,14 +176,21 @@ class MainEventHandler(
         if (repository.supportsAppNotifications()) {
             val appNotification = ProgressEvents.getPayload("AppNotification") as AppNotification?
             if (appNotification != null) {
-                repository.sendAppNotification(appNotification)
+                val ready = connectionSession.ready ?: return
+                AppScopes.io.launch {
+                    runCatching {
+                        connectCoordinator.withSession(ready) { check ->
+                            repository.guardWrites(check).sendAppNotification(appNotification)
+                        }
+                    }.onFailure { Timber.w(it, "Notification forwarding failed") }
+                }
             }
         }
     }
 
     private fun handleConnectionFailure() {
         Timber.e("Failed to connect to the watch")
-        logConnection(SyncTrigger.CONNECTION_FAILED, false, "Failed to connect")
+        logConnection(SyncTrigger.CONNECTION_FAILED, false, "Failed to connect", connectionSession.attemptedAddress)
     }
 
     private fun handleError() {
@@ -179,17 +208,13 @@ class MainEventHandler(
         val disconnectedDevice = ProgressEvents.getPayload("Disconnect") as? BluetoothDevice
         val device = disconnectedDevice ?: return
         val token = connectionEvents.disconnectToken(device) ?: return
-        AppScopes.io.launch {
-            connectCoordinator.handleDisconnect {
-                connectionEvents.disconnect(token, repository.isConnected()) { ended ->
-                    sessionUiBridge.emitDisconnected()
-                    repository.teardownConnection(device)
-                    device.name
-                        ?.takeIf { it.isNotBlank() }
-                        ?.takeIf { AppUsageState.shouldShowConnectionSnackbar() }
-                        ?.let { name -> AppSnackbar(context.getString(R.string.watch_disconnected_snackbar, name)) }
-                    logConnection(SyncTrigger.CONNECTION_DISCONNECTED, true, address = ended.address)
-                }
+        // Invalidate at receipt, before asynchronous work or reconnect setup can run.
+        connectCoordinator.handleDisconnect {
+            connectionEvents.disconnect(token, repository.isConnected()) {
+                device.name
+                    ?.takeIf { it.isNotBlank() }
+                    ?.takeIf { AppUsageState.shouldShowConnectionSnackbar() }
+                    ?.let { name -> AppSnackbar(context.getString(R.string.watch_disconnected_snackbar, name)) }
             }
         }
     }

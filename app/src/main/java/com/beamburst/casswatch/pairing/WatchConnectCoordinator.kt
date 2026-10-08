@@ -3,15 +3,23 @@ package com.beamburst.casswatch.pairing
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.utils.Utils
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import org.avmedia.gshockapi.IGShockAPI
 import timber.log.Timber
+import org.avmedia.gshockapi.IGShockAPI
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Owns connection attempts, takeovers and writes until their entire lifecycle completes. */
+/** Connection control never waits for session I/O or library response deferreds. */
 @Singleton
 class WatchConnectCoordinator @Inject constructor(
     private val repository: IGShockAPI,
@@ -22,78 +30,79 @@ class WatchConnectCoordinator @Inject constructor(
     }
 
     private val connectMutex = Mutex()
+    private data class Attempt(val token: WatchConnectionSession.Connecting, val result: Deferred<Boolean>)
+    private var attempt: Attempt? = null
 
     suspend fun connect(
         address: String,
         takeover: Boolean = false,
         timeoutMs: Long = DEFAULT_TIMEOUT_MS,
-    ): Boolean = connectMutex.withLock {
+    ): Boolean {
         val requested = Utils.sanitizeMacAddress(address)
-        if (requested.isBlank()) return@withLock false
-        var ownsAttempt = false
+        if (requested.isBlank()) return false
+        var owned: Attempt? = null
+        var accepted = false
         try {
+            // Includes mutex acquisition, BLE setup and library initialization.
             val result = withTimeoutOrNull(timeoutMs) {
-                val observed = session.state.value
-                // CONNECTED precedes onDeviceReady. Unknown identity is readiness pending,
-                // not evidence of a different watch, and must never be cleared here.
-                if (repository.isConnected()) {
-                    val current = session.ready ?: session.awaitReady()
-                    if (current.address == requested) {
-                        return@withTimeoutOrNull repository.isConnected() && session.isCurrent(current)
-                    }
-                    if (!takeover) return@withTimeoutOrNull false
-                    stopCurrent()
-                }
-                val current = session.begin(observed, requested)
-                if (current is WatchConnectionSession.Ready) {
-                    // Setup raced isConnected(): retain it and let the library initialize.
-                    if (current.address != requested) {
+                val active = connectMutex.withLock {
+                    val state = session.state.value
+                    if (state is WatchConnectionSession.Ready && repository.isConnected()) {
+                        if (state.address == requested) return@withLock null
                         if (!takeover) return@withTimeoutOrNull false
                         stopCurrent()
-                        session.begin(session.state.value, requested)
+                    } else if (state is WatchConnectionSession.Connecting) {
+                        if (state.address == requested && attempt != null) return@withLock attempt
+                        if (state.address != requested) {
+                            if (!takeover) return@withTimeoutOrNull false
+                            stopCurrent()
+                        }
+                    }
+                    val token = session.begin(session.state.value, requested) as WatchConnectionSession.Connecting
+                    val job = SupervisorJob()
+                    val result = CoroutineScope(currentCoroutineContext() + job).async(start = CoroutineStart.LAZY) {
+                        repository.waitForConnection(requested)
+                        val ready = session.awaitReady()
+                        repository.isConnected() && ready.address == requested && ready.generation == token.generation
+                    }
+                    result.invokeOnCompletion { job.cancel() }
+                    Attempt(token, result).also { attempt = it; owned = it }
+                }
+                if (active == null) return@withTimeoutOrNull true
+                active.result.await()
+            } ?: false
+            accepted = result
+            return result
+        } finally {
+            // A cancelled caller must still release its own attempt, never a replacement.
+            owned?.let { mine ->
+                withContext(NonCancellable) {
+                    connectMutex.withLock {
+                        if (attempt === mine) {
+                            if (!accepted) {
+                                Timber.w("Connection attempt to %s ended before readiness", requested)
+                                stopCurrent()
+                            }
+                            attempt = null
+                        }
                     }
                 }
-                if (session.state.value == WatchConnectionSession.Disconnected) {
-                    session.begin(session.state.value, requested)
-                }
-                ownsAttempt = true
-                repository.waitForConnection(requested)
-                if (!repository.isConnected()) return@withTimeoutOrNull false
-                val ready = session.awaitReady()
-                repository.isConnected() && ready.address == requested
             }
-            if (result == null || (result == false && ownsAttempt)) {
-                Timber.w("Connection to %s did not become ready within %d ms", requested, timeoutMs)
-                stopCurrent()
-            }
-            result == true
-        } catch (cancelled: CancellationException) {
-            stopCurrent()
-            throw cancelled
-        } catch (error: Exception) {
-            if (ownsAttempt) stopCurrent()
-            throw error
         }
     }
 
     suspend fun disconnect(address: String? = null) = connectMutex.withLock {
-        val current = session.state.value
-        val currentAddress = when (current) {
-            is WatchConnectionSession.Ready -> current.address
-            is WatchConnectionSession.Connecting -> current.address
-            else -> null
-        }
-        if (address == null || currentAddress == Utils.sanitizeMacAddress(address)) stopCurrent()
+        if (address == null || session.attemptedAddress == Utils.sanitizeMacAddress(address)) stopCurrent()
     }
 
-    suspend fun handleDisconnect(block: () -> Unit) = connectMutex.withLock { block() }
+    // Called at event receipt: invalidation/cancellation must not wait for any coroutine.
+    fun handleDisconnect(block: () -> Unit) = block()
 
-    /** Hold ownership across suspensions; callers also validate selection before each write. */
     suspend fun <T> withSession(
         expected: WatchConnectionSession.Ready,
         selectedAddress: (() -> String?)? = null,
         block: suspend (check: () -> Unit) -> T,
-    ): T = connectMutex.withLock {
+    ): T = session.withWork(expected) {
         val check = {
             if (!repository.isConnected() || !session.isCurrent(expected) ||
                 (selectedAddress != null && session.matching(selectedAddress()) != expected)) {
@@ -101,16 +110,26 @@ class WatchConnectCoordinator @Inject constructor(
             }
         }
         check()
-        block(check).also { check() }
+        try {
+            block(check).also { confirmWatchWrite(check) }
+        } catch (error: Exception) {
+            if (error !is CancellationException) Timber.w(error, "Session work failed for %s", expected.address)
+            throw error
+        }
+    }
+
+    suspend fun closeRejectedSetup() = connectMutex.withLock {
+        Timber.w("Closing setup without an accepted connection session")
+        repository.disconnect()
     }
 
     private fun stopCurrent() {
-        val ended = session.state.value
-        session.ended(ended)
-        // IGShockAPI.disconnect -> release cancels Nordic's queue and closes GATT even
-        // while CONNECTING. The library's separately launched startConnection coroutine
-        // has no cancellation handle; unexpected late setup is rejected by session.begin /
-        // established rather than adopted as the next requested watch.
+        session.ended(session.state.value)
+        session.invalidateReconnect()
+        attempt?.result?.cancel()
+        attempt = null
+        // No handle exists for the library's detached startConnection job. Late setup
+        // is explicitly closed by the event adapter/handler.
         repository.disconnect()
     }
 }

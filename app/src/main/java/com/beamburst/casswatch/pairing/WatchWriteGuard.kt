@@ -8,6 +8,11 @@ import com.beamburst.casswatch.ui.common.AppSnackbar
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
+/**
+ * The library launches writes without a delivery acknowledgment. Yielding and checking
+ * before committing success catches app-observed session changes, but cannot fence its
+ * detached transport queue or prove BLE delivery.
+ */
 class WatchWriteGuard internal constructor(
     private val selectedAddress: () -> String?,
     private val session: WatchConnectionSession,
@@ -41,6 +46,14 @@ class WatchWriteGuard internal constructor(
         }
     }
 
+    /** Alarm handlers can use this API for bounded reads and fenced helper writes. */
+    suspend fun runApi(
+        expected: WatchConnectionSession.Ready,
+        api: org.avmedia.gshockapi.IGShockAPI,
+        block: suspend (api: org.avmedia.gshockapi.IGShockAPI, confirm: suspend () -> Unit) -> Unit,
+    ) = run(expected) { check ->
+        block(api.guardWrites(check)) { confirmWatchWrite(check) }
+    }
 }
 
 class WatchConnectionChangedException : IllegalStateException("Watch connection changed")
