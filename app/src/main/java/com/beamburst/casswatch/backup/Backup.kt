@@ -186,4 +186,22 @@ internal suspend fun restoreBackup(text: String, target: BackupRestoreTarget): I
 internal fun backupEntriesForRestore(entries: JSONObject): JSONObject = JSONObject(entries.toString()).apply {
     remove(ALARM_FALLBACK_MIGRATION_FLAG)
     BackupImporter.watchSettingsImportKeysToDrop(entries).forEach { remove(it) }
+    keys().asSequence().toList().forEach { key ->
+        when {
+            key.startsWith("AlarmState_") -> {
+                val state = AlarmSyncStorage.decode(getString(key))
+                put(key, AlarmSyncStorage.encode(state.copy(watchPayloads = emptyMap(), alarms = state.alarms.map {
+                    it.copy(fallbackAttemptAt = null, fallbackStatus = null)
+                })))
+            }
+            key == "PhoneAlarmDrafts" || key.startsWith("PhoneAlarmDrafts_") -> {
+                val alarms = org.json.JSONArray(getString(key))
+                for (index in 0 until alarms.length()) {
+                    alarms.getJSONObject(index).remove("fallbackAttemptAt")
+                    alarms.getJSONObject(index).remove("fallbackStatus")
+                }
+                put(key, alarms.toString())
+            }
+        }
+    }
 }

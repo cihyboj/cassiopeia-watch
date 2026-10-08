@@ -1,31 +1,25 @@
 package com.beamburst.casswatch.ui.alarms
 
-import com.beamburst.casswatch.data.local.SyncEntry
-import com.beamburst.casswatch.data.local.SyncKind
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 
-/** Only the latest successful payload for this watch, at this exact slot, is evidence. */
+/** Confirmation persists across daily rings, until replaced or invalidated. */
 internal fun watchHasOccurrence(
     key: AlarmKey,
     alarm: AlarmSyncStorage.StoredAlarm,
     instant: Long,
-    history: List<SyncEntry>,
+    payloads: Map<Int, WatchAlarmPayload>,
     now: Long,
     zone: ZoneId,
 ): Boolean {
-    val entry = history.filter { it.success && SyncKind.ALARMS in it.kinds &&
-        AlarmKey.from(it.deviceAddress, key.slot)?.normalizedAddress == key.normalizedAddress && it.timestamp <= now }
-        .maxByOrNull { it.timestamp } ?: return false
+    val payload = payloads[key.slot] ?: return false
+    if (payload.address != key.normalizedAddress || !payload.enabled || !payload.daily || payload.syncedAt > now) return false
+    if (payload.zoneId != zone.id || payload.utcOffsetSeconds != zone.rules.getOffset(Instant.ofEpochMilli(instant)).totalSeconds) return false
     val fireDate = Instant.ofEpochMilli(instant).atZone(zone).toLocalDate()
     if (AlarmOccurrence(fireDate, alarm.hour, alarm.minute).resolveInstant(zone).toEpochMilli() != instant) return false
-    val effectiveTime = alarmTimeAtOccurrence(instant, zone)
-    if (entry.details.alarmHashes?.getOrNull(key.slot) != alarmHash(effectiveTime.hour, effectiveTime.minute, emptySet(), true)) return false
-    // A watch alarm is daily. A previous payload only confirms its first upcoming ring;
-    // future weekly occurrences still need a fresh sync with the right enabled state.
-    val atSync = Clock.fixed(Instant.ofEpochMilli(entry.timestamp), zone)
-    return AlarmOccurrence.nextOccurrence(effectiveTime.hour, effectiveTime.minute, atSync, zone).resolveInstant(zone).toEpochMilli() == instant
+    val time = alarmTimeAtOccurrence(instant, zone)
+    return payload.hour == time.hour && payload.minute == time.minute
 }
 
 internal fun validFallbackCallback(

@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
-import com.beamburst.casswatch.data.local.MultiWatchMigrator
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.data.local.WatchConnectionTracker
 import com.beamburst.casswatch.data.repository.GShockRepository
@@ -119,9 +118,7 @@ class GShockApplication : Application(), IScreenManager {
             Timber.plant(Timber.DebugTree())
         }
         installGlobalExceptionHandler()
-        val storageMigration = MultiWatchMigrator.migrateIfNeeded(this)
         AppScopes.io.launch {
-            storageMigration?.join()
             alarmSchedulingCoordinator.reconcileAll()
         }
         ActivityProvider.initialize(this)

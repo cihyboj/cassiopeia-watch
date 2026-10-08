@@ -1,6 +1,7 @@
 package com.beamburst.casswatch.ui.alarms
 
 import android.content.Context
+import com.beamburst.casswatch.data.local.MultiWatchMigrator
 import com.beamburst.casswatch.data.local.SyncEntry
 import com.beamburst.casswatch.data.local.SyncHistoryStore
 import com.beamburst.casswatch.utils.LocalDataStorage
@@ -33,6 +34,8 @@ interface AlarmSchedulingCoordinator {
 }
 
 internal interface AlarmPersistence {
+    suspend fun initialize() = Unit
+    suspend fun slots(address: String): Set<Int> = (0..4).toSet()
     suspend fun addresses(): List<String>
     suspend fun load(address: String): AlarmState
     suspend fun save(address: String, state: AlarmState)
@@ -60,9 +63,17 @@ internal class PersistedAlarmSchedulingCoordinator(
     private val mutex = Mutex()
     private val unavailableKeys = MutableStateFlow<Set<AlarmKey>>(emptySet())
     override val unavailable = unavailableKeys.asStateFlow()
-    override suspend fun <T> serialized(block: suspend () -> T): T = mutex.withLock { block() }
+    private var initialized = false
+    override suspend fun <T> serialized(block: suspend () -> T): T = mutex.withLock {
+        if (!initialized) {
+            migrateLocked()
+            initialized = true
+        }
+        block()
+    }
 
     private suspend fun migrateLocked() {
+        persistence.initialize()
         if (persistence.migrationDone()) return
         ((0..4).toSet() + persistence.legacySlots()).forEach(backend::cancelLegacy)
         persistence.addresses().forEach { reconcileLocked(it) }
@@ -71,23 +82,19 @@ internal class PersistedAlarmSchedulingCoordinator(
     }
 
     override suspend fun reconcile(address: String) = serialized {
-        migrateLocked()
         reconcileLocked(address)
     }
     override suspend fun reconcileAll() = serialized {
-        migrateLocked()
         persistence.addresses().forEach { reconcileLocked(it) }
     }
     override suspend fun cancelWatch(address: String) = serialized { cancelLocked(address) }
     override suspend fun snapshot(address: String): AlarmState = serialized {
         val normalized = AlarmKey.from(address, 0)?.normalizedAddress ?: return@serialized AlarmState()
-        migrateLocked()
         reconcileLocked(normalized)
         if (normalized in persistence.addresses()) persistence.load(normalized) else AlarmState()
     }
     override suspend fun update(address: String, transform: (AlarmState) -> AlarmState): AlarmState? = serialized {
         val normalized = AlarmKey.from(address, 0)?.normalizedAddress ?: return@serialized null
-        migrateLocked()
         if (normalized !in persistence.addresses()) return@serialized null
         val next = transform(persistence.load(normalized))
         persistence.save(normalized, next)
@@ -96,6 +103,8 @@ internal class PersistedAlarmSchedulingCoordinator(
     }
     override suspend fun forgetWatch(address: String, remove: suspend () -> Unit) = serialized {
         cancelLocked(address)
+        val key = AlarmKey.from(address, 0)
+        if (key != null) persistence.save(key.normalizedAddress, AlarmState())
         remove()
     }
     override suspend fun replaceAll(restore: suspend () -> Unit) = serialized {
@@ -116,7 +125,7 @@ internal class PersistedAlarmSchedulingCoordinator(
         val state = persistence.load(key.normalizedAddress)
         if (!validFallbackCallback(key, persistence.addresses(), state, instant, hash, clock, zone())) return@serialized false
         val alarm = state.alarms[key.slot]
-        val confirmed = watchHasOccurrence(key, alarm, instant, persistence.history(key.normalizedAddress), clock.millis(), zone())
+        val confirmed = watchHasOccurrence(key, alarm, instant, state.watchPayloads, clock.millis(), zone())
         // Persist before hand-off: a repeated callback must not create another clock alarm.
         persistence.save(key.normalizedAddress, state.copy(alarms = state.alarms.mapIndexed { slot, old ->
             if (slot == key.slot) old.copy(fallbackAttemptAt = instant) else old
@@ -131,8 +140,7 @@ internal class PersistedAlarmSchedulingCoordinator(
 
     private suspend fun cancelLocked(address: String) {
         val key = AlarmKey.from(address, 0) ?: return
-        val state = persistence.load(key.normalizedAddress)
-        (state.alarms.indices + (0..4) + state.days.keys).distinct().forEach { backend.cancel(key.copy(slot = it)) }
+        persistence.slots(key.normalizedAddress).forEach { backend.cancel(key.copy(slot = it)) }
         unavailableKeys.value = unavailableKeys.value.filterNot { it.normalizedAddress == key.normalizedAddress }.toSet()
     }
 
@@ -142,7 +150,6 @@ internal class PersistedAlarmSchedulingCoordinator(
         val old = persistence.load(key.normalizedAddress)
         val state = reconcileAlarmState(old, clock, zone())
         if (old != state) persistence.save(key.normalizedAddress, state)
-        val history = persistence.history(key.normalizedAddress)
         val unavailable = unavailableKeys.value.filterNot { it.normalizedAddress == key.normalizedAddress }.toMutableSet()
         state.alarms.forEachIndexed { slot, alarm ->
             val alarmKey = key.copy(slot = slot)
@@ -150,7 +157,7 @@ internal class PersistedAlarmSchedulingCoordinator(
             backend.expiry(alarmKey, if (days.isEmpty() && alarm.enabled && alarm.firedAt == null)
                 alarm.occurrence()?.resolveInstant(zone())?.toEpochMilli() else null)
             val instant = nextAlarmOccurrence(alarm, days, clock, zone())?.toEpochMilli()
-            if (instant == null || alarm.fallbackAttemptAt == instant || watchHasOccurrence(alarmKey, alarm, instant, history, clock.millis(), zone())) {
+            if (instant == null || alarm.fallbackAttemptAt == instant || watchHasOccurrence(alarmKey, alarm, instant, state.watchPayloads, clock.millis(), zone())) {
                 backend.cancelFallback(alarmKey)
             } else if (backend.schedule(alarmKey, alarm, instant) == FallbackAvailability.UNAVAILABLE) {
                 backend.cancelFallback(alarmKey)
@@ -167,8 +174,17 @@ internal class AndroidAlarmPersistence @Inject constructor(
     private val historyStore: SyncHistoryStore,
 ) : AlarmPersistence {
     private val migrationFlag = ALARM_FALLBACK_MIGRATION_FLAG
+    override suspend fun initialize() = MultiWatchMigrator.migrateIfNeeded(context)
+    override suspend fun slots(address: String): Set<Int> {
+        // Cancellation must survive even an undecodable state. Include sparse legacy slots.
+        val entries = LocalDataStorage.toJsonObject(context)
+        val suffix = "_${com.beamburst.casswatch.utils.Utils.sanitizeMacAddress(address)}"
+        val own = org.json.JSONObject()
+        entries.keys().asSequence().filter { it.endsWith(suffix) }.forEach { own.put(it, entries.get(it)) }
+        return (0..4).toSet() + persistedAlarmSlots(own)
+    }
     override suspend fun addresses(): List<String> = LocalDataStorage.getDeviceAddresses(context)
-    override suspend fun load(address: String): AlarmState = AlarmSyncStorage.loadState(context, address)
+    override suspend fun load(address: String): AlarmState = AlarmSyncStorage.loadRecovering(context, address)
     override suspend fun save(address: String, state: AlarmState) = AlarmSyncStorage.saveState(context, address, state)
     override suspend fun history(address: String): List<SyncEntry> = historyStore.load(address)
     override suspend fun migrationDone(): Boolean = LocalDataStorage.get(context, migrationFlag, "false").toBoolean()

@@ -55,7 +55,10 @@ internal fun reconcileAlarmState(state: AlarmState, clock: Clock, zone: ZoneId):
             if (dated.occurrence()!!.isElapsed(clock, zone)) dated.copy(firedAt = clock.millis()) else dated
         }
     }
-    return state.copy(alarms = alarms, dirty = state.dirty || alarms != state.alarms)
+    val payloads = state.watchPayloads.filterValues {
+        it.zoneId == zone.id && it.utcOffsetSeconds == zone.rules.getOffset(clock.instant()).totalSeconds
+    }
+    return state.copy(alarms = alarms, dirty = state.dirty || alarms != state.alarms, watchPayloads = payloads)
 }
 
 internal fun editAlarmState(

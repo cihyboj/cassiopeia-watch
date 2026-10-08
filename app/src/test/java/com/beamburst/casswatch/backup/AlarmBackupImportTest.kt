@@ -130,4 +130,15 @@ class AlarmBackupImportTest {
         assertTrue(store.migrationDone())
         assertEquals(setOf(AlarmKey(a, 0)), backend.scheduled.keys)
     }
+    @Test fun `import keeps display history but clears confirmation and phone local receipts`() {
+        val original = AlarmState(listOf(alarm.copy(fallbackAttemptAt = clock.millis(), fallbackStatus = "requested")),
+            watchPayloads = mapOf(0 to WatchAlarmPayload(a, 7, 0, true, true, zone.id, 0, clock.millis())))
+        val data = JSONObject().put(AlarmSyncStorage.stateKey(a), AlarmSyncStorage.encode(original)).put("SyncHistory_$a", "display history")
+        val restored = backupEntriesForRestore(data)
+        val state = AlarmSyncStorage.decode(restored.getString(AlarmSyncStorage.stateKey(a)))
+        assertTrue(state.watchPayloads.isEmpty())
+        assertNull(state.alarms[0].fallbackAttemptAt)
+        assertNull(state.alarms[0].fallbackStatus)
+        assertEquals("display history", restored.getString("SyncHistory_$a"))
+    }
 }

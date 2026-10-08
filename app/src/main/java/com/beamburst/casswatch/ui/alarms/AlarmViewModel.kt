@@ -712,7 +712,7 @@ class AlarmViewModel @Inject constructor(
                 key = AlarmKey(addr, index),
                 alarm = state.alarms.getOrNull(index) ?: return@forEachIndexed,
                 alarmDays = _alarmDays.value[index] ?: AlarmSchedulePlanner.AllDays,
-                history = history,
+                payloads = state.watchPayloads,
                 clock = alarmTime.clock,
                 zone = alarmTime.zone(),
                 autoSyncEnabled = autoSyncEnabled,

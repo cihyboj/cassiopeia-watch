@@ -60,4 +60,20 @@ class AlarmSyncStorageTest {
         )
         assertEquals(state, AlarmSyncStorage.decode(AlarmSyncStorage.encode(state)))
     }
+    @Test fun `malformed state returns defaults instead of preventing another watch from loading`() {
+        val badAddress = "AA:BB:CC:DD:EE:01"
+        val goodAddress = "AA:BB:CC:DD:EE:02"
+        val good = AlarmState(listOf(AlarmSyncStorage.StoredAlarm(7, 0, true, false, null)))
+        val entries = mapOf(AlarmSyncStorage.stateKey(badAddress) to "broken", AlarmSyncStorage.stateKey(goodAddress) to AlarmSyncStorage.encode(good))
+        assertEquals(AlarmState(), AlarmSyncStorage.readState(badAddress, entries::get))
+        assertEquals(good, AlarmSyncStorage.readState(goodAddress, entries::get))
+    }
+    @Test fun `payload codec preserves address slot enabled daily and clock evidence`() {
+        val address = "AA:BB:CC:DD:EE:01"
+        val state = AlarmState(watchPayloads = mapOf(3 to WatchAlarmPayload(address, 7, 0, true, true, "Europe/Warsaw", 7200, 123)))
+        assertEquals(state, AlarmSyncStorage.decode(AlarmSyncStorage.encode(state)))
+    }
+    @Test(expected = IllegalArgumentException::class) fun `invalid draft time is rejected`() {
+        AlarmSyncStorage.decodeAlarms("""[{"hour":24,"minute":0,"enabled":true,"hasHourlyChime":false}]""")
+    }
 }

@@ -1,12 +1,7 @@
 package com.beamburst.casswatch.data.local
 
-import com.beamburst.casswatch.utils.AppScopes
 import android.content.Context
 import com.beamburst.casswatch.utils.LocalDataStorage
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Job
 
 object MultiWatchMigrator {
 
@@ -27,24 +22,20 @@ object MultiWatchMigrator {
 
     fun perWatchKey(base: String, addr: String) = "${base}_$addr"
 
-    fun migrateIfNeeded(context: Context): Job? {
-        val alreadyMigrated = LocalDataStorage.get(context, MIGRATED_FLAG_KEY, "false")?.toBoolean() ?: false
-        if (alreadyMigrated) return null
-
-        val addr = LocalDataStorage.get(context, CurrentWatchSelector.LAST_DEVICE_ADDRESS_KEY, null)
-        return AppScopes.io.launch {
-            if (addr == null) {
-                LocalDataStorage.putAsync(context, MIGRATED_FLAG_KEY, "true")
-                return@launch
-            }
-
+    /** Awaited by the alarm coordinator while holding its initialization mutex. */
+    suspend fun migrateIfNeeded(context: Context) {
+        if (LocalDataStorage.get(context, MIGRATED_FLAG_KEY, "false").toBoolean()) return
+        val addr = LocalDataStorage.get(context, CurrentWatchSelector.LAST_DEVICE_ADDRESS_KEY)
+        if (addr != null) {
             GLOBAL_KEYS.forEach { key ->
-                LocalDataStorage.get(context, key, null)?.let { value ->
-                    LocalDataStorage.putAsync(context, perWatchKey(key, addr), value)
+                LocalDataStorage.get(context, key)?.let { value ->
+                    // Retry after a crash must never overwrite a newer per-watch draft.
+                    val target = perWatchKey(key, addr)
+                    if (LocalDataStorage.get(context, target) == null) LocalDataStorage.putAsync(context, target, value)
                     LocalDataStorage.deleteAsync(context, key)
                 }
             }
-            LocalDataStorage.putAsync(context, MIGRATED_FLAG_KEY, "true")
         }
+        LocalDataStorage.putAsync(context, MIGRATED_FLAG_KEY, "true")
     }
 }
