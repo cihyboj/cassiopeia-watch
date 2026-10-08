@@ -58,7 +58,7 @@ data class BleDebugUiState(
 	val notificationCharacteristicFound: Boolean = false,
 	val manualHex: String = "",
 	val manualLabel: String = "",
-	val dryRun: Boolean = false,
+	val dryRun: Boolean = true,
 	val manualValidationError: String? = null,
 	val notificationApp: String = "",
 	val notificationTitle: String = "",
@@ -95,6 +95,7 @@ class BleDebugViewModel @Inject constructor(
 	private val subscriberId = "BleDebugViewModel-${System.identityHashCode(this)}"
 	private val nextLogId = AtomicLong(0L)
 	private var repeatJob: Job? = null
+	private var lastCommand: BleDebugCommand? = null
 	private var notificationLoggingActive = false
 
 	init {
@@ -218,10 +219,8 @@ class BleDebugViewModel @Inject constructor(
 
 	fun startRepeat() {
 		stopRepeat()
-		val current = state.value
-		val hex = current.lastCommandHex
-		val label = current.lastCommandLabel
-		if (hex.isNullOrBlank() || label.isNullOrBlank()) {
+		val command = lastCommand
+		if (command == null) {
 			appendLog(appContext.getString(R.string.ble_debug_repeat), "", appContext.getString(R.string.ble_debug_no_command_has_been_sent_yet))
 			return
 		}
@@ -230,7 +229,16 @@ class BleDebugViewModel @Inject constructor(
 		repeatJob = viewModelScope.launch {
 			while (isActive) {
 				delay(state.value.repeatIntervalSeconds * 1000L)
-				sendHex(appContext.getString(R.string.ble_debug_repeat_label, label), hex, state.value.dryRun, rememberAsLastCommand = false)
+				command.resend { label, hex, mode, targetDescription ->
+					sendHex(
+						label = appContext.getString(R.string.ble_debug_repeat_label, label),
+						hex = hex,
+						dryRun = state.value.dryRun,
+						rememberAsLastCommand = false,
+						mode = mode,
+						targetDescription = targetDescription,
+					)
+				}
 			}
 		}
 	}
@@ -275,6 +283,7 @@ class BleDebugViewModel @Inject constructor(
 		onValidationError(null)
 
 		if (rememberAsLastCommand) {
+			lastCommand = BleDebugCommand(label, formattedHex, mode, targetDescription)
 			_state.update {
 				it.copy(
 					lastCommandLabel = label,
