@@ -3,53 +3,172 @@ name: Build and Release APK
 on:
   push:
     tags:
-      - '*'
+      - 'v[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build:
+  validate:
+    # Deleting a tag also fires a push event.
+    if: ${{ !github.event.deleted }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate tag and main ancestry
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+$ ]] || { echo 'Invalid release tag'; exit 1; }
+          git merge-base --is-ancestor HEAD origin/main || { echo 'Tag commit is not on main'; exit 1; }
+          VERSION=$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)".*/\1/p' app/build.gradle)
+          [ "$TAG" = "v$VERSION" ] || { echo 'Tag does not match versionName'; exit 1; }
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Decode and verify keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
-          # Fail fast on a missing/corrupt keystore or wrong password; without this the
-          # build silently produces an UNSIGNED apk and uploads it to the release.
-          keytool -list \
-            -keystore app/release.keystore \
-            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
-            -alias "${{ secrets.KEY_ALIAS }}" > /dev/null
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
+
+      - name: Unit tests and lint before signing
+        run: ./gradlew test lint --stacktrace
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/unsigned-validation.keystore
+
+  release:
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
 
-      - name: Build APK
-        run: ./gradlew assembleRelease
+      - name: Refuse duplicate or published releases
         env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh api --paginate --slurp "repos/$GH_REPO/releases" > "$RUNNER_TEMP/releases.json"
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          pages = json.loads((Path(os.environ['RUNNER_TEMP']) / 'releases.json').read_text())
+          matches = [release for page in pages for release in page if release['tag_name'] == os.environ['TAG']]
+          if any(not release['draft'] for release in matches):
+              raise SystemExit('Refusing to overwrite a published release')
+          if matches:
+              raise SystemExit('A draft already exists for this tag; refusing to create a duplicate')
+          PY
+
+      - name: Verify the tag still points at this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          # A tag moved after this run started must not get a release built from another commit.
+          # The API resolves annotated tags to their commit; the checkout keeps no credentials.
+          REMOTE=$(gh api "repos/$GH_REPO/commits/tags/$TAG" --jq .sha)
+          [ "$REMOTE" = "$(git rev-parse HEAD)" ] || { echo 'Tag no longer points at the validated commit'; exit 1; }
+
+      - name: Decode and verify keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+          keytool -list \
+            -keystore "$RUNNER_TEMP/release.keystore" \
+            -storepass:env KEYSTORE_PASSWORD \
+            -alias "$KEY_ALIAS" > /dev/null
+
+      - name: Build signed release APK
+        run: ./gradlew assembleRelease --stacktrace
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Verify APK is signed
-        run: |
-          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          "$BUILD_TOOLS/apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk
-
-      - name: Create Release and Upload APK
-        uses: softprops/action-gh-release@v2
-        with:
-          files: app/build/outputs/apk/release/app-release.apk
-          generate_release_notes: true
+      - name: Verify signature and prepare release assets
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          EXPECTED_SIGNER_SHA256: ${{ vars.EXPECTED_SIGNER_SHA256 }}
+        run: |
+          BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs \
+            app/build/outputs/apk/release/app-release.apk > "$RUNNER_TEMP/apksigner.txt"
+          cat "$RUNNER_TEMP/apksigner.txt"
+          mapfile -t SIGNERS < <(sed -n 's/^Signer #[0-9]* certificate SHA-256 digest: //p' "$RUNNER_TEMP/apksigner.txt")
+          [ "${#SIGNERS[@]}" -eq 1 ] || { echo 'Expected exactly one APK signer'; exit 1; }
+          FINGERPRINT=$(printf '%s' "${SIGNERS[0]}" | tr '[:lower:]' '[:upper:]')
+          EXPECTED=$(printf '%s' "$EXPECTED_SIGNER_SHA256" | tr -d ':[:space:]' | tr '[:lower:]' '[:upper:]')
+          [[ "$EXPECTED" =~ ^[0-9A-F]{64}$ ]] || { echo 'EXPECTED_SIGNER_SHA256 must contain a SHA-256 fingerprint'; exit 1; }
+          [ "$FINGERPRINT" = "$EXPECTED" ] || { echo 'APK signer fingerprint mismatch'; exit 1; }
+          printf 'Signer SHA-256: %s\n' "$FINGERPRINT"
+          mkdir -p dist
+          APK_NAME="cassiopeia-watch-${TAG#v}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "dist/$APK_NAME"
+          (cd dist && sha256sum "$APK_NAME" > "$APK_NAME.sha256")
+          printf '%s\n' "$FINGERPRINT" > dist/signer-sha256.txt
+          cp NOTICE LICENSE dist/
+          if [ -f THIRD_PARTY_NOTICES.md ]; then
+            cp THIRD_PARTY_NOTICES.md dist/
+          fi
+
+      - name: Re-verify the tag before creating the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          # A tag moved after this run started must not get a release built from another commit.
+          # The API resolves annotated tags to their commit; the checkout keeps no credentials.
+          REMOTE=$(gh api "repos/$GH_REPO/commits/tags/$TAG" --jq .sha)
+          [ "$REMOTE" = "$(git rev-parse HEAD)" ] || { echo 'Tag no longer points at the validated commit'; exit 1; }
+
+      - name: Create draft prerelease and upload assets
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          draft: true
+          prerelease: true
+          files: dist/*
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.keystore"

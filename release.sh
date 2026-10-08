@@ -1,171 +1,110 @@
 #!/bin/bash
 
-# release.sh - Automates the release process for Cassiopeia Watch
+# release.sh - Prepares a release PR for Cassiopeia Watch
 
 set -euo pipefail
 
-# Debug release process
-if [ "${1:-}" == "debug" ]; then
-    echo "🐞 Processing Debug Build..."
-
-    APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
-
-    # Build if not exists
-    if [ ! -f "$APK_PATH" ]; then
-        echo "🔨 Building Debug APK..."
-        ./gradlew assembleDebug
-    fi
-
-    if [ ! -f "$APK_PATH" ]; then
-        echo "❌ Error: Debug APK not found at $APK_PATH"
-        exit 1
-    fi
-
-    # Check for gh availability
-    if ! command -v gh &> /dev/null; then
-         echo "❌ GitHub CLI (gh) is not installed. Please install it to upload to GitHub."
-         exit 1
-    fi
-
-    echo "📤 Uploading to GitHub Releases (tag: debug)..."
-
-    # Delete existing 'debug' tag/release if it exists (swallow errors)
-    gh release delete debug -y --cleanup-tag &> /dev/null || true
-
-    # Create new release with the APK
-    gh release create debug "$APK_PATH" \
-       --prerelease \
-       --title "Latest Debug Build" \
-       --notes "Debug build uploaded via release.sh on $(date)"
-
-    echo ""
-    echo "✅ Debug APK Uploaded to GitHub!"
-    # Attempt to get the repository URL for a clickable link
-    REPO=$(gh repo view --json url -q .url)
-    echo "🔗 Release: $REPO/releases/tag/debug"
-
-    echo "📂 Local file location:"
-    echo "   $(pwd)/$APK_PATH"
-
-    exit 0
-fi
-
-# Normal release process (new release)
-if [ -z "${1:-}" ] || [[ "$1" == -* ]]; then
-    echo "Usage: ./release.sh <version_name> [OR debug]"
-    echo ""
-    echo "Examples:"
-    echo "  ./release.sh 41.0              # Create new release"
-    echo "  ./release.sh debug             # Upload debug APK"
+if [ "$#" -ne 1 ] || ! [[ "$1" =~ ^[0-9]+\.[0-9]+$ ]]; then
+    echo "Usage: ./release.sh <major>.<minor> (e.g. 41.0)"
     exit 1
 fi
 
-# Refuse to release with uncommitted changes — they would be swept into the
-# release commit or lost on branch switch.
+# Refuse to prepare a release with uncommitted changes.
 if [ -n "$(git status --porcelain)" ]; then
     echo "❌ Working tree is not clean. Commit or stash changes first."
     exit 1
 fi
 
-# Ensure we are on the main branch
-CURRENT_BRANCH=$(git branch --show-current)
-if [ "$CURRENT_BRANCH" != "main" ]; then
-    echo "🔄 Switching to main branch..."
-    git checkout main
-    git pull origin main
-    CURRENT_BRANCH="main"
-fi
-
-# Check if gh CLI is installed
 if ! command -v gh &> /dev/null; then
-    echo "⚠️  Warning: GitHub CLI (gh) is not installed. GitHub release will not be created."
-    echo "   Install it from: https://cli.github.com/"
-    GH_AVAILABLE=false
-else
-    GH_AVAILABLE=true
-fi
-
-VERSION_NAME=${1#v}
-
-# Version code: major * 1000 + minor, so ordering survives any minor number
-# (the old "strip the dots" scheme made 41.0 -> 410 sort BELOW 40.10 -> 4010).
-# Validate the WHOLE string first: "41" or "41.0.1" would otherwise slip through
-# the per-component checks and publish an unintended version name/code.
-if ! [[ "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+$ ]]; then
-    echo "❌ Version must look like <major>.<minor> (e.g. 41.0), got: $VERSION_NAME"
+    echo "❌ GitHub CLI (gh) is required to open the release PR."
     exit 1
 fi
+
+VERSION_NAME=$1
 MAJOR=${VERSION_NAME%%.*}
 MINOR=${VERSION_NAME##*.}
-VERSION_CODE=$((MAJOR * 1000 + MINOR))
+# Bound input before Bash arithmetic so overflow cannot bypass the monotonic check.
+if [ "${#MAJOR}" -gt 9 ] || [ "${#MINOR}" -gt 9 ]; then
+    echo "❌ Version components are too large for an Android versionCode."
+    exit 1
+fi
+VERSION_CODE=$((10#$MAJOR * 1000 + 10#$MINOR))
+if [ "$VERSION_CODE" -gt 2100000000 ]; then
+    echo "❌ versionCode $VERSION_CODE exceeds Android's supported maximum."
+    exit 1
+fi
 
-PREVIOUS_CODE=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' app/build.gradle)
-if [ -n "$PREVIOUS_CODE" ] && [ "$VERSION_CODE" -le "$PREVIOUS_CODE" ]; then
+# A real read verifies gh access; gh auth status can be misleading here.
+gh repo view --json nameWithOwner > /dev/null
+if [ ! -s RELEASE_NOTES_NEXT.md ]; then
+    echo "❌ RELEASE_NOTES_NEXT.md must contain the release notes."
+    exit 1
+fi
+
+# Start directly from the fetched main tip, even if main is checked out elsewhere.
+git fetch origin main
+PREVIOUS_CODE=$(git show origin/main:app/build.gradle | sed -n 's/^[[:space:]]*versionCode = \([0-9]*\).*/\1/p')
+if ! [[ "$PREVIOUS_CODE" =~ ^[0-9]+$ ]]; then
+    echo "❌ Could not read versionCode from origin/main."
+    exit 1
+fi
+if [ "$VERSION_CODE" -le "$PREVIOUS_CODE" ]; then
     echo "❌ New versionCode $VERSION_CODE is not greater than current $PREVIOUS_CODE."
     echo "   (Updaters reject downgrades. Pick a higher version.)"
     exit 1
 fi
 
-echo "🚀 Preparing release for version $VERSION_NAME (Code: $VERSION_CODE)..."
+# Check everything that can be checked before creating the branch, so a failed
+# precondition leaves nothing to clean up.
+if [ -z "$(git show origin/main:RELEASE_NOTES_NEXT.md 2>/dev/null)" ]; then
+    echo "❌ RELEASE_NOTES_NEXT.md must contain the release notes on origin/main."
+    exit 1
+fi
+RELEASE_BRANCH="release/v$VERSION_NAME"
+if git show-ref --verify --quiet "refs/heads/$RELEASE_BRANCH" ||
+    [ -n "$(git ls-remote --heads origin "$RELEASE_BRANCH")" ]; then
+    echo "❌ Branch $RELEASE_BRANCH already exists locally or on origin."
+    echo "   A previous run stopped partway. Either finish it by hand (push the branch,"
+    echo "   open the PR) or delete it and start again:"
+    echo "     git branch -D $RELEASE_BRANCH; git push origin --delete $RELEASE_BRANCH"
+    exit 1
+fi
+START_REF=$(git symbolic-ref --quiet --short HEAD || git rev-parse HEAD)
+git switch --no-track -c "$RELEASE_BRANCH" origin/main
 
-# 0. Validate before touching anything
+# From here on a failure leaves the release branch checked out; say how to recover.
+on_failure() {
+    echo "❌ Release preparation stopped on branch $RELEASE_BRANCH."
+    echo "   To start over: git restore --staged --worktree . && git switch $START_REF && git branch -D $RELEASE_BRANCH"
+    echo "   If the branch was already pushed: git push origin --delete $RELEASE_BRANCH"
+}
+trap on_failure ERR
+
+echo "🚀 Preparing release for version $VERSION_NAME (Code: $VERSION_CODE)..."
 echo "🧪 Running tests and lint..."
 ./gradlew test lint
 
-# 1. Update app/build.gradle
 echo "📝 Updating app/build.gradle..."
 sed -i.bak "s/versionCode = .*/versionCode = $VERSION_CODE/" app/build.gradle
 sed -i.bak "s/versionName = .*/versionName = \"$VERSION_NAME\"/" app/build.gradle
 rm -f app/build.gradle.bak
 
-# 2. Create latest.txt version metadata
-echo "📄 Creating latest.txt with version $VERSION_NAME..."
-echo "$VERSION_NAME" > latest.txt
+# Fastlane Android changelogs are named after versionCode.
+CHANGELOG_PATH="fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+echo "📂 Creating changelog at $CHANGELOG_PATH..."
+mkdir -p "$(dirname "$CHANGELOG_PATH")"
+cp RELEASE_NOTES_NEXT.md "$CHANGELOG_PATH"
 
-# 3. Update F-Droid Metadata (Fastlane)
-CHANGELOG_PATH="fastlane/metadata/android/en-US/changelogs/${VERSION_NAME}.txt"
-echo "📂 Creating F-Droid changelog at $CHANGELOG_PATH..."
+echo "💾 Committing release preparation..."
+git add app/build.gradle "$CHANGELOG_PATH"
+git commit -m "Prepare release v$VERSION_NAME"
 
-if [ -f "RELEASE_NOTES_NEXT.md" ]; then
-    cp RELEASE_NOTES_NEXT.md "$CHANGELOG_PATH"
-else
-    echo "New release $VERSION_NAME" > "$CHANGELOG_PATH"
-    echo "⚠️  No RELEASE_NOTES_NEXT.md found; wrote a placeholder changelog."
-    echo "   Edit $CHANGELOG_PATH before publishing, or create RELEASE_NOTES_NEXT.md next time."
-fi
+echo "📤 Pushing release branch and opening PR..."
+git push --set-upstream origin "$RELEASE_BRANCH"
+gh pr create --base main --head "$RELEASE_BRANCH" \
+    --title "Prepare release v$VERSION_NAME" --body-file RELEASE_NOTES_NEXT.md
 
-# 4. Git Operations
-echo "💾 Committing changes..."
-
-git add app/build.gradle "$CHANGELOG_PATH" latest.txt
-git commit -m "Release v$VERSION_NAME"
-
-echo "🏷️ Tagging release..."
-git tag -a "v$VERSION_NAME" -m "Release version $VERSION_NAME"
-
-echo "📤 Pushing to GitHub..."
-git push origin "$CURRENT_BRANCH"
-git push origin "v$VERSION_NAME"
-
-# Create GitHub Release
-if [ "$GH_AVAILABLE" = true ]; then
-    echo "🎁 Creating GitHub release v$VERSION_NAME..."
-    gh release create "v$VERSION_NAME" --title "Release v$VERSION_NAME" --notes-file "$CHANGELOG_PATH"
-fi
-
-# 5. Update master branch for F-Droid
-if [ "$CURRENT_BRANCH" == "main" ]; then
-    echo "🔄 Merging main into master..."
-    git checkout master
-    git pull origin master
-    if git merge main --no-edit; then
-        git push origin master
-    else
-        echo "❌ Error: Merge into master failed due to conflicts."
-        echo "   Please resolve conflicts manually on the master branch."
-        git merge --abort
-    fi
-    git checkout main
-fi
-
-echo "✅ Release process initiated! The GitHub Action will now build and upload the APK."
+trap - ERR
+echo "✅ Release PR prepared. After merging, verify main's versionName is $VERSION_NAME, then run:"
+printf 'git fetch origin main && git tag -a "v%s" origin/main -m "Release v%s" && git push origin "refs/tags/v%s"\n' \
+    "$VERSION_NAME" "$VERSION_NAME" "$VERSION_NAME"
