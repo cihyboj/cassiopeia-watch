@@ -13,7 +13,7 @@ import org.avmedia.gshockapi.Alarm
 import org.json.JSONObject
 import java.time.DayOfWeek
 
-internal data class AlarmState(
+data class AlarmState(
     val alarms: List<AlarmSyncStorage.StoredAlarm> = emptyList(),
     val days: Map<Int, Set<DayOfWeek>> = emptyMap(),
     val dirty: Boolean = false,
@@ -104,4 +104,23 @@ object AlarmSyncStorage {
     fun loadFiredAts(context: Context, addr: String): Map<Int, Long> = loadState(context, addr).firedAts()
     fun flowFor(context: Context, addr: String): Flow<List<Alarm>?> = changes.map { loadAlarms(context, addr) }.distinctUntilChanged()
     internal fun stateFlowFor(context: Context, addr: String): Flow<AlarmState> = changes.map { loadState(context, addr) }.distinctUntilChanged()
+}
+
+/** Includes orphaned drafts and sparse legacy day-selection indices, not just the paired list. */
+internal fun persistedAlarmSlots(entries: JSONObject): Set<Int> = buildSet {
+    entries.keys().asSequence().forEach { key ->
+        runCatching {
+            when {
+                key.startsWith("AlarmState_") -> {
+                    val state = AlarmSyncStorage.decode(entries.getString(key))
+                    addAll(state.alarms.indices)
+                    addAll(state.days.keys)
+                }
+                key == "PhoneAlarmDrafts" || key.startsWith("PhoneAlarmDrafts_") ->
+                    addAll(AlarmSyncStorage.decodeAlarms(entries.getString(key)).indices)
+                key == "AlarmDaySelections" || key.startsWith("AlarmDaySelections_") ->
+                    addAll(AlarmSyncStorage.decodeDays(entries.getString(key)).keys)
+            }
+        }
+    }
 }

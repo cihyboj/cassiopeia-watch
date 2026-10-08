@@ -20,11 +20,20 @@ class AlarmCoordinatorTest {
         override suspend fun load(address: String) = states[address] ?: AlarmState()
         override suspend fun save(address: String, state: AlarmState) { states[address] = state }
         override suspend fun history(address: String): List<SyncEntry> = emptyList()
+        override suspend fun legacySlots(): Set<Int> = emptySet()
+        override suspend fun migrationDone() = true
+        override suspend fun finishMigration() = Unit
     }
     private class Backend : AlarmScheduleBackend {
         val scheduled = mutableMapOf<AlarmKey, Long>()
         override fun cancel(key: AlarmKey) { scheduled.remove(key) }
-        override fun schedule(key: AlarmKey, alarm: AlarmSyncStorage.StoredAlarm, instant: Long) { scheduled[key] = instant }
+        override fun schedule(key: AlarmKey, alarm: AlarmSyncStorage.StoredAlarm, instant: Long): FallbackAvailability {
+            scheduled[key] = instant
+            return FallbackAvailability.SCHEDULED
+        }
+        override fun cancelFallback(key: AlarmKey) = cancel(key)
+        override fun cancelLegacy(slot: Int) = Unit
+        override fun expiry(key: AlarmKey, instant: Long?) = Unit
     }
     @Test fun `reconcile after process death consumes elapsed persisted occurrence without screen`() = runBlocking {
         val store = Store(mutableMapOf(a to initial))
@@ -57,8 +66,7 @@ class AlarmCoordinatorTest {
         val backend = Backend()
         val coordinator = PersistedAlarmSchedulingCoordinator(store, backend, clock) { ZoneId.of("UTC") }
         coordinator.reconcileAll()
-        coordinator.cancelWatch(a)
-        coordinator.serialized { store.states.remove(a) }
+        coordinator.forgetWatch(a) { store.states.remove(a) }
         coordinator.reconcile(a)
         assertFalse(backend.scheduled.containsKey(AlarmKey(a, 0)))
         assertTrue(backend.scheduled.containsKey(AlarmKey(b, 0)))

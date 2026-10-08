@@ -120,6 +120,7 @@ class AlarmViewModel @Inject constructor(
     private val watchSelector: CurrentWatchSelector,
     private val connectionTracker: WatchConnectionTracker,
     private val alarmCoordinator: AlarmSchedulingCoordinator,
+    private val alarmTime: AlarmSchedulingTime,
 ) : ViewModel() {
 
     companion object {
@@ -406,7 +407,7 @@ class AlarmViewModel @Inject constructor(
             val edited = previous.copy(hour = alarm.hour, minute = alarm.minute, enabled = alarm.enabled,
                 hasHourlyChime = alarm.hasHourlyChime, name = alarm.name)
             val updated = editAlarmState(state, index, edited, days ?: state.days[index] ?: AlarmSchedulePlanner.AllDays,
-                reenable, java.time.Clock.systemUTC(), ZoneId.systemDefault())
+                reenable, alarmTime.clock, alarmTime.zone())
             AlarmSyncStorage.saveState(appContext, addr, updated)
         }
         alarmCoordinator.reconcile(addr)
@@ -702,20 +703,19 @@ class AlarmViewModel @Inject constructor(
         )
         val adjustmentTimeMinutes = settings?.adjustmentTimeMinutes ?: 0
         val isDirty = isDirtyOverride ?: AlarmSyncStorage.isDirty(appContext, addr)
-        val syncedHashes = lastAlarmSync.value?.details?.alarmHashes.orEmpty()
+        val history = store.load(addr)
+        val state = AlarmSyncStorage.loadState(appContext, addr)
         val now = LocalDateTime.now()
         val warnings = mutableMapOf<Int, String>()
 
         _alarms.value.forEachIndexed { index, alarm ->
             val risk = AlarmSyncRiskEvaluator.evaluate(
-                alarm = alarm,
-                alarmIndex = index,
+                key = AlarmKey(addr, index),
+                alarm = state.alarms.getOrNull(index) ?: return@forEachIndexed,
                 alarmDays = _alarmDays.value[index] ?: AlarmSchedulePlanner.AllDays,
-                viewMode = AlarmViewMode.WEEKLY,
-                firedAts = _firedAts.value,
-                isDirty = isDirty,
-                syncedHashes = syncedHashes,
-                now = now,
+                history = history,
+                clock = alarmTime.clock,
+                zone = alarmTime.zone(),
                 autoSyncEnabled = autoSyncEnabled,
                 adjustmentTimeMinutes = adjustmentTimeMinutes,
             )

@@ -4,53 +4,56 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.provider.AlarmClock
-import com.beamburst.casswatch.data.local.SyncHistoryStore
-import com.beamburst.casswatch.data.local.SyncKind
-import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.utils.AppScopes
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class PhoneFallbackReceiver : BroadcastReceiver() {
-
     companion object {
         const val EXTRA_ALARM_INDEX = "alarm_index"
         const val EXTRA_EXPECTED_HASH = "expected_hash"
         const val EXTRA_FIRE_INSTANT = "fire_instant"
-        const val EXTRA_ALARM_HOUR = "alarm_hour"
-        const val EXTRA_ALARM_MINUTE = "alarm_minute"
-        const val EXTRA_ALARM_NAME = "alarm_name"
         const val EXTRA_DEVICE_ADDRESS = "device_address"
+        const val ACTION_EXPIRE = "com.beamburst.casswatch.EXPIRE_ALARM"
+    }
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface AlarmEntryPoint {
+        fun alarmSchedulingCoordinator(): AlarmSchedulingCoordinator
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val alarmIndex = intent.getIntExtra(EXTRA_ALARM_INDEX, -1)
-        val expectedHash = intent.getStringExtra(EXTRA_EXPECTED_HASH) ?: return
-
-        val store = SyncHistoryStore(context)
-        val addr = intent.getStringExtra(EXTRA_DEVICE_ADDRESS)
-            ?: LocalDataStorage.getDeviceAddresses(context).firstOrNull()
-        val entries = if (addr != null) store.load(addr) else emptyList()
-        val lastSuccess = entries.firstOrNull { it.success && SyncKind.ALARMS in it.kinds }
-        val watchHasAlarm = lastSuccess?.details?.alarmHashes?.contains(expectedHash) == true
-
-        if (watchHasAlarm) {
-            Timber.d("Phone fallback: alarm $alarmIndex hash matched sync history; trusting watch")
-            return
-        }
-
-        Timber.d("Phone fallback: alarm $alarmIndex hash not found; firing AlarmClock intent")
-        val hour = intent.getIntExtra(EXTRA_ALARM_HOUR, 0)
-        val minute = intent.getIntExtra(EXTRA_ALARM_MINUTE, 0)
-        val name = intent.getStringExtra(EXTRA_ALARM_NAME)
-
-        val alarmIntent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
-            putExtra(AlarmClock.EXTRA_HOUR, hour)
-            putExtra(AlarmClock.EXTRA_MINUTES, minute)
-            putExtra(AlarmClock.EXTRA_MESSAGE, name)
-            putExtra(AlarmClock.EXTRA_SKIP_UI, true)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        runCatching { context.startActivity(alarmIntent) }.onFailure {
-            Timber.e(it, "Failed to start AlarmClock for fallback")
+        val key = AlarmKey.from(intent.getStringExtra(EXTRA_DEVICE_ADDRESS), intent.getIntExtra(EXTRA_ALARM_INDEX, -1)) ?: return
+        val expiry = intent.action == ACTION_EXPIRE
+        if (intent.data?.toString() != if (expiry) "${key.uri}/expiry" else key.uri) return
+        val hash = intent.getStringExtra(EXTRA_EXPECTED_HASH)
+        if (!expiry && hash == null) return
+        val pending = goAsync()
+        AppScopes.io.launch {
+            try {
+                val coordinator = EntryPointAccessors.fromApplication(context.applicationContext, AlarmEntryPoint::class.java)
+                    .alarmSchedulingCoordinator()
+                if (expiry) coordinator.reconcile(key.normalizedAddress)
+                else coordinator.fallback(key, intent.getLongExtra(EXTRA_FIRE_INSTANT, -1), hash!!) { alarm ->
+                    // Best-effort hand-off, hour/minute only: no date, creation acknowledgement or cancellation API.
+                    context.startActivity(Intent(AlarmClock.ACTION_SET_ALARM).apply {
+                        putExtra(AlarmClock.EXTRA_HOUR, alarm.hour)
+                        putExtra(AlarmClock.EXTRA_MINUTES, alarm.minute)
+                        putExtra(AlarmClock.EXTRA_MESSAGE, alarm.name)
+                        putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    })
+                }
+            } catch (error: Exception) {
+                Timber.e(error, "Phone fallback callback failed for %s", key)
+            } finally {
+                pending.finish()
+            }
         }
     }
 }

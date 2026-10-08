@@ -1,107 +1,49 @@
 package com.beamburst.casswatch.ui.alarms
 
-import org.avmedia.gshockapi.Alarm
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
+import com.beamburst.casswatch.data.local.SyncDetails
+import com.beamburst.casswatch.data.local.SyncEntry
+import com.beamburst.casswatch.data.local.SyncKind
+import com.beamburst.casswatch.data.local.SyncTrigger
+import org.junit.Assert.*
 import org.junit.Test
-import java.time.DayOfWeek
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 class AlarmSyncRiskEvaluatorTest {
-    @Test
-    fun `warns when dirty alarm occurs before next auto sync`() {
-        val risk = AlarmSyncRiskEvaluator.evaluate(
-            alarm = Alarm(12, 10, true, false, "Lunch"),
-            alarmIndex = 0,
-            alarmDays = setOf(DayOfWeek.WEDNESDAY),
-            viewMode = AlarmViewMode.WEEKLY,
-            firedAts = emptyMap(),
-            isDirty = true,
-            syncedHashes = emptyList(),
-            now = LocalDateTime.of(2026, 5, 6, 10, 0),
-            autoSyncEnabled = true,
-            adjustmentTimeMinutes = 30,
-        )
+    private val address = "AA:BB:CC:DD:EE:01"
+    private val zone = ZoneId.of("UTC")
+    private val clock = Clock.fixed(Instant.parse("2026-05-06T10:00:00Z"), zone)
+    private fun evaluate(hour: Int = 12, minute: Int = 10, slot: Int = 0, history: List<SyncEntry> = emptyList(), auto: Boolean = true) =
+        AlarmSyncRiskEvaluator.evaluate(AlarmKey(address, slot), AlarmSyncStorage.StoredAlarm(hour, minute, true, false, "Lunch"),
+            AlarmSchedulePlanner.AllDays, history, clock, zone, auto, 30)
+    private fun success(address: String = this.address, hashes: List<String> = listOf("12:10:true")) = SyncEntry(
+        clock.millis() - 1000, address, SyncTrigger.MANUAL_SEND_ALARMS, setOf(SyncKind.ALARMS), true, errorMessage = null,
+        details = SyncDetails.Empty.copy(alarmHashes = hashes))
 
-        assertNotNull(risk)
+    @Test fun `warns before auto sync`() {
+        val risk = evaluate()
         assertEquals(LocalDateTime.of(2026, 5, 6, 12, 10), risk?.nextAlarmAt)
         assertEquals(LocalDateTime.of(2026, 5, 6, 12, 30), risk?.nextAutoSyncAt)
     }
-
-    @Test
-    fun `warns when dirty alarm is at same time as next auto sync`() {
-        val risk = AlarmSyncRiskEvaluator.evaluate(
-            alarm = Alarm(12, 30, true, false, "Lunch"),
-            alarmIndex = 0,
-            alarmDays = setOf(DayOfWeek.WEDNESDAY),
-            viewMode = AlarmViewMode.WEEKLY,
-            firedAts = emptyMap(),
-            isDirty = true,
-            syncedHashes = emptyList(),
-            now = LocalDateTime.of(2026, 5, 6, 10, 0),
-            autoSyncEnabled = true,
-            adjustmentTimeMinutes = 30,
-        )
-
-        assertNotNull(risk)
-        assertEquals(LocalDateTime.of(2026, 5, 6, 12, 30), risk?.nextAlarmAt)
-        assertEquals(LocalDateTime.of(2026, 5, 6, 12, 30), risk?.nextAutoSyncAt)
+    @Test fun `predicted auto sync before alarm never suppresses fallback`() {
+        assertNotNull(evaluate(13, 0))
+        assertNotNull(evaluate(12, 30))
     }
-
-    @Test
-    fun `does not warn when next auto sync is before alarm`() {
-        val risk = AlarmSyncRiskEvaluator.evaluate(
-            alarm = Alarm(13, 0, true, false, "Lunch"),
-            alarmIndex = 0,
-            alarmDays = setOf(DayOfWeek.WEDNESDAY),
-            viewMode = AlarmViewMode.WEEKLY,
-            firedAts = emptyMap(),
-            isDirty = true,
-            syncedHashes = emptyList(),
-            now = LocalDateTime.of(2026, 5, 6, 10, 0),
-            autoSyncEnabled = true,
-            adjustmentTimeMinutes = 30,
-        )
-
-        assertNull(risk)
+    @Test fun `actual successful sync in same watch and slot suppresses fallback`() {
+        assertNull(evaluate(history = listOf(success())))
     }
-
-    @Test
-    fun `does not warn when alarm payload was already confirmed by sync history`() {
-        val risk = AlarmSyncRiskEvaluator.evaluate(
-            alarm = Alarm(12, 10, true, false, "Lunch"),
-            alarmIndex = 0,
-            alarmDays = setOf(DayOfWeek.WEDNESDAY),
-            viewMode = AlarmViewMode.WEEKLY,
-            firedAts = emptyMap(),
-            isDirty = true,
-            syncedHashes = listOf("12:10:true"),
-            now = LocalDateTime.of(2026, 5, 6, 10, 0),
-            autoSyncEnabled = true,
-            adjustmentTimeMinutes = 30,
-        )
-
-        assertNull(risk)
+    @Test fun `same hash in another slot or watch does not suppress fallback`() {
+        assertNotNull(evaluate(slot = 1, history = listOf(success())))
+        assertNotNull(evaluate(history = listOf(success("AA:BB:CC:DD:EE:02"))))
     }
-
-    @Test
-    fun `warns when automatic sync is disabled`() {
-        val risk = AlarmSyncRiskEvaluator.evaluate(
-            alarm = Alarm(12, 10, true, false, "Lunch"),
-            alarmIndex = 0,
-            alarmDays = setOf(DayOfWeek.WEDNESDAY),
-            viewMode = AlarmViewMode.WEEKLY,
-            firedAts = emptyMap(),
-            isDirty = true,
-            syncedHashes = emptyList(),
-            now = LocalDateTime.of(2026, 5, 6, 10, 0),
-            autoSyncEnabled = false,
-            adjustmentTimeMinutes = 30,
-        )
-
-        assertNotNull(risk)
-        assertEquals(LocalDateTime.of(2026, 5, 6, 12, 10), risk?.nextAlarmAt)
-        assertNull(risk?.nextAutoSyncAt)
+    @Test fun `failed sync and future record do not suppress fallback`() {
+        assertNotNull(evaluate(history = listOf(success().copy(success = false))))
+        assertNotNull(evaluate(history = listOf(success().copy(timestamp = clock.millis() + 1000))))
+    }
+    @Test fun `automatic sync disabled has no prediction`() {
+        assertNull(evaluate(auto = false)?.nextAutoSyncAt)
+        assertNotNull(evaluate(auto = false))
     }
 }
