@@ -74,7 +74,7 @@ fun AlarmList(alarmViewModel: AlarmViewModel = hiltViewModel()) {
                         hours = alarm.hour,
                         minutes = alarm.minute,
                         isAlarmEnabled = alarm.enabled,
-                        showAsEnabled = alarm.enabled && !firedAts.containsKey(index),
+                        showAsEnabled = alarmIsArmed(alarm.enabled, firedAts[index]),
                         name = alarm.name,
                         onToggleAlarm = { isEnabled ->
                             alarmViewModel.toggleAlarm(index, isEnabled)

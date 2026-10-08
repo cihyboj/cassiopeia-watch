@@ -171,7 +171,7 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="disconnected_info_title">Watch not connected</string>
     <string name="disconnected_info_body">Connect your watch to send or receive alarms. You can still send current alarms to your phone clock.</string>
     <string name="exact_alarm_dialog_title">Phone-side safety net</string>
-    <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
+    <string name="exact_alarm_dialog_body">Poco antes de la hora prevista se solicita una alarma de respaldo a la app de reloj. Su creación no se confirma: solo se envían hora y minuto, sin fecha ni cancelación posterior. Se necesita permiso para alarmas exactas.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
     <string name="paired_watches_empty" translatable="false">No watches paired yet.</string>
@@ -220,4 +220,5 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="broadcast_how_to_receive">How to receive</string>
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
+    <string name="phone_alarm_handoff_limits">Solicitudes enviadas a la app de reloj; la creación de alarmas no está confirmada. Una alarma única no tiene fecha y esta app no puede cancelarla tras enviarla.</string>
 </resources>

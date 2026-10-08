@@ -9,6 +9,7 @@ suspend fun applyHourlySignalToWatch(
     api: IGShockAPI,
     settings: HourlySignalSettings,
     now: LocalDateTime,
+    consumedSlots: Set<Int> = emptySet(),
 ) {
     val target = HourlySignalEvaluator.shouldChimeAt(now, settings)
     if (WatchInfo.chimeInSettings) {
@@ -18,8 +19,10 @@ suspend fun applyHourlySignalToWatch(
         }
     } else {
         val current = api.getAlarms()
-        if (current.isNotEmpty() && current.first().hasHourlyChime != target) {
-            api.setAlarms(ArrayList(AlarmSchedulePlanner.mirrorChime(current, target)))
+        val unconsumed = current.mapIndexed { index, alarm ->
+            if (index in consumedSlots) alarm.copy(enabled = false) else alarm
         }
+        val payload = AlarmSchedulePlanner.mirrorChime(unconsumed, target)
+        if (payload != current) api.setAlarms(ArrayList(payload))
     }
 }

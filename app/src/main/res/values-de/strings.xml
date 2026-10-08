@@ -172,7 +172,7 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="disconnected_info_title">Watch not connected</string>
     <string name="disconnected_info_body">Connect your watch to send or receive alarms. You can still send current alarms to your phone clock.</string>
     <string name="exact_alarm_dialog_title">Phone-side safety net</string>
-    <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
+    <string name="exact_alarm_dialog_body">Kurz vor der Weckzeit wird ein Ersatzalarm bei der Uhr-App angefragt. Die Erstellung ist unbestätigt: nur Stunde und Minute, ohne Datum oder Löschung nach der Übergabe. Dafür ist die Berechtigung für genaue Alarme nötig.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
     <string name="paired_watches_empty">Noch keine Uhren gekoppelt.</string>
@@ -221,4 +221,5 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="broadcast_how_to_receive">How to receive</string>
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
+    <string name="phone_alarm_handoff_limits">Anfragen an die Uhr-App gesendet; die Alarmerstellung ist unbestätigt. Ein einmaliger Alarm hat kein Datum und kann nach der Übergabe hier nicht gelöscht werden.</string>
 </resources>

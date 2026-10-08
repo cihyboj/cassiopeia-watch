@@ -177,7 +177,7 @@
     <string name="disconnected_info_title">Watch not connected</string>
     <string name="disconnected_info_body">Connect your watch to send or receive alarms. You can still send current alarms to your phone clock.</string>
     <string name="exact_alarm_dialog_title">Phone-side safety net</string>
-    <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
+    <string name="exact_alarm_dialog_body">予定時刻の少し前に時計アプリへ予備アラームを要求します。作成は未確認で、送信するのは時と分のみです。日付は指定できず、送信後の取消もできません。この要求には正確なアラームの権限が必要です。</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
     <string name="paired_watches_empty" translatable="false">No watches paired yet.</string>
@@ -226,4 +226,5 @@
     <string name="broadcast_how_to_receive">How to receive</string>
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
+    <string name="phone_alarm_handoff_limits">時計アプリにリクエストを送信しました。アラームの作成は未確認です。1回限りのアラームには日付がなく、送信後はこのアプリから取り消せません。</string>
 </resources>

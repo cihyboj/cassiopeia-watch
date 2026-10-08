@@ -16,7 +16,7 @@ class BackupSchemaTest {
         }
         val payload = buildBackupJson(entries, nowMs = 1_700_000_000_000L, versionName = "1.2.3")
 
-        assertEquals(1, payload.getInt(BackupSchema.KEY_SCHEMA))
+        assertEquals(2, payload.getInt(BackupSchema.KEY_SCHEMA))
         assertEquals(1_700_000_000_000L, payload.getLong(BackupSchema.KEY_EXPORTED_AT))
         assertEquals("1.2.3", payload.getString(BackupSchema.KEY_PACKAGE_VERSION))
         val readBack = payload.getJSONObject(BackupSchema.KEY_ENTRIES)

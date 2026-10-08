@@ -70,7 +70,12 @@ internal fun editAlarmState(
     val previous = state.alarms[slot]
     val rearm = days.isEmpty() && edited.enabled && (reenable || !previous.enabled ||
         previous.hour != edited.hour || previous.minute != edited.minute || state.days[slot] != days)
-    val alarm = if (rearm) edited.copy(
+    val alarm = if (days.isNotEmpty()) edited.copy(
+        oneShotLocalDate = null,
+        firedAt = null,
+        fallbackAttemptAt = if (!reenable && previous.hour == edited.hour && previous.minute == edited.minute && state.days[slot] == days)
+            previous.fallbackAttemptAt else null,
+    ) else if (rearm) edited.copy(
         oneShotLocalDate = AlarmOccurrence.nextOccurrence(edited.hour, edited.minute, clock, zone).localDate.toString(),
         firedAt = null,
         fallbackAttemptAt = null,
@@ -93,3 +98,9 @@ internal fun nextAlarmOccurrence(alarm: AlarmSyncStorage.StoredAlarm, days: Set<
         .firstOrNull { it.dayOfWeek in days && it.atZone(zone).toInstant().isAfter(after) }
         ?.atZone(zone)?.toInstant()
 }
+
+/** A successful write cannot acknowledge an edit made while BLE was in flight. Consumption stays persisted. */
+internal fun alarmStateAfterSuccessfulSync(current: AlarmState, sent: AlarmState): AlarmState =
+    if (current == sent) current.copy(dirty = false) else current
+
+internal fun alarmIsArmed(enabled: Boolean, firedAt: Long?): Boolean = enabled && firedAt == null

@@ -220,7 +220,7 @@
     <string name="dismiss">Dismiss</string>
     <string name="time_set_notification">Time set at %1$s for %2$s watch</string>
     <string name="exact_alarm_dialog_title">Phone-side safety net</string>
-    <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
+    <string name="exact_alarm_dialog_body">Phone fallbacks request an alarm from your clock app shortly before ring time. Creation is unconfirmed: only hour and minute are sent, with no date or cancellation after hand-off. Exact-alarm permission is needed for this request.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
 
@@ -482,4 +482,5 @@
     <string name="ble_debug_unlocked" translatable="false">BLE Debug unlocked</string>
     <string name="ble_debug_already_unlocked" translatable="false">BLE Debug already unlocked</string>
     <string name="ble_debug_unlock_remaining" translatable="false">%1$d taps to unlock BLE Debug</string>
+    <string name="phone_alarm_handoff_limits">Requests sent to the clock app; alarm creation is unconfirmed. A one-time alarm has no date, and this app cannot cancel it after hand-off.</string>
 </resources>

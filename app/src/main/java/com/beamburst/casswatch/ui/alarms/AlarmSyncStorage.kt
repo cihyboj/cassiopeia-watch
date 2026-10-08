@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import org.avmedia.gshockapi.Alarm
 import org.json.JSONObject
 import java.time.DayOfWeek
@@ -19,6 +20,7 @@ data class AlarmState(
     val dirty: Boolean = false,
 ) {
     fun watchAlarms(): List<Alarm> = alarms.map { Alarm(it.hour, it.minute, it.enabled, it.hasHourlyChime, it.name) }
+    fun oneShotLocalDates(): Map<Int, String> = alarms.mapIndexedNotNull { i, a -> a.oneShotLocalDate?.let { i to it } }.toMap()
     fun firedAts(): Map<Int, Long> = alarms.mapIndexedNotNull { i, a -> a.firedAt?.let { i to it } }.toMap()
 }
 
@@ -67,20 +69,22 @@ object AlarmSyncStorage {
         }
     }
 
-    internal fun loadState(context: Context, addr: String): AlarmState {
-        LocalDataStorage.get(context, stateKey(addr))?.let { return decode(it) }
-        val alarms = LocalDataStorage.get(context, key("PhoneAlarmDrafts", addr))
+    internal fun loadState(context: Context, addr: String): AlarmState = readState(addr) { LocalDataStorage.get(context, it) }
+
+    internal fun readState(addr: String, read: (String) -> String?): AlarmState {
+        read(stateKey(addr))?.let { return decode(it) }
+        val alarms = read(key("PhoneAlarmDrafts", addr))
             ?.takeIf(String::isNotBlank)?.let { runCatching { decodeAlarms(it) }.getOrNull() }.orEmpty()
             .map { it.copy(hour = it.hour.coerceIn(0, 23), minute = it.minute.coerceIn(0, 59)) }
-        val days = LocalDataStorage.get(context, key("AlarmDaySelections", addr))
+        val days = read(key("AlarmDaySelections", addr))
             ?.let { runCatching { decodeDays(it) }.getOrNull() }.orEmpty()
-        return AlarmState(alarms, days, LocalDataStorage.get(context, key("PhoneAlarmDraftsDirty", addr), "false").toBoolean())
+        return AlarmState(alarms, days, read(key("PhoneAlarmDraftsDirty", addr)).toBoolean())
     }
 
     /** One awaited DataStore transaction contains the draft, days, date, consumption and dirty state. */
     internal suspend fun saveState(context: Context, addr: String, state: AlarmState) {
         LocalDataStorage.putAsync(context, stateKey(addr), encode(state))
-        changes.value += 1
+        changes.update { it + 1 }
     }
 
     suspend fun saveAlarms(context: Context, addr: String, alarms: List<Alarm>, dirty: Boolean, firedAts: Map<Int, Long> = loadFiredAts(context, addr)) {

@@ -217,14 +217,15 @@ class AlarmSchedulePlannerTest {
 
     @Test
     fun `weekly mode fire-once unfired sends alarm enabled`() {
-        // No days selected, alarm enabled, no firedAt → goes to watch enabled (all-days semantic)
+        // A dated future one-time occurrence is enabled until consumed.
         val alarm = Alarm(hour = 23, minute = 0, enabled = true, hasHourlyChime = false, name = null)
         val result = AlarmSchedulePlanner.applyWeeklySchedule(
             alarms = listOf(alarm),
             alarmDays = mapOf(0 to emptySet()),          // empty = fire-once
             now = LocalDateTime.of(2026, 5, 2, 10, 0),
             viewMode = AlarmViewMode.WEEKLY,
-            firedAts = emptyMap()                         // not yet fired
+            firedAts = emptyMap(),
+            oneShotLocalDates = mapOf(0 to "2026-05-02"),
         )
         assertTrue("fire-once unfired alarm must be sent enabled", result[0].enabled)
     }
@@ -253,6 +254,25 @@ class AlarmSchedulePlannerTest {
             firedAts = emptyMap()
         )
         assertFalse("disabled fire-once alarm must stay disabled", result[0].enabled)
+    }
+
+    @Test
+    fun `elapsed dated alarm is disabled even before consumption is persisted`() {
+        val result = AlarmSchedulePlanner.applyWeeklySchedule(
+            listOf(Alarm(7, 0, true, false, null)), mapOf(0 to emptySet()),
+            LocalDateTime.of(2026, 10, 9, 8, 0), AlarmViewMode.WEEKLY,
+            oneShotLocalDates = mapOf(0 to "2026-10-09"),
+        )
+        assertFalse(result[0].enabled)
+    }
+
+    @Test
+    fun `undated one time alarm fails closed pending migration`() {
+        val result = AlarmSchedulePlanner.applyWeeklySchedule(
+            listOf(Alarm(7, 0, true, false, null)), mapOf(0 to emptySet()),
+            LocalDateTime.of(2026, 10, 8, 23, 0), AlarmViewMode.WEEKLY,
+        )
+        assertFalse(result[0].enabled)
     }
 
     @Test

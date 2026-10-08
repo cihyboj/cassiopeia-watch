@@ -50,4 +50,21 @@ class AlarmOccurrenceTest {
         assertEquals(Instant.parse("2026-10-09T05:00:00Z"), alarm.resolveInstant(ZoneId.of("Europe/Warsaw")))
         assertEquals(Instant.parse("2026-10-09T07:00:00Z"), alarm.resolveInstant(utc))
     }
+    @Test fun `switch into one time arms and switching back clears consumption`() {
+        val daily = state().copy(days = mapOf(0 to AlarmSchedulePlanner.AllDays))
+        val armed = editAlarmState(daily, 0, daily.alarms[0], emptySet(), false, clock("2026-10-08T23:00:00Z"), utc)
+        assertEquals("2026-10-09", armed.alarms[0].oneShotLocalDate)
+        val consumed = reconcileAlarmState(armed, clock("2026-10-09T08:00:00Z"), utc)
+        val recurring = editAlarmState(consumed, 0, consumed.alarms[0], AlarmSchedulePlanner.AllDays, false, clock("2026-10-09T08:00:00Z"), utc)
+        assertNull(recurring.alarms[0].firedAt)
+        assertNull(recurring.alarms[0].oneShotLocalDate)
+    }
+    @Test fun `successful sync retains consumed marker and does not acknowledge a concurrent edit`() {
+        val consumed = state("2026-10-09", 123)
+        assertEquals(123L, alarmStateAfterSuccessfulSync(consumed, consumed).alarms[0].firedAt)
+        assertFalse(alarmStateAfterSuccessfulSync(consumed, consumed).dirty)
+        val edited = consumed.copy(alarms = listOf(consumed.alarms[0].copy(name = "New")))
+        assertEquals(edited, alarmStateAfterSuccessfulSync(edited, consumed))
+        assertTrue(alarmStateAfterSuccessfulSync(edited, consumed).dirty)
+    }
 }
