@@ -16,8 +16,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 import org.avmedia.gshockapi.IGShockAPI
-import org.avmedia.gshockapi.ProgressEvents
-import org.avmedia.gshockapi.EventAction
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -38,11 +36,6 @@ class WatchConnectCoordinator @Inject constructor(
     @Volatile private var attempt: Attempt? = null
 
     init {
-        ProgressEvents.runEventActions("WatchConnectCoordinator-initialization", arrayOf(
-            EventAction("WatchInitializationCompleted") {
-                session.ready?.let(session::initializationCompleted)
-            },
-        ))
         session.onEnded { ended ->
             attempt?.takeIf { it.token.generation == ended.generation }?.let {
                 attempt = null
@@ -133,6 +126,24 @@ class WatchConnectCoordinator @Inject constructor(
                             attempt = null
                         }
                     }
+                }
+            }
+        }
+    }
+
+    /** Untagged library completion events cannot identify the generation that initialized. */
+    suspend fun initializeReconnect(expected: WatchConnectionSession.Ready) {
+        var initialized = false
+        try {
+            withSession(expected) { check ->
+                kotlin.check(repository.guardWrites(check).init()) { "Watch initialization failed" }
+                session.initializationCompleted(expected)
+                initialized = session.isInitialized(expected)
+            }
+        } finally {
+            if (!initialized) withContext(NonCancellable) {
+                connectMutex.withLock {
+                    if (session.isCurrent(expected)) stopCurrent()
                 }
             }
         }
