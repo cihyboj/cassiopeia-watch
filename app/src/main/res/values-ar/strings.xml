@@ -214,4 +214,12 @@
     <string name="phone_alarm_handoff_limits">أُرسلت الطلبات إلى تطبيق الساعة؛ لم يُؤكد إنشاء المنبهات. المنبه لمرة واحدة لا يتضمن تاريخًا، ولا يمكن لهذا التطبيق إلغاؤه بعد الإرسال.</string>
     <string name="watch_permission_explanation">يلزم الوصول إلى Bluetooth للتواصل مع ساعتك. على Android 10–11، اسمح بالوصول إلى الموقع للبحث عن أجهزة Bluetooth.</string>
     <string name="sync_notifications_blocked">إشعارات المزامنة التلقائية مفعلة، لكن Android يحظرها. اسمح بإشعارات التطبيق وقناة المزامنة في الإعدادات.</string>
+    <string name="alarm_fallback_channel">استعادة منبهات الهاتف</string>
+    <string name="alarm_fallback_title">تحقق من منبه الهاتف</string>
+    <string name="alarm_fallback_failed">فشل طلب منبه الهاتف. افتح تطبيق الساعة واضبط المنبه يدويًا.</string>
+    <string name="alarm_fallback_requested">تم طلب منبه للهاتف؛ لم يُؤكد إنشاؤه. افتح تطبيق الساعة للتحقق منه.</string>
+    <string name="alarm_fallback_open_clock">افتح الساعة</string>
+    <string name="alarm_fallback_unlock_limits">بعد إعادة تشغيل الهاتف، تعمل المنبهات الاحتياطية بعد أول فتح للقفل فقط.</string>
+    <string name="alarm_one_time_watch_limits">تخزن الساعة المنبه لمرة واحدة كمنبه يومي. بعد رنينه يستمر يوميًا حتى المزامنة التالية أو إيقافه على الساعة.</string>
+    <string name="alarm_fallback_unconfirmed">لم يُؤكد إنشاء منبه الهاتف. افتح تطبيق الساعة للتحقق أو ضبطه يدويًا.</string>
 </resources>

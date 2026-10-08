@@ -22,7 +22,9 @@ data class AlarmState(
     val days: Map<Int, Set<DayOfWeek>> = emptyMap(),
     val dirty: Boolean = false,
     val watchPayloads: Map<Int, WatchAlarmPayload> = emptyMap(),
+    val clockNeedsSync: Boolean = false,
 ) {
+    fun confirmedPayloads(): Map<Int, WatchAlarmPayload> = if (clockNeedsSync) emptyMap() else watchPayloads
     fun watchAlarms(): List<Alarm> = alarms.map { Alarm(it.hour, it.minute, it.enabled, it.hasHourlyChime, it.name) }
     fun oneShotOccurrences(): Map<Int, AlarmOccurrence> = alarms.mapIndexedNotNull { i, alarm ->
         if (days[i]?.isEmpty() == true) alarm.occurrence()?.let { i to it } else null
@@ -62,12 +64,14 @@ object AlarmSyncStorage {
         val oneShotLocalDate: String? = null,
         val fallbackAttemptAt: Long? = null,
         val fallbackStatus: String? = null,
+        val fallbackStatusAt: Long? = null,
     )
 
     internal fun encode(state: AlarmState): String = JSONObject().apply {
         put("alarms", gson.toJson(state.alarms))
         put("days", encodeDays(state.days))
         put("dirty", state.dirty)
+        put("clockNeedsSync", state.clockNeedsSync)
         put("watchPayloads", JSONObject().apply {
             state.watchPayloads.forEach { (slot, payload) ->
                 put(slot.toString(), JSONObject().apply {
@@ -86,7 +90,8 @@ object AlarmSyncStorage {
 
     internal fun decode(raw: String): AlarmState {
         val obj = JSONObject(raw)
-        val payloads = obj.optJSONObject("watchPayloads") ?: JSONObject()
+        require(obj.get("dirty") is Boolean)
+        val payloads = if (obj.has("watchPayloads")) obj.getJSONObject("watchPayloads") else JSONObject()
         val decoded = payloads.keys().asSequence().associate { key ->
             val slot = key.toInt().also { require(it >= 0) }
             val p = payloads.getJSONObject(key)
@@ -100,7 +105,7 @@ object AlarmSyncStorage {
             }
         }
         return AlarmState(decodeAlarms(obj.getString("alarms")), decodeDays(obj.getString("days")),
-            obj.getBoolean("dirty"), decoded)
+            obj.getBoolean("dirty"), decoded, obj.optBoolean("clockNeedsSync", false))
     }
 
     internal fun decodeAlarms(raw: String): List<StoredAlarm> {
@@ -116,7 +121,7 @@ object AlarmSyncStorage {
                 val date = alarm.getString("oneShotLocalDate")
                 require(LocalDate.parse(date).toString() == date)
             }
-            for (field in listOf("firedAt", "fallbackAttemptAt")) {
+            for (field in listOf("firedAt", "fallbackAttemptAt", "fallbackStatusAt")) {
                 if (alarm.has(field) && !alarm.isNull(field)) {
                     val value = alarm.get(field)
                     require(value is Number && value.toDouble() == value.toLong().toDouble() && value.toLong() >= 0)
@@ -143,14 +148,21 @@ object AlarmSyncStorage {
 
     /** Called inside the coordinator lock. Keep the original bytes for diagnosis/recovery. */
     internal suspend fun loadRecovering(context: Context, addr: String): AlarmState {
-        val raw = LocalDataStorage.get(context, stateKey(addr))
-        if (raw != null && runCatching { decode(raw) }.isFailure) {
-            Timber.w("Quarantining malformed alarm state for %s", addr)
+        return recoverState(addr, { LocalDataStorage.get(context, it) }) { raw ->
             LocalDataStorage.putAsync(context, "Quarantined${stateKey(addr)}_${System.currentTimeMillis()}", raw)
             saveState(context, addr, AlarmState())
-            return AlarmState()
         }
-        return loadState(context, addr)
+    }
+
+    internal suspend fun recoverState(addr: String, read: (String) -> String?, quarantine: suspend (String) -> Unit): AlarmState {
+        val raw = read(stateKey(addr)) ?: return readState(addr, read)
+        return try {
+            decode(raw)
+        } catch (error: Exception) {
+            Timber.w(error, "Quarantining malformed alarm state for %s", addr)
+            quarantine(raw)
+            AlarmState()
+        }
     }
 
     internal fun readState(addr: String, read: (String) -> String?): AlarmState {
@@ -200,18 +212,23 @@ object AlarmSyncStorage {
 
 /** Includes orphaned drafts and sparse legacy day-selection indices, not just the paired list. */
 internal fun persistedAlarmSlots(entries: JSONObject): Set<Int> = buildSet {
+    fun days(raw: String) {
+        runCatching { JSONObject(raw).keys().asSequence().mapNotNull(String::toIntOrNull).filter { it >= 0 }.forEach(::add) }
+    }
+    fun alarms(raw: String) {
+        runCatching { addAll(0 until org.json.JSONArray(raw).length()) }
+    }
     entries.keys().asSequence().forEach { key ->
         runCatching {
             when {
                 key.startsWith("AlarmState_") -> {
-                    val state = AlarmSyncStorage.decode(entries.getString(key))
-                    addAll(state.alarms.indices)
-                    addAll(state.days.keys)
+                    val state = JSONObject(entries.getString(key))
+                    // Identity cleanup uses shape only, independent of record validity.
+                    alarms(state.optString("alarms", "[]"))
+                    days(state.optString("days", "{}"))
                 }
-                key == "PhoneAlarmDrafts" || key.startsWith("PhoneAlarmDrafts_") ->
-                    addAll(AlarmSyncStorage.decodeAlarms(entries.getString(key)).indices)
-                key == "AlarmDaySelections" || key.startsWith("AlarmDaySelections_") ->
-                    addAll(AlarmSyncStorage.decodeDays(entries.getString(key)).keys)
+                key == "PhoneAlarmDrafts" || key.startsWith("PhoneAlarmDrafts_") -> alarms(entries.getString(key))
+                key == "AlarmDaySelections" || key.startsWith("AlarmDaySelections_") -> days(entries.getString(key))
             }
         }
     }

@@ -190,8 +190,8 @@ internal fun backupEntriesForRestore(entries: JSONObject): JSONObject = JSONObje
         when {
             key.startsWith("AlarmState_") -> {
                 val state = AlarmSyncStorage.decode(getString(key))
-                put(key, AlarmSyncStorage.encode(state.copy(watchPayloads = emptyMap(), alarms = state.alarms.map {
-                    it.copy(fallbackAttemptAt = null, fallbackStatus = null)
+                put(key, AlarmSyncStorage.encode(state.copy(watchPayloads = emptyMap(), clockNeedsSync = true, alarms = state.alarms.map {
+                    it.copy(fallbackAttemptAt = null, fallbackStatus = null, fallbackStatusAt = null)
                 })))
             }
             key == "PhoneAlarmDrafts" || key.startsWith("PhoneAlarmDrafts_") -> {
@@ -199,6 +199,7 @@ internal fun backupEntriesForRestore(entries: JSONObject): JSONObject = JSONObje
                 for (index in 0 until alarms.length()) {
                     alarms.getJSONObject(index).remove("fallbackAttemptAt")
                     alarms.getJSONObject(index).remove("fallbackStatus")
+                    alarms.getJSONObject(index).remove("fallbackStatusAt")
                 }
                 put(key, alarms.toString())
             }

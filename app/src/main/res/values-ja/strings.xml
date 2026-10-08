@@ -226,4 +226,12 @@
     <string name="phone_alarm_handoff_limits">時計アプリにリクエストを送信しました。アラームの作成は未確認です。1回限りのアラームには日付がなく、送信後はこのアプリから取り消せません。</string>
     <string name="watch_permission_explanation">時計との通信には Bluetooth へのアクセスが必要です。Android 10–11 では Bluetooth スキャンのために位置情報を許可してください。</string>
     <string name="sync_notifications_blocked">自動同期の通知は有効ですが、Android がブロックしています。設定でアプリの通知と同期通知チャンネルを許可してください。</string>
+    <string name="alarm_fallback_channel">スマートフォンのアラーム復旧</string>
+    <string name="alarm_fallback_title">アラームを確認してください</string>
+    <string name="alarm_fallback_failed">アラームのリクエストに失敗しました。時計アプリを開き、手動で設定してください。</string>
+    <string name="alarm_fallback_requested">アラームをリクエストしましたが、作成は未確認です。時計アプリで確認してください。</string>
+    <string name="alarm_fallback_open_clock">時計を開く</string>
+    <string name="alarm_fallback_unlock_limits">スマートフォン再起動後、予備のアラームは最初のロック解除後に再開します。</string>
+    <string name="alarm_one_time_watch_limits">腕時計は1回限りのアラームを毎日のアラームとして保存します。一度鳴った後も、再同期するか腕時計で無効にするまで毎日鳴り続けます。</string>
+    <string name="alarm_fallback_unconfirmed">アラームの作成は未確認です。時計アプリで確認するか、手動で設定してください。</string>
 </resources>

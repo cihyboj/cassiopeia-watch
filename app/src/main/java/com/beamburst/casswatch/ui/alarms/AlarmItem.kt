@@ -1,5 +1,7 @@
 package com.beamburst.casswatch.ui.alarms
 
+import androidx.compose.ui.res.stringResource
+import com.beamburst.casswatch.R
 import com.beamburst.casswatch.ui.common.AppSwitch
 import com.beamburst.casswatch.ui.common.AppText
 import com.beamburst.casswatch.ui.common.AppTextVeryLarge
@@ -106,6 +108,11 @@ fun AlarmItem(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+            }
+            if (selectedDays.isEmpty()) {
+                AppText(text = stringResource(R.string.alarm_one_time_watch_limits),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             AlarmSyncWarningText(syncWarning)
         }

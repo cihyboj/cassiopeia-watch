@@ -280,4 +280,12 @@
     <string name="phone_alarm_handoff_limits">Wysłano prośby do aplikacji zegara; utworzenie alarmów nie jest potwierdzone. Alarm jednorazowy nie ma daty i ta aplikacja nie może go anulować po przekazaniu.</string>
     <string name="watch_permission_explanation">Dostęp do Bluetooth jest potrzebny do komunikacji z zegarkiem. W Androidzie 10–11 zezwól na lokalizację, aby skanować Bluetooth.</string>
     <string name="sync_notifications_blocked">Powiadomienia automatycznej synchronizacji są włączone, ale Android je blokuje. Zezwól na powiadomienia aplikacji i kanał synchronizacji w ustawieniach.</string>
+    <string name="alarm_fallback_channel">Odzyskiwanie alarmów telefonu</string>
+    <string name="alarm_fallback_title">Sprawdź alarm telefonu</string>
+    <string name="alarm_fallback_failed">Prośba o alarm telefonu nie powiodła się. Otwórz zegar i ustaw alarm ręcznie.</string>
+    <string name="alarm_fallback_requested">Poproszono o alarm telefonu; utworzenie nie jest potwierdzone. Sprawdź go w zegarze.</string>
+    <string name="alarm_fallback_open_clock">Otwórz zegar</string>
+    <string name="alarm_fallback_unlock_limits">Po ponownym uruchomieniu telefonu alarmy zastępcze działają dopiero po pierwszym odblokowaniu.</string>
+    <string name="alarm_one_time_watch_limits">Zegarek zapisuje alarm jednorazowy jako codzienny. Po zadzwonieniu dzwoni codziennie do kolejnej synchronizacji z aplikacją lub wyłączenia na zegarku.</string>
+    <string name="alarm_fallback_unconfirmed">Utworzenie alarmu telefonu nie jest potwierdzone. Sprawdź lub ustaw go ręcznie w zegarze.</string>
 </resources>

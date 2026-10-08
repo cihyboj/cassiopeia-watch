@@ -40,6 +40,7 @@ class WeeklyAlarmScheduler @Inject constructor(
     private val watchTimeWriter: WatchTimeWriter,
     private val alarmCoordinator: AlarmSchedulingCoordinator,
     private val alarmTime: AlarmSchedulingTime,
+    private val payloadWriter: AlarmPayloadWriter,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "WeeklyAlarmScheduler"
@@ -108,56 +109,20 @@ class WeeklyAlarmScheduler @Inject constructor(
             AlarmSchedulePlanner.mirrorChime(scheduledAlarms, hourlySignalTarget)
         }
 
-        if (alarmsToSend != currentAlarms) {
-            val setResult = runCatching {
-                checkSession()
-                api.setAlarms(ArrayList(alarmsToSend))
-                if (WatchInfo.chimeInSettings) {
-                    checkSession()
-                    applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, now)
-                }
-            }
-            confirmWatchWrite(checkSession)
-            syncLogger.record(
-                address = addr,
-                trigger = SyncTrigger.AUTO_ON_RECONNECT,
-                kinds = alarmSyncHistoryKinds,
-                success = setResult.isSuccess,
-                errorMessage = setResult.exceptionOrNull()?.message,
-                details = alarmSyncDetailsForWatchPayload(
-                    alarms = alarmsToSend,
-                    hourlySignalTarget = hourlySignalTarget,
-                    actions = listOf("Alarm schedule applied on reconnect"),
-                ),
-            )
-
-            setResult.onFailure {
-                Timber.e(it, "Failed to apply per-alarm day schedule")
-            }.onSuccess {
+        // Only an actual alarm write establishes persisted watch confirmation.
+        payloadWriter.write(ready, alarmsToSend, SyncTrigger.AUTO_ON_RECONNECT, hourlySignalTarget,
+            { confirmWatchWrite(checkSession) }) {
+            api.setAlarms(ArrayList(alarmsToSend))
+        }
+        if (WatchInfo.chimeInSettings) {
+            payloadWriter.hourlySignal(api, ready, signalSettings, now, SyncTrigger.AUTO_ON_RECONNECT) {
                 confirmWatchWrite(checkSession)
-                alarmCoordinator.update(addr) { current ->
-                    alarmStateAfterSuccessfulSync(current, snapshot)
-                }
             }
-        } else {
-            confirmWatchWrite(checkSession)
-            syncLogger.record(
-                address = addr,
-                trigger = SyncTrigger.AUTO_ON_RECONNECT,
-                kinds = alarmSyncHistoryKinds,
-                success = true,
-                details = alarmSyncDetailsForWatchPayload(
-                    alarms = alarmsToSend,
-                    hourlySignalTarget = hourlySignalTarget,
-                    actions = listOf("Alarm schedule verified on reconnect"),
-                ),
-            )
-            if (snapshot.dirty) {
-                confirmWatchWrite(checkSession)
-                alarmCoordinator.update(addr) { current ->
-                    alarmStateAfterSuccessfulSync(current, snapshot)
-                }
-            }
+        }
+        confirmWatchWrite(checkSession)
+        alarmCoordinator.update(addr) { current ->
+            checkSession()
+            alarmStateAfterSuccessfulSync(current, snapshot)
         }
         alarmCoordinator.reconcile(addr)
         }

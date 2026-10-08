@@ -226,4 +226,12 @@
     <string name="phone_alarm_handoff_limits">Peticions enviades a l’aplicació de rellotge; la creació d’alarmes no està confirmada. Una alarma única no té data i aquesta aplicació no la pot cancel·lar després d’enviar-la.</string>
     <string name="watch_permission_explanation">Cal accés a Bluetooth per comunicar-se amb el rellotge. A Android 10–11, permet la ubicació per cercar dispositius Bluetooth.</string>
     <string name="sync_notifications_blocked">Les notificacions de sincronització automàtica estan activades, però Android les bloqueja. Permet les notificacions de l’aplicació i el canal de sincronització als ajustos.</string>
+    <string name="alarm_fallback_channel">Recuperació d’alarmes del telèfon</string>
+    <string name="alarm_fallback_title">Comprova l’alarma del telèfon</string>
+    <string name="alarm_fallback_failed">La petició d’alarma ha fallat. Obre l’aplicació de rellotge per configurar-la manualment.</string>
+    <string name="alarm_fallback_requested">S’ha demanat una alarma; la creació no està confirmada. Comprova-la a l’aplicació de rellotge.</string>
+    <string name="alarm_fallback_open_clock">Obrir rellotge</string>
+    <string name="alarm_fallback_unlock_limits">Després de reiniciar el telèfon, les alarmes de reserva es reprenen després del primer desbloqueig.</string>
+    <string name="alarm_one_time_watch_limits">El rellotge desa l’alarma única com a diària. Després de sonar, continuarà cada dia fins a una altra sincronització o fins que la desactivis al rellotge.</string>
+    <string name="alarm_fallback_unconfirmed">La creació de l’alarma no està confirmada. Comprova-la o configura-la manualment al rellotge.</string>
 </resources>

@@ -41,7 +41,7 @@ import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
 import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.ui.alarms.HourlySignalEvaluator
-import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
+import com.beamburst.casswatch.ui.alarms.applyReconciledHourlySignal
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.NtpTimeSettings
@@ -583,7 +583,8 @@ constructor(
                     val result = runCatching {
                         writeResult = watchTimeWriter.write(api, watchTime, ready, checkSession)
                         checkSession()
-                        applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, now)
+                        applyReconciledHourlySignal(appContext, api.guardWrites(checkSession), ready,
+                            signalSettings, now, SyncTrigger.MANUAL_SETTINGS_SET_TIME) { confirmWatchWrite(checkSession) }
                     }
                     confirmWatchWrite(checkSession)
                     syncLogger.record(

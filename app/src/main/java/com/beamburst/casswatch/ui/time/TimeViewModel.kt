@@ -31,7 +31,7 @@ import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.local.WatchSnapshot
 import com.beamburst.casswatch.data.repository.GShockRepository
-import com.beamburst.casswatch.ui.alarms.applyHourlySignalToWatch
+import com.beamburst.casswatch.ui.alarms.applyReconciledHourlySignal
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import com.beamburst.casswatch.utils.TimeWriteResult
@@ -166,7 +166,8 @@ class TimeViewModel @Inject constructor(
                                 val addr = ready.address
                                 val signalSettings = HourlySignalSettings.load(appContext, addr)
                                 checkSession()
-                                applyHourlySignalToWatch(api.guardWrites(checkSession), signalSettings, LocalDateTime.now())
+                                applyReconciledHourlySignal(appContext, api.guardWrites(checkSession), ready,
+                                    signalSettings, LocalDateTime.now(), SyncTrigger.MANUAL_SET_TIME) { confirmWatchWrite(checkSession) }
                             }
                             confirmWatchWrite(checkSession)
                             syncLogger.record(

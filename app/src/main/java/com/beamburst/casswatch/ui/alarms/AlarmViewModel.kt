@@ -1,5 +1,7 @@
 package com.beamburst.casswatch.ui.alarms
 
+import com.beamburst.casswatch.pairing.WatchWriteGuard
+import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.utils.WatchSyncActivity
 import android.content.Context
 import android.content.Intent
@@ -18,8 +20,6 @@ import com.beamburst.casswatch.data.local.SyncEntry
 import com.beamburst.casswatch.data.local.SyncHistoryStore
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
-import com.beamburst.casswatch.data.local.WatchConnectionTracker
-import com.beamburst.casswatch.data.local.WatchConnectionTracker.ConnectionState
 import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.scratchpad.AlarmNameStorage
@@ -119,7 +119,9 @@ class AlarmViewModel @Inject constructor(
     private val syncLogger: SyncHistoryLogger,
     private val store: SyncHistoryStore,
     private val watchSelector: CurrentWatchSelector,
-    private val connectionTracker: WatchConnectionTracker,
+    private val connectionSession: WatchConnectionSession,
+    private val writeGuard: WatchWriteGuard,
+    private val payloadWriter: AlarmPayloadWriter,
     private val alarmCoordinator: AlarmSchedulingCoordinator,
     private val alarmTime: AlarmSchedulingTime,
 ) : ViewModel() {
@@ -158,6 +160,10 @@ class AlarmViewModel @Inject constructor(
 
     private val _syncWarnings = MutableStateFlow<Map<Int, String>>(emptyMap())
     val syncWarnings: StateFlow<Map<Int, String>> = _syncWarnings.asStateFlow()
+    private val _fallbackStatuses = MutableStateFlow<Map<Int, String>>(emptyMap())
+    val fallbackStatuses: StateFlow<Map<Int, String>> = _fallbackStatuses.asStateFlow()
+
+    fun openPhoneClock() = openFallbackClock(appContext)
 
     private var exactAlarmPermissionRequested = false
     private val eventSubscriberName = "AlarmViewModel-${System.identityHashCode(this)}"
@@ -188,13 +194,13 @@ class AlarmViewModel @Inject constructor(
                 },
                 EventAction("ConnectionSetupComplete") {
                     viewModelScope.launch {
-                        _isConnected.value = true
+                        _isConnected.value = isSelectedWatchConnected(watchSelector.currentAddress())
                         loadAlarms()
                     }
                 },
                 EventAction("WatchInitializationCompleted") {
                     viewModelScope.launch {
-                        _isConnected.value = true
+                        _isConnected.value = isSelectedWatchConnected(watchSelector.currentAddress())
                         loadAlarms()
                     }
                 },
@@ -352,35 +358,39 @@ class AlarmViewModel @Inject constructor(
                 return@runCatching
             }
 
-            alarmNameStorage.load()
+            val ready = connectionSession.matching(addr) ?: return@runCatching
+            writeGuard.readApi(ready, api) { watch, confirm ->
+                val names = watch.getScratchpadData(alarmNameStorage.getStorageOffset(), alarmNameStorage.getStorageSize())
+                confirm()
+                alarmNameStorage.setBuffer(names.copyOf())
+                val alarmsFromWatch = watch.getAlarms()
+                    .take(WatchInfo.alarmCount)
+                    .mapIndexed { index, alarm ->
+                        val name = alarmNameStorage.get(index)
+                        alarm.copy(name = name)
+                    }
 
-            val alarmsFromWatch = api.getAlarms()
-                .take(WatchInfo.alarmCount)
-                .mapIndexed { index, alarm ->
-                    val name = alarmNameStorage.get(index)
-                    alarm.copy(name = name)
+                val newAlarms = if (WatchInfo.chimeInSettings) {
+                    val settings = watch.getSettings()
+                    alarmsFromWatch.mapIndexed { index, alarm ->
+                        if (index == 0) alarm.copy(hasHourlyChime = settings.hourlyChime)
+                        else alarm
+                    }
+                } else {
+                    alarmsFromWatch
                 }
-
-            val newAlarms = if (WatchInfo.chimeInSettings) {
-                val settings = api.getSettings()
-                alarmsFromWatch.mapIndexed { index, alarm ->
-                    if (index == 0) alarm.copy(hasHourlyChime = settings.hourlyChime)
-                    else alarm
-                }
-            } else {
-                alarmsFromWatch
-            }
-            seedHourlySignalSettingsFromWatch(addr, newAlarms.getOrNull(0)?.hasHourlyChime ?: false)
-            _alarms.value = newAlarms
-            if (addr != null) {
-                alarmCoordinator.update(addr) { state ->
+                confirm()
+                seedHourlySignalSettingsFromWatch(ready.address, newAlarms.getOrNull(0)?.hasHourlyChime ?: false)
+                _alarms.value = newAlarms
+                alarmCoordinator.update(ready.address) { state ->
                     if (state.alarms.isNotEmpty()) state else state.copy(alarms = newAlarms.map {
-                        AlarmSyncStorage.StoredAlarm(it.hour, it.minute, it.enabled, it.hasHourlyChime, it.name)
+                            AlarmSyncStorage.StoredAlarm(it.hour, it.minute, it.enabled, it.hasHourlyChime, it.name)
                     })
                 }
-                loadLocalStateForAddress(addr)
+                confirm()
+                loadLocalStateForAddress(ready.address)
+                ProgressEvents.onNext("Alarms Loaded")
             }
-            ProgressEvents.onNext("Alarms Loaded")
         }.onFailure {
             val addr = watchSelector.currentAddress()
             _alarms.value = if (addr != null) AlarmSyncStorage.loadAlarms(appContext, addr) ?: createDefaultLocalAlarms()
@@ -482,36 +492,24 @@ class AlarmViewModel @Inject constructor(
         refreshSyncRiskState()
     }
 
-    fun sendHourlySignalToWatch() = viewModelScope.launch {
-        val addr = watchSelector.currentAddress() ?: return@launch
-        if (!isSelectedWatchConnected(addr)) {
-            AppSnackbar(appContext.getString(R.string.watch_not_connected))
-            return@launch
-        }
-        val settings = HourlySignalSettings.load(appContext, addr)
-        val alarmSnapshot = alarmCoordinator.snapshot(addr)
-        val syncTime = LocalDateTime.now()
-        val hourlySignalTarget = HourlySignalEvaluator.shouldChimeAt(syncTime, settings)
-        val result = runCatching {
-            applyHourlySignalToWatch(api, settings, syncTime, consumedSlots = alarmSnapshot.firedAts().keys,
-                oneShotOccurrences = alarmSnapshot.oneShotOccurrences(), clock = alarmTime.clock, zone = alarmTime.zone())
-        }
-        syncLogger.record(
-            trigger = SyncTrigger.MANUAL_SEND_ALARMS,
-            kinds = setOf(SyncKind.HOURLY_SIGNAL),
-            success = result.isSuccess,
-            errorMessage = result.exceptionOrNull()?.message,
-            details = alarmSyncDetailsForWatchPayload(
-                alarms = emptyList(),
-                hourlySignalTarget = hourlySignalTarget,
-                actions = listOf("Hourly signal sent from Alarms screen"),
-            ),
-        )
-        if (result.isSuccess) {
-            alarmCoordinator.reconcile(addr)
-            AppSnackbar(appContext.getString(R.string.hourly_signal_sent_to_watch))
-        } else {
-            ProgressEvents.onNext("Error", result.exceptionOrNull()?.message ?: "")
+    fun sendHourlySignalToWatch() = viewModelScope.launch(Dispatchers.IO) {
+        val ready = writeGuard.capture() ?: return@launch
+        writeGuard.runApi(ready, api) { watch, confirm ->
+            WatchSyncActivity.track {
+                val settings = HourlySignalSettings.load(appContext, ready.address)
+                val syncTime = LocalDateTime.ofInstant(alarmTime.clock.instant(), alarmTime.zone())
+                val result = runCatching {
+                    payloadWriter.hourlySignal(watch, ready, settings, syncTime, SyncTrigger.MANUAL_SEND_ALARMS, confirm)
+                }
+                confirm()
+                syncLogger.record(address = ready.address, trigger = SyncTrigger.MANUAL_SEND_ALARMS,
+                    kinds = setOf(SyncKind.HOURLY_SIGNAL), success = result.isSuccess,
+                    errorMessage = result.exceptionOrNull()?.message,
+                    details = SyncDetails.Empty.copy(hourlySignalTarget = HourlySignalEvaluator.shouldChimeAt(syncTime, settings)))
+                confirm()
+                if (result.isSuccess) AppSnackbar(appContext.getString(R.string.hourly_signal_sent_to_watch))
+                else ProgressEvents.onNext("Error", result.exceptionOrNull()?.message ?: "")
+            }
         }
     }
 
@@ -526,73 +524,42 @@ class AlarmViewModel @Inject constructor(
     }
 
     fun sendAlarmsToWatch() = viewModelScope.launch(Dispatchers.IO) {
-        WatchSyncActivity.track {
-        val addr = watchSelector.currentAddress() ?: return@launch
-        if (!isSelectedWatchConnected(addr)) {
-            AppSnackbar(appContext.getString(R.string.watch_not_connected))
-            return@launch
-        }
-
-        // snapshot() persists expiry under the coordinator lock before constructing any BLE payload.
-        val snapshot = alarmCoordinator.snapshot(addr)
-        if (snapshot.alarms.isEmpty()) return@launch
-        val desiredAlarms = snapshot.watchAlarms().mapIndexed { index, alarm ->
-            if (alarm.name == null) {
-                alarmNameStorage.put("", index)
-                alarm.copy(name = "")
-            } else alarm
-        }
-        runCatching { alarmNameStorage.save() }
-            .onFailure {
-                Timber.w(it, "Saving alarm names to watch failed")
-                ProgressEvents.onNext("Error", it.message ?: "")
-                return@launch
+        val ready = writeGuard.capture() ?: return@launch
+        writeGuard.runApi(ready, api) { watch, confirm ->
+            WatchSyncActivity.track {
+                // Persist expiry before constructing any BLE payload.
+                val snapshot = alarmCoordinator.snapshot(ready.address)
+                if (snapshot.alarms.isEmpty()) return@track
+                val desiredAlarms = snapshot.watchAlarms().mapIndexed { index, alarm ->
+                    alarmNameStorage.put(alarm.name.orEmpty(), index)
+                    alarm.copy(name = alarm.name.orEmpty())
+                }
+                val syncTime = LocalDateTime.ofInstant(alarmTime.clock.instant(), alarmTime.zone())
+                val signalSettings = HourlySignalSettings.load(appContext, ready.address)
+                val target = HourlySignalEvaluator.shouldChimeAt(syncTime, signalSettings)
+                val scheduled = AlarmSchedulePlanner.applyWeeklySchedule(desiredAlarms, snapshot.days, syncTime,
+                    AlarmViewMode.WEEKLY, snapshot.firedAts(), snapshot.oneShotLocalDates(), alarmTime.zone(), alarmTime.clock)
+                val payload = if (WatchInfo.chimeInSettings) scheduled else AlarmSchedulePlanner.mirrorChime(scheduled, target)
+                val result = runCatching {
+                    watch.setScratchpadData(alarmNameStorage.getBuffer().copyOf(), alarmNameStorage.getStorageOffset())
+                    payloadWriter.write(ready, payload, SyncTrigger.MANUAL_SEND_ALARMS, target, confirm) {
+                        watch.setAlarms(ArrayList(payload))
+                    }
+                    if (WatchInfo.chimeInSettings) {
+                        payloadWriter.hourlySignal(watch, ready, signalSettings, syncTime, SyncTrigger.MANUAL_SEND_ALARMS, confirm)
+                    }
+                    confirm()
+                    alarmCoordinator.update(ready.address) { current ->
+                        if (!connectionSession.isCurrent(ready)) throw com.beamburst.casswatch.pairing.WatchConnectionChangedException()
+                        alarmStateAfterSuccessfulSync(current, snapshot)
+                    }
+                    confirm()
+                    refreshSyncRiskState()
+                    AppSnackbar(appContext.getString(R.string.alarms_set_to_watch))
+                }
+                confirm()
+                result.onFailure { ProgressEvents.onNext("Error", it.message ?: "") }
             }
-        val alarmsToSend = AlarmSchedulePlanner.applyWeeklySchedule(
-            alarms = desiredAlarms,
-            alarmDays = snapshot.days,
-            now = LocalDateTime.ofInstant(alarmTime.clock.instant(), alarmTime.zone()),
-            viewMode = AlarmViewMode.WEEKLY,
-            firedAts = snapshot.firedAts(),
-            oneShotLocalDates = snapshot.oneShotLocalDates(),
-            clock = alarmTime.clock,
-            zone = alarmTime.zone(),
-        )
-
-        val signalSettings = HourlySignalSettings.load(appContext, addr)
-        val syncTime = LocalDateTime.now()
-        val hourlySignalTarget = HourlySignalEvaluator.shouldChimeAt(syncTime, signalSettings)
-
-        val result = runCatching {
-            api.getAlarms()
-            val alarmsWithChime = AlarmSchedulePlanner.mirrorChime(alarmsToSend, hourlySignalTarget)
-            api.setAlarms(ArrayList(alarmsWithChime))
-            if (WatchInfo.chimeInSettings) {
-                applyHourlySignalToWatch(api, signalSettings, syncTime)
-            }
-        }
-        syncLogger.record(
-            trigger = SyncTrigger.MANUAL_SEND_ALARMS,
-            kinds = alarmSyncHistoryKinds,
-            success = result.isSuccess,
-            errorMessage = result.exceptionOrNull()?.message,
-            details = alarmSyncDetailsForWatchPayload(
-                alarms = alarmsToSend,
-                hourlySignalTarget = hourlySignalTarget,
-                actions = listOf("Alarms sent from Alarms screen"),
-            ),
-        )
-        if (result.isSuccess) {
-            alarmCoordinator.update(addr) { current ->
-                // Do not acknowledge an edit made while the BLE write was in flight.
-                alarmStateAfterSuccessfulSync(current, snapshot)
-            }
-            alarmCoordinator.reconcile(addr)
-            refreshSyncRiskState()
-            AppSnackbar(appContext.getString(R.string.alarms_set_to_watch))
-        } else {
-            ProgressEvents.onNext("Error", result.exceptionOrNull()?.message ?: "")
-        }
         }
     }
 
@@ -683,16 +650,14 @@ class AlarmViewModel @Inject constructor(
         DayOfWeek.SUNDAY -> Calendar.SUNDAY
     }
 
-    private fun isSelectedWatchConnected(addr: String?): Boolean {
-        if (addr == null || !api.isConnected()) return false
-        val tracked = connectionTracker.states.value[addr]
-        return tracked == ConnectionState.CONNECTED || tracked == null
-    }
+    private fun isSelectedWatchConnected(addr: String?): Boolean =
+        api.isConnected() && connectionSession.matching(addr) != null
 
     private fun refreshSyncRiskState() = viewModelScope.launch(Dispatchers.IO) {
         val addr = watchSelector.currentAddress()
         if (addr == null) {
             _syncWarnings.value = emptyMap()
+            _fallbackStatuses.value = emptyMap()
             return@launch
         }
 
@@ -703,8 +668,15 @@ class AlarmViewModel @Inject constructor(
             seed = settings?.timeAdjustment,
         )
         val adjustmentTimeMinutes = settings?.adjustmentTimeMinutes ?: 0
-        val history = store.load(addr)
         val state = AlarmSyncStorage.loadState(appContext, addr)
+        _fallbackStatuses.value = state.alarms.mapIndexedNotNull { slot, alarm ->
+            when (alarm.fallbackStatus) {
+                "failed" -> slot to appContext.getString(R.string.alarm_fallback_failed)
+                "pending" -> slot to appContext.getString(R.string.alarm_fallback_unconfirmed)
+                "requested" -> slot to appContext.getString(R.string.alarm_fallback_requested)
+                else -> null
+            }
+        }.toMap()
         val warnings = mutableMapOf<Int, String>()
 
         _alarms.value.forEachIndexed { index, alarm ->
@@ -712,7 +684,7 @@ class AlarmViewModel @Inject constructor(
                 key = AlarmKey(addr, index),
                 alarm = state.alarms.getOrNull(index) ?: return@forEachIndexed,
                 alarmDays = _alarmDays.value[index] ?: AlarmSchedulePlanner.AllDays,
-                payloads = state.watchPayloads,
+                payloads = state.confirmedPayloads(),
                 clock = alarmTime.clock,
                 zone = alarmTime.zone(),
                 autoSyncEnabled = autoSyncEnabled,

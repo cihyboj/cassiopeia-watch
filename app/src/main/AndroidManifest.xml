@@ -59,6 +59,12 @@
         android:required="false" />
 
 
+    <!-- Clock resolution is needed before attempting a phone alarm hand-off. -->
+    <queries>
+        <intent><action android:name="android.intent.action.SET_ALARM" /></intent>
+        <intent><action android:name="android.intent.action.SHOW_ALARMS" /></intent>
+    </queries>
+
     <application
         android:name=".GShockApplication"
         android:allowBackup="true"

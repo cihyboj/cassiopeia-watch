@@ -16,6 +16,8 @@ import timber.log.Timber
 /**
  * Re-arms watch detection after a reboot: syncs CDM associations and restarts the BLE
  * fallback scan, so reconnection works before the user first opens the app.
+ * Alarm storage is credential-protected: recovery starts after first unlock, not during
+ * Direct Boot. The Alarms screen discloses this limitation.
  */
 class BootReceiver : BroadcastReceiver() {
 

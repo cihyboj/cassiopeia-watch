@@ -4,11 +4,14 @@ import android.app.AlarmManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.beamburst.casswatch.ui.alarms.alarmStateAfterPhoneClockChange
 import com.beamburst.casswatch.ui.alarms.PhoneFallbackReceiver
 import com.beamburst.casswatch.utils.LocalDataStorage
 import com.beamburst.casswatch.utils.AppScopes
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import com.beamburst.casswatch.ui.alarms.ALARM_RECEIVER_TIMEOUT_MS
 import timber.log.Timber
 
 /** System broadcasts rebuild wall-clock occurrences and retry fallbacks after permission changes. */
@@ -18,16 +21,18 @@ class AlarmLifecycleReceiver : BroadcastReceiver() {
         val pending = goAsync()
         AppScopes.io.launch {
             try {
-                val coordinator = EntryPointAccessors.fromApplication(
-                    context.applicationContext, PhoneFallbackReceiver.AlarmEntryPoint::class.java,
-                ).alarmSchedulingCoordinator()
-                if (intent.action == Intent.ACTION_TIME_CHANGED || intent.action == Intent.ACTION_TIMEZONE_CHANGED) {
-                    // A time broadcast is not evidence that the disconnected watch changed too.
-                    LocalDataStorage.getDeviceAddresses(context).forEach { address ->
-                        coordinator.update(address) { it.copy(watchPayloads = emptyMap()) }
+                withTimeout(ALARM_RECEIVER_TIMEOUT_MS) {
+                    val coordinator = EntryPointAccessors.fromApplication(
+                        context.applicationContext, PhoneFallbackReceiver.AlarmEntryPoint::class.java,
+                    ).alarmSchedulingCoordinator()
+                    if (intent.action == Intent.ACTION_TIME_CHANGED || intent.action == Intent.ACTION_TIMEZONE_CHANGED) {
+                        // A time broadcast is not evidence that the disconnected watch changed too.
+                        LocalDataStorage.getDeviceAddresses(context).forEach { address ->
+                            coordinator.update(address, ::alarmStateAfterPhoneClockChange)
+                        }
                     }
+                    coordinator.reconcileAll()
                 }
-                coordinator.reconcileAll()
             } catch (error: Exception) {
                 Timber.e(error, "Alarm lifecycle reconciliation failed for %s", intent.action)
             } finally {
