@@ -2,6 +2,7 @@ package com.beamburst.casswatch
 
 import CachedIO
 
+import com.beamburst.casswatch.pairing.WatchResponseTimeoutException
 import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.pairing.WatchConnectCoordinator
 import com.beamburst.casswatch.utils.AppScopes
@@ -107,7 +108,11 @@ class MainEventHandler(
                     connectCoordinator.withSession(ready) { check -> repository.guardWrites(check).init() }
                 }.onFailure {
                     Timber.w(it, "Reconnect initialization failed for %s", ready.address)
-                    if (connectionSession.isCurrent(ready)) connectCoordinator.disconnect(ready.address)
+                    if (it is WatchResponseTimeoutException) {
+                        recordReconnectTimeout(ready, it)
+                    } else if (connectionSession.isCurrent(ready)) {
+                        connectCoordinator.disconnect(ready.address)
+                    }
                 }
             }
         }
@@ -157,10 +162,28 @@ class MainEventHandler(
                     if (!warmedDispatchedFor.add(key)) return@runCatching
                 }
                 connectCoordinator.withSession(ready) { check ->
-                    watchTimeWriter.primeCache(repository.guardWrites(check))
+                    repository.guardWrites(check).primeTimeCache()
+                    check()
+                    connectionTracker.markCacheWarmed(address)
                 }
-            }.onFailure { Timber.w(it, "Cache-warm dispatch failed") }
+            }.onFailure {
+                Timber.w(it, "Cache-warm dispatch failed")
+                if (it is WatchResponseTimeoutException) recordReconnectTimeout(ready, it)
+            }
         }
+    }
+
+    private suspend fun recordReconnectTimeout(
+        ready: WatchConnectionSession.Ready,
+        error: WatchResponseTimeoutException,
+    ) {
+        syncLogger.record(
+            address = ready.address,
+            trigger = SyncTrigger.AUTO_ON_RECONNECT,
+            kinds = setOf(SyncKind.CONNECTION),
+            success = false,
+            errorMessage = error.message,
+        )
     }
 
     private fun showWatchConnectedSnackbar() {

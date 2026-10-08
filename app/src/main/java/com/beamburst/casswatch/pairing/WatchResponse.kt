@@ -9,9 +9,20 @@ import timber.log.Timber
 
 const val WATCH_RESPONSE_TIMEOUT_MS = 8_000L
 
+// GShockAPI 042cc1e: settings = SettingsIO + TimeAdjustmentIO; init = AppInfoIO
+// + ButtonPressedIO; alarms = two queued GETs (0x2A/0x2B) behind one deferred;
+// one event = EventsIO title + time. TimeIO awaits up to 3 DST states + 6 city
+// DST values + 5 city names (city 0 is encoded locally), for both prime and set.
+// Opaque calls get one per-response allowance for each possible response.
+const val WATCH_SETTINGS_TIMEOUT_MS = 2 * WATCH_RESPONSE_TIMEOUT_MS
+const val WATCH_INITIALIZATION_TIMEOUT_MS = 2 * WATCH_RESPONSE_TIMEOUT_MS
+const val WATCH_ALARMS_TIMEOUT_MS = 2 * WATCH_RESPONSE_TIMEOUT_MS
+const val WATCH_EVENT_TIMEOUT_MS = 2 * WATCH_RESPONSE_TIMEOUT_MS
+const val WATCH_TIME_TIMEOUT_MS = 14 * WATCH_RESPONSE_TIMEOUT_MS
+
 class WatchResponseTimeoutException : IllegalStateException("Watch response timed out")
 
-/** Bound complete API calls, including reads hidden inside time and scratchpad writes. */
+/** Bound a response, or an opaque call with its explicitly derived operation budget. */
 suspend fun <T> awaitWatchResponse(
     timeoutMs: Long = WATCH_RESPONSE_TIMEOUT_MS,
     block: suspend () -> T,
