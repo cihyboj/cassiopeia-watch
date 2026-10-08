@@ -79,7 +79,7 @@ Key events: `WatchInitializationCompleted`, `ConnectionSetupComplete`, `ButtonPr
 
 ### Navigation
 
-After connection, `BottomNavigationBarWithPermissions` hosts a Compose `NavHost` with tabs: **Time**, **Alarms**, **Events** (only if `WatchInfo.hasReminders`), **Settings**, plus a **SyncHistory** screen. Routes are defined in `Screens.kt` as sealed objects. The Events tab requires the calendar runtime permission.
+After connection, `BottomNavigationBarWithPermissions` hosts a Compose `NavHost` with tabs: **Time**, **Alarms**, **Events** (only if `WatchInfo.hasReminders`), **Settings**, plus a **SyncHistory** screen, and a **Debug** (BLE debug panel) tab that exists only in debug builds. Routes are defined in `Screens.kt` as sealed objects. The Events tab requires the calendar runtime permission.
 
 A 3-minute inactivity timer (`InactivityHandler`) disconnects the watch when the user stops interacting — deferred while `WatchSyncActivity` reports a sync in flight.
 
@@ -116,6 +116,10 @@ The watch exposes a small scratchpad memory used to persist app-side settings ac
 
 Sync outcomes are recorded via `SyncHistoryLogger`/`SyncHistoryStore` and shown on the Sync History screen — every watch write should be recorded there.
 
+### Time source and network use
+
+`WatchTimeProvider`/`WatchTimeWriter` (`utils/NtpTime.kt`) choose the time written to the watch: phone time by default, or an SNTP offset when the user enables the NTP option in Settings (default server `pool.ntp.org`, UDP port 123, off by default). This is the only network use in the app. `docs/index.html` (the privacy policy) and `THIRD_PARTY_NOTICES.md` describe app behaviour and dependencies; keep them in step when permissions, network use, stored data or dependencies change.
+
 ### Services
 
 - `GShockCompanionDeviceService` — `CompanionDeviceService` that handles CDM presence callbacks; foreground while a watch is present.
@@ -128,7 +132,7 @@ Sync outcomes are recorded via `SyncHistoryLogger`/`SyncHistoryStore` and shown 
 - **WatchInfo for capability checks.** Use `WatchInfo.hasReminders`, `WatchInfo.alwaysConnected`, `WatchInfo.chimeInSettings`, etc. to conditionally enable features for the connected model.
 - **Timber for logging.** `Timber.d/i/w/e(...)` everywhere; `Timber.DebugTree` is only planted in debug builds.
 - **AppSnackbar for user feedback.** Call `AppSnackbar(message)` rather than managing snackbar state in composables directly.
-- **Strings in `res/values/strings.xml`.** The app is localized into 10+ languages; never hardcode user-visible strings.
+- **Strings in `res/values/strings.xml`.** The app is localized into 11 languages besides English (`values-*` folders); never hardcode user-visible strings, and add translations to every locale folder unless the string is marked `translatable="false"`.
 - **`@ApplicationContext` for context injection.** Always inject application context (not activity context) into singletons and ViewModels.
 - **Gson-serialized models need R8 keep rules.** Anything persisted as JSON by field name must be covered in `app/proguard-rules.pro`, or release builds will silently corrupt storage.
 
@@ -136,7 +140,7 @@ Sync outcomes are recorded via `SyncHistoryLogger`/`SyncHistoryStore` and shown 
 
 - Kotlin 2.2.0, AGP 8.12.3, compileSdk 36, minSdk 26, Java 21
 - Jetpack Compose (Material3) + ConstraintLayout Compose
-- Hilt 2.57 for DI
+- Hilt 2.57.2 for DI
 - DataStore Preferences for local storage
 - RRule for calendar recurrence rule parsing
 - Timber for logging
