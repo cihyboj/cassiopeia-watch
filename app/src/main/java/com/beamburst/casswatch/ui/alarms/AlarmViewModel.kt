@@ -119,7 +119,7 @@ class AlarmViewModel @Inject constructor(
     private val store: SyncHistoryStore,
     private val watchSelector: CurrentWatchSelector,
     private val connectionTracker: WatchConnectionTracker,
-    private val phoneFallbackScheduler: PhoneFallbackScheduler,
+    private val alarmCoordinator: AlarmSchedulingCoordinator,
 ) : ViewModel() {
 
     companion object {
@@ -203,6 +203,7 @@ class AlarmViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             watchSelector.selected.collect { addr ->
+                if (addr != null) alarmCoordinator.reconcile(addr)
                 loadLocalStateForAddress(addr)
                 loadAlarms()
             }
@@ -210,6 +211,18 @@ class AlarmViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             lastAlarmSync.collect {
                 refreshSyncRiskState()
+            }
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            watchSelector.selected.flatMapLatest { addr ->
+                if (addr == null) flowOf(null) else AlarmSyncStorage.stateFlowFor(appContext, addr)
+            }.collect { state ->
+                if (state != null && state.alarms.isNotEmpty()) {
+                    _alarms.value = state.watchAlarms()
+                    _alarmDays.value = state.days
+                    _firedAts.value = state.firedAts()
+                    refreshSyncRiskState()
+                }
             }
         }
         startFireTimeTick()
@@ -301,27 +314,9 @@ class AlarmViewModel @Inject constructor(
     }
 
     private fun tickFireOnceAlarms() {
+        // Display refresh only. Persisted expiry belongs to the application coordinator.
         val addr = watchSelector.currentAddress() ?: return
-        val now = System.currentTimeMillis()
-        val nowTime = LocalTime.now()
-        var anyFired = false
-
-        val updatedFiredAts = _firedAts.value.toMutableMap()
-        _alarms.value.forEachIndexed { index, alarm ->
-            val isFireOnce = alarm.enabled &&
-                _alarmDays.value[index]?.isEmpty() == true &&
-                !updatedFiredAts.containsKey(index)
-            if (isFireOnce && nowTime.isAfter(LocalTime.of(alarm.hour, alarm.minute))) {
-                updatedFiredAts[index] = now
-                anyFired = true
-            }
-        }
-
-        if (anyFired) {
-            _firedAts.value = updatedFiredAts
-            AlarmSyncStorage.saveAlarms(appContext, addr, _alarms.value, dirty = true, firedAts = updatedFiredAts)
-            refreshSyncRiskState(isDirtyOverride = true)
-        }
+        loadLocalStateForAddress(addr)
     }
 
     private suspend fun hasLocalAppAlarms(localDraft: List<Alarm>?, addr: String?): Boolean {
@@ -393,21 +388,37 @@ class AlarmViewModel @Inject constructor(
         return List(count) { Alarm(0, 0, false, false, "") }
     }
 
-    private fun updateAlarm(index: Int, transform: (Alarm) -> Alarm) {
-        val updated = _alarms.value.mapIndexed { i, alarm ->
-            if (i == index) transform(alarm) else alarm
-        }
-        _alarms.value = updated
+    private suspend fun updateAlarm(
+        index: Int,
+        days: Set<DayOfWeek>? = null,
+        reenable: Boolean = false,
+        transform: (Alarm) -> Alarm,
+    ) {
         val addr = watchSelector.currentAddress() ?: return
-        AlarmSyncStorage.saveAlarms(appContext, addr, updated, dirty = true, firedAts = _firedAts.value)
+        alarmCoordinator.serialized {
+            if (addr !in LocalDataStorage.getDeviceAddresses(appContext)) return@serialized
+            val stored = AlarmSyncStorage.loadState(appContext, addr)
+            val state = if (stored.alarms.isEmpty()) stored.copy(alarms = _alarms.value.map {
+                AlarmSyncStorage.StoredAlarm(it.hour, it.minute, it.enabled, it.hasHourlyChime, it.name)
+            }) else stored
+            val previous = state.alarms.getOrNull(index) ?: return@serialized
+            val alarm = transform(state.watchAlarms()[index])
+            val edited = previous.copy(hour = alarm.hour, minute = alarm.minute, enabled = alarm.enabled,
+                hasHourlyChime = alarm.hasHourlyChime, name = alarm.name)
+            val updated = editAlarmState(state, index, edited, days ?: state.days[index] ?: AlarmSchedulePlanner.AllDays,
+                reenable, java.time.Clock.systemUTC(), ZoneId.systemDefault())
+            AlarmSyncStorage.saveState(appContext, addr, updated)
+        }
+        alarmCoordinator.reconcile(addr)
+        loadLocalStateForAddress(addr)
     }
 
-    fun toggleAlarm(index: Int, isEnabled: Boolean) {
-        updateAlarm(index) { it.copy(enabled = isEnabled) }
+    fun toggleAlarm(index: Int, isEnabled: Boolean) = viewModelScope.launch(Dispatchers.IO) {
+        updateAlarm(index, reenable = isEnabled) { it.copy(enabled = isEnabled) }
         refreshSyncRiskState(isDirtyOverride = true)
     }
 
-    fun onTimeChanged(index: Int, hours: Int, minutes: Int) {
+    fun onTimeChanged(index: Int, hours: Int, minutes: Int) = viewModelScope.launch(Dispatchers.IO) {
         updateAlarm(index) { it.copy(hour = hours, minute = minutes, name = null) }
         refreshSyncRiskState(isDirtyOverride = true)
     }
@@ -496,24 +507,15 @@ class AlarmViewModel @Inject constructor(
         }
     }
 
-    fun setViewMode(mode: AlarmViewMode) {
+    fun setViewMode(mode: AlarmViewMode) = viewModelScope.launch(Dispatchers.IO) {
         _viewMode.value = AlarmViewMode.WEEKLY
-        val addr = watchSelector.currentAddress() ?: return
+        val addr = watchSelector.currentAddress() ?: return@launch
         AlarmSyncStorage.saveViewMode(appContext, addr, AlarmViewMode.WEEKLY)
-        AlarmSyncStorage.saveAlarms(appContext, addr, _alarms.value, dirty = true, firedAts = _firedAts.value)
-        refreshSyncRiskState(isDirtyOverride = true)
     }
 
-    fun toggleDay(alarmIndex: Int, day: DayOfWeek) {
-        _alarmDays.update { current ->
-            val days = current[alarmIndex] ?: emptySet()
-            val updated = if (day in days) days - day else days + day
-            current + (alarmIndex to updated)
-        }
-        val addr = watchSelector.currentAddress() ?: return
-        AlarmSyncStorage.saveDaySelections(appContext, addr, _alarmDays.value)
-        AlarmSyncStorage.saveAlarms(appContext, addr, _alarms.value, dirty = true, firedAts = _firedAts.value)
-        refreshSyncRiskState(isDirtyOverride = true)
+    fun toggleDay(alarmIndex: Int, day: DayOfWeek) = viewModelScope.launch(Dispatchers.IO) {
+        val days = _alarmDays.value[alarmIndex] ?: AlarmSchedulePlanner.AllDays
+        updateAlarm(alarmIndex, days = if (day in days) days - day else days + day) { it }
     }
 
     fun sendAlarmsToWatch() = viewModelScope.launch {
@@ -614,24 +616,16 @@ class AlarmViewModel @Inject constructor(
         _editorTarget.value = null
     }
 
-    fun upsertAlarm(index: Int, hour: Int, minute: Int, name: String, days: Set<DayOfWeek>) {
+    fun upsertAlarm(index: Int, hour: Int, minute: Int, name: String, days: Set<DayOfWeek>) = viewModelScope.launch(Dispatchers.IO) {
         val isFireOnce = days.isEmpty()
         if (isFireOnce && !exactAlarmPermissionRequested) {
             exactAlarmPermissionRequested = true
             viewModelScope.launch { _uiEvents.emit(UiEvent.RequestExactAlarmPermission) }
         }
 
-        val existing = _alarms.value.getOrNull(index)
-        val timeChanged = existing?.hour != hour || existing.minute != minute
-        if (timeChanged) {
-            val updated = _firedAts.value.toMutableMap().also { it.remove(index) }
-            _firedAts.value = updated
+        updateAlarm(index, days = days) {
+            it.copy(hour = hour, minute = minute, name = name.ifBlank { null }, enabled = true)
         }
-
-        updateAlarm(index) { it.copy(hour = hour, minute = minute, name = name.ifBlank { null }, enabled = true) }
-        _alarmDays.update { it + (index to days) }
-        val addr = watchSelector.currentAddress() ?: return
-        AlarmSyncStorage.saveDaySelections(appContext, addr, _alarmDays.value)
         refreshSyncRiskState(isDirtyOverride = true)
         _editorTarget.value = null
     }
@@ -697,7 +691,6 @@ class AlarmViewModel @Inject constructor(
         val addr = watchSelector.currentAddress()
         if (addr == null) {
             _syncWarnings.value = emptyMap()
-            phoneFallbackScheduler.cancelAll(_alarms.value.indices.toList())
             return@launch
         }
 
@@ -727,33 +720,12 @@ class AlarmViewModel @Inject constructor(
                 adjustmentTimeMinutes = adjustmentTimeMinutes,
             )
 
-            if (risk == null) {
-                phoneFallbackScheduler.cancel(index)
-            } else {
+            if (risk != null) {
                 warnings[index] = appContext.getString(
-                    if (risk.nextAutoSyncAt == null) {
-                        R.string.alarm_sync_risk_auto_off
-                    } else {
-                        R.string.alarm_sync_risk_before_auto_sync
-                    },
+                    if (risk.nextAutoSyncAt == null) R.string.alarm_sync_risk_auto_off
+                    else R.string.alarm_sync_risk_before_auto_sync,
                     risk.nextAlarmAt.format(warningTimeFormatter)
                 )
-                if (phoneFallbackScheduler.canScheduleExactAlarms()) {
-                    phoneFallbackScheduler.schedule(
-                        alarmIndex = index,
-                        expectedHash = alarmHash(alarm.hour, alarm.minute, emptySet(), enabled = true),
-                        fireInstant = risk.nextAlarmAt
-                            .atZone(ZoneId.systemDefault())
-                            .toInstant()
-                            .toEpochMilli(),
-                        alarmHour = alarm.hour,
-                        alarmMinute = alarm.minute,
-                        alarmName = alarm.name,
-                        deviceAddress = addr,
-                    )
-                } else {
-                    phoneFallbackScheduler.cancel(index)
-                }
             }
         }
 

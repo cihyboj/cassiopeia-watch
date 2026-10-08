@@ -11,6 +11,7 @@ object PerWatchCacheCleaner {
         val migratedKeys = MultiWatchMigrator.GLOBAL_KEYS.map { "${it}_$addr" }
         val extraKeys = listOf(
             "SyncHistory_$addr",
+            "AlarmState_$addr",
             "WatchSnapshot_$addr",
             LocalDataStorage.timeWriteLatencyKey(addr),
             LocalDataStorage.autoSyncOnReconnectKey(addr),

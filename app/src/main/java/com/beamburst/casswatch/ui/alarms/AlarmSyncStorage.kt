@@ -1,112 +1,107 @@
 package com.beamburst.casswatch.ui.alarms
 
 import android.content.Context
+import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.utils.Utils
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.beamburst.casswatch.utils.LocalDataStorage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.avmedia.gshockapi.Alarm
+import org.json.JSONObject
 import java.time.DayOfWeek
 
+internal data class AlarmState(
+    val alarms: List<AlarmSyncStorage.StoredAlarm> = emptyList(),
+    val days: Map<Int, Set<DayOfWeek>> = emptyMap(),
+    val dirty: Boolean = false,
+) {
+    fun watchAlarms(): List<Alarm> = alarms.map { Alarm(it.hour, it.minute, it.enabled, it.hasHourlyChime, it.name) }
+    fun firedAts(): Map<Int, Long> = alarms.mapIndexedNotNull { i, a -> a.firedAt?.let { i to it } }.toMap()
+}
+
 object AlarmSyncStorage {
-    private const val ALARMS_KEY = "PhoneAlarmDrafts"
-    private const val ALARMS_DIRTY_KEY = "PhoneAlarmDraftsDirty"
-    private const val ALARM_VIEW_MODE_KEY = "AlarmViewMode"
-    private const val ALARM_DAYS_KEY = "AlarmDaySelections"
-
     private val gson = Gson()
-    private val _changes = MutableStateFlow(0L)
+    private val changes = MutableStateFlow(0L)
+    private fun key(base: String, addr: String) = "${base}_${Utils.sanitizeMacAddress(addr)}"
+    fun stateKey(addr: String) = key("AlarmState", addr)
 
-    private fun key(base: String, addr: String) = "${base}_$addr"
-
+    // This existing model has an R8 field keep rule. Dates stay ISO strings in storage.
     data class StoredAlarm(
         val hour: Int,
         val minute: Int,
         val enabled: Boolean,
         val hasHourlyChime: Boolean,
         val name: String?,
-        val firedAt: Long? = null
+        val firedAt: Long? = null,
+        val oneShotLocalDate: String? = null,
+        val fallbackAttemptAt: Long? = null,
     )
 
-    fun saveAlarms(context: Context, addr: String, alarms: List<Alarm>, dirty: Boolean, firedAts: Map<Int, Long> = emptyMap()) {
-        val stored = alarms.mapIndexed { index, it ->
-            StoredAlarm(
-                hour = it.hour,
-                minute = it.minute,
-                enabled = it.enabled,
-                hasHourlyChime = it.hasHourlyChime,
-                name = it.name,
-                firedAt = firedAts[index]
-            )
+    internal fun encode(state: AlarmState): String = JSONObject().apply {
+        put("alarms", gson.toJson(state.alarms))
+        put("days", encodeDays(state.days))
+        put("dirty", state.dirty)
+    }.toString()
+
+    internal fun decode(raw: String): AlarmState {
+        val obj = JSONObject(raw)
+        return AlarmState(decodeAlarms(obj.getString("alarms")), decodeDays(obj.getString("days")), obj.getBoolean("dirty"))
+    }
+
+    internal fun decodeAlarms(raw: String): List<StoredAlarm> =
+        gson.fromJson(raw, object : TypeToken<List<StoredAlarm>>() {}.type)
+
+    private fun encodeDays(days: Map<Int, Set<DayOfWeek>>): String = gson.toJson(
+        days.mapKeys { it.key.toString() }.mapValues { it.value.map(DayOfWeek::name) }
+    )
+
+    internal fun decodeDays(raw: String): Map<Int, Set<DayOfWeek>> {
+        val obj = JSONObject(raw)
+        return obj.keys().asSequence().associate { key ->
+            val index = key.toInt().also { require(it >= 0) }
+            val arr = obj.getJSONArray(key)
+            index to (0 until arr.length()).map { DayOfWeek.valueOf(arr.getString(it)) }.toSet()
         }
-        LocalDataStorage.put(context, key(ALARMS_KEY, addr), gson.toJson(stored))
-        LocalDataStorage.put(context, key(ALARMS_DIRTY_KEY, addr), dirty.toString())
-        _changes.value = System.currentTimeMillis()
     }
 
-    private fun loadStoredAlarms(context: Context, addr: String): List<StoredAlarm>? {
-        val json = LocalDataStorage.get(context, key(ALARMS_KEY, addr)) ?: return null
-        if (json.isBlank()) return null
-        val type = object : TypeToken<List<StoredAlarm>>() {}.type
-        return runCatching { gson.fromJson<List<StoredAlarm>>(json, type) }.getOrNull()
+    internal fun loadState(context: Context, addr: String): AlarmState {
+        LocalDataStorage.get(context, stateKey(addr))?.let { return decode(it) }
+        val alarms = LocalDataStorage.get(context, key("PhoneAlarmDrafts", addr))
+            ?.takeIf(String::isNotBlank)?.let { runCatching { decodeAlarms(it) }.getOrNull() }.orEmpty()
+            .map { it.copy(hour = it.hour.coerceIn(0, 23), minute = it.minute.coerceIn(0, 59)) }
+        val days = LocalDataStorage.get(context, key("AlarmDaySelections", addr))
+            ?.let { runCatching { decodeDays(it) }.getOrNull() }.orEmpty()
+        return AlarmState(alarms, days, LocalDataStorage.get(context, key("PhoneAlarmDraftsDirty", addr), "false").toBoolean())
     }
 
-    fun loadAlarms(context: Context, addr: String): List<Alarm>? =
-        loadStoredAlarms(context, addr)?.map {
-            // Coerce out-of-range values (corrupt storage, edited backup import) so
-            // downstream LocalTime.of() calls cannot throw.
-            Alarm(it.hour.coerceIn(0, 23), it.minute.coerceIn(0, 59), it.enabled, it.hasHourlyChime, it.name)
+    /** One awaited DataStore transaction contains the draft, days, date, consumption and dirty state. */
+    internal suspend fun saveState(context: Context, addr: String, state: AlarmState) {
+        LocalDataStorage.putAsync(context, stateKey(addr), encode(state))
+        changes.value += 1
+    }
+
+    suspend fun saveAlarms(context: Context, addr: String, alarms: List<Alarm>, dirty: Boolean, firedAts: Map<Int, Long> = loadFiredAts(context, addr)) {
+        val old = loadState(context, addr)
+        val stored = alarms.mapIndexed { index, a ->
+            StoredAlarm(a.hour, a.minute, a.enabled, a.hasHourlyChime, a.name, firedAts[index],
+                old.alarms.getOrNull(index)?.oneShotLocalDate, old.alarms.getOrNull(index)?.fallbackAttemptAt)
         }
-
-    fun hasStoredAlarms(context: Context, addr: String): Boolean =
-        loadStoredAlarms(context, addr) != null
-
-    fun isDirty(context: Context, addr: String): Boolean =
-        LocalDataStorage.get(context, key(ALARMS_DIRTY_KEY, addr), "false")?.toBoolean() ?: false
-
-    fun saveViewMode(context: Context, addr: String, mode: AlarmViewMode) {
-        LocalDataStorage.put(context, key(ALARM_VIEW_MODE_KEY, addr), mode.name)
+        saveState(context, addr, old.copy(alarms = stored, dirty = dirty))
     }
 
-    fun loadViewMode(context: Context, addr: String): AlarmViewMode {
-        val stored = LocalDataStorage.get(context, key(ALARM_VIEW_MODE_KEY, addr))
-        return if (stored == AlarmViewMode.WEEKLY.name) AlarmViewMode.WEEKLY else AlarmViewMode.SIMPLE
-    }
-
-    fun saveDaySelections(context: Context, addr: String, alarmDays: Map<Int, Set<DayOfWeek>>) {
-        val toStore = alarmDays
-            .mapKeys { it.key.toString() }
-            .mapValues { it.value.map { day -> day.name } }
-        LocalDataStorage.put(context, key(ALARM_DAYS_KEY, addr), gson.toJson(toStore))
-    }
-
-    fun loadDaySelections(context: Context, addr: String): Map<Int, Set<DayOfWeek>> {
-        val json = LocalDataStorage.get(context, key(ALARM_DAYS_KEY, addr)) ?: return emptyMap()
-        if (json.isBlank()) return emptyMap()
-
-        val type = object : TypeToken<Map<String, List<String>>>() {}.type
-        val raw = runCatching {
-            gson.fromJson<Map<String, List<String>>>(json, type)
-        }.getOrNull() ?: return emptyMap()
-
-        return raw.mapNotNull { (key, values) ->
-            val index = key.toIntOrNull() ?: return@mapNotNull null
-            val days = values.mapNotNull {
-                runCatching { DayOfWeek.valueOf(it) }.getOrNull()
-            }.toSet()
-            index to days
-        }.toMap()
-    }
-
-    fun loadFiredAts(context: Context, addr: String): Map<Int, Long> =
-        loadStoredAlarms(context, addr)
-            ?.mapIndexedNotNull { i, a -> a.firedAt?.let { i to it } }
-            ?.toMap()
-            ?: emptyMap()
-
-    fun flowFor(context: Context, addr: String): Flow<List<Alarm>?> =
-        _changes.map { loadAlarms(context, addr) }.distinctUntilChanged()
+    fun loadAlarms(context: Context, addr: String): List<Alarm>? = loadState(context, addr).watchAlarms().takeIf { it.isNotEmpty() }
+    fun hasStoredAlarms(context: Context, addr: String): Boolean = loadAlarms(context, addr) != null
+    fun isDirty(context: Context, addr: String): Boolean = loadState(context, addr).dirty
+    suspend fun saveViewMode(context: Context, addr: String, mode: AlarmViewMode) = LocalDataStorage.putAsync(context, key("AlarmViewMode", addr), mode.name)
+    fun loadViewMode(context: Context, addr: String): AlarmViewMode =
+        if (LocalDataStorage.get(context, key("AlarmViewMode", addr)) == AlarmViewMode.WEEKLY.name) AlarmViewMode.WEEKLY else AlarmViewMode.SIMPLE
+    suspend fun saveDaySelections(context: Context, addr: String, alarmDays: Map<Int, Set<DayOfWeek>>) =
+        saveState(context, addr, loadState(context, addr).copy(days = alarmDays))
+    fun loadDaySelections(context: Context, addr: String): Map<Int, Set<DayOfWeek>> = loadState(context, addr).days
+    fun loadFiredAts(context: Context, addr: String): Map<Int, Long> = loadState(context, addr).firedAts()
+    fun flowFor(context: Context, addr: String): Flow<List<Alarm>?> = changes.map { loadAlarms(context, addr) }.distinctUntilChanged()
+    internal fun stateFlowFor(context: Context, addr: String): Flow<AlarmState> = changes.map { loadState(context, addr) }.distinctUntilChanged()
 }

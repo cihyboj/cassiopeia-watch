@@ -52,4 +52,12 @@ class AlarmSyncStorageTest {
         assertEquals(stored.hasHourlyChime, result[0].hasHourlyChime)
         assertNull(result[0].name)
     }
+    @Test
+    fun `complete state codec preserves dates days consumption and dirty together`() {
+        val state = AlarmState(
+            listOf(AlarmSyncStorage.StoredAlarm(7, 0, true, false, "Wake", 123L, "2026-10-09")),
+            mapOf(0 to emptySet()), true,
+        )
+        assertEquals(state, AlarmSyncStorage.decode(AlarmSyncStorage.encode(state)))
+    }
 }
