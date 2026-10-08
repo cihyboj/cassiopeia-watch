@@ -1,6 +1,7 @@
 package com.beamburst.casswatch
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -14,7 +15,7 @@ data class BottomNavigationItem(
     val route: String = "",
 ) {
     @Composable
-    fun bottomNavigationItems(): List<BottomNavigationItem> {
+    fun bottomNavigationItems(showDebug: Boolean = false): List<BottomNavigationItem> {
 
         val baseItems = mutableListOf(
             BottomNavigationItem(
@@ -35,6 +36,16 @@ data class BottomNavigationItem(
                     label = stringResource(R.string.events),
                     icon = ImageVector.vectorResource(id = R.drawable.ic_event_black_24dp),
                     route = Screens.Events.route
+                )
+            )
+        }
+
+        if (BuildConfig.DEBUG && showDebug) {
+            baseItems.add(
+                BottomNavigationItem(
+                    label = stringResource(R.string.title_debug),
+                    icon = Icons.Filled.BugReport,
+                    route = Screens.Debug.route
                 )
             )
         }

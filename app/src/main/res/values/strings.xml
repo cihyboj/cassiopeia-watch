@@ -4,6 +4,7 @@
     <string name="title_alarms">Alarms</string>
     <string name="title_events">Events</string>
     <string name="title_settings">Settings</string>
+    <string name="title_debug" translatable="false">Debug</string>
     <string name="events">Events</string>
     <string name="alarms">Alarms</string>
     <string name="time">Time</string>
@@ -337,4 +338,148 @@
     <string name="timer_preset_20min">20 min</string>
     <string name="timer_preset_45min">45 min</string>
     <string name="timer_preset_60min">60 min</string>
+
+    <!-- BLE debug panel -->
+    <string name="ble_debug_alarm_1_off_07_00" translatable="false">Alarm 1 OFF 07:00</string>
+    <string name="ble_debug_alarm_1_on_07_00" translatable="false">Alarm 1 ON 07:00</string>
+    <string name="ble_debug_alarm_1_on_08_00" translatable="false">Alarm 1 ON 08:00</string>
+    <string name="ble_debug_alarm_1_on_09_00" translatable="false">Alarm 1 ON 09:00</string>
+    <string name="ble_debug_alarm_1_one_time_07_00" translatable="false">Alarm 1 one-time 07:00</string>
+    <string name="ble_debug_buzzer_start_alarm" translatable="false">Buzzer start alarm</string>
+    <string name="ble_debug_buzzer_stop_alarm" translatable="false">Buzzer stop alarm</string>
+    <string name="ble_debug_buzzer_start_timer" translatable="false">Buzzer start timer</string>
+    <string name="ble_debug_buzzer_stop_timer" translatable="false">Buzzer stop timer</string>
+    <string name="ble_debug_buzzer_start_auto_lap" translatable="false">Buzzer start auto-lap</string>
+    <string name="ble_debug_buzzer_stop_auto_lap" translatable="false">Buzzer stop auto-lap</string>
+    <string name="ble_debug_no_alert" translatable="false">No alert</string>
+    <string name="ble_debug_mild_alert" translatable="false">Mild alert</string>
+    <string name="ble_debug_high_alert" translatable="false">High alert</string>
+    <string name="ble_debug_timeout_3_min" translatable="false">Timeout 3 min</string>
+    <string name="ble_debug_timeout_5_min" translatable="false">Timeout 5 min</string>
+    <string name="ble_debug_timeout_10_min" translatable="false">Timeout 10 min</string>
+    <string name="ble_debug_timeout_60_min" translatable="false">Timeout 60 min</string>
+    <string name="ble_debug_timeout_90_min" translatable="false">Timeout 90 min</string>
+    <string name="ble_debug_timeout_120_min" translatable="false">Timeout 120 min</string>
+    <string name="ble_debug_new_alert_email" translatable="false">New alert email</string>
+    <string name="ble_debug_new_alert_call" translatable="false">New alert call</string>
+    <string name="ble_debug_new_alert_sms" translatable="false">New alert SMS</string>
+    <string name="ble_debug_new_alert_schedule" translatable="false">New alert schedule</string>
+    <string name="ble_debug_new_alert_sns" translatable="false">New alert SNS</string>
+    <string name="ble_debug_more_alert_test" translatable="false">More alert TEST</string>
+    <string name="ble_debug_more_alert_abcdef" translatable="false">More alert ABCDEF</string>
+    <string name="ble_debug_more_alert_clear" translatable="false">More alert clear</string>
+    <string name="ble_debug_long_alert_music" translatable="false">Long alert music</string>
+    <string name="ble_debug_long_alert_sns" translatable="false">Long alert SNS</string>
+    <string name="ble_debug_long_alert_email" translatable="false">Long alert email</string>
+    <string name="ble_debug_long_alert_schedule" translatable="false">Long alert schedule</string>
+    <string name="ble_debug_read_step_class" translatable="false">Read step class</string>
+    <string name="ble_debug_read_step_unit_0" translatable="false">Read step unit 0</string>
+    <string name="ble_debug_read_step_unit_1" translatable="false">Read step unit 1</string>
+    <string name="ble_debug_read_watch_condition" translatable="false">Read watch condition</string>
+    <string name="ble_debug_read_ble_settings" translatable="false">Read BLE settings</string>
+    <string name="ble_debug_read_notification_manager" translatable="false">Read notification manager</string>
+    <string name="ble_debug_read_custom_alert" translatable="false">Read custom alert</string>
+    <string name="ble_debug_read_notification_method" translatable="false">Read notification method</string>
+    <string name="ble_debug_read_timer" translatable="false">Read timer</string>
+    <string name="ble_debug_read_stopwatch" translatable="false">Read stopwatch</string>
+    <string name="ble_debug_read_version_info" translatable="false">Read version info</string>
+    <string name="ble_debug_read_module_id" translatable="false">Read module ID</string>
+    <string name="ble_debug_read_app_info" translatable="false">Read app info</string>
+    <string name="ble_debug_read_watch_name" translatable="false">Read watch name</string>
+    <string name="ble_debug_read_location_radio" translatable="false">Read location/radio</string>
+    <string name="ble_debug_generic" translatable="false">Generic</string>
+    <string name="ble_debug_message" translatable="false">Message</string>
+    <string name="ble_debug_email" translatable="false">Email</string>
+    <string name="ble_debug_calendar" translatable="false">Calendar</string>
+    <string name="ble_debug_phone_call" translatable="false">Phone call</string>
+    <string name="ble_debug_urgent_call" translatable="false">Urgent call</string>
+    <string name="ble_debug_email_sms" translatable="false">Email/SMS</string>
+    <string name="ble_debug_preview" translatable="false">Preview: %1$s</string>
+    <string name="ble_debug_invalid" translatable="false">(invalid)</string>
+    <string name="ble_debug_seconds" translatable="false">%1$ds</string>
+    <string name="ble_debug_last_command" translatable="false">%1$s (%2$s)</string>
+    <string name="ble_debug_ble_debug" translatable="false">BLE Debug</string>
+    <string name="ble_debug_alarm" translatable="false">Alarm</string>
+    <string name="ble_debug_buzzer" translatable="false">Buzzer</string>
+    <string name="ble_debug_phone_finder_immediate_alert" translatable="false">Phone finder / immediate alert</string>
+    <string name="ble_debug_ble_connection_timeout" translatable="false">BLE connection timeout</string>
+    <string name="ble_debug_step_counter_read_probes" translatable="false">Step counter read probes</string>
+    <string name="ble_debug_notification_config_read_probes" translatable="false">Notification config read probes</string>
+    <string name="ble_debug_feature_discovery_read_probes" translatable="false">Feature discovery read probes</string>
+    <string name="ble_debug_casio_alert_notification_probes" translatable="false">Casio alert notification probes</string>
+    <string name="ble_debug_connection_status" translatable="false">Connection status</string>
+    <string name="ble_debug_connected" translatable="false">Connected</string>
+    <string name="ble_debug_yes" translatable="false">yes</string>
+    <string name="ble_debug_no" translatable="false">no</string>
+    <string name="ble_debug_device" translatable="false">Device</string>
+    <string name="ble_debug_unknown" translatable="false">Unknown</string>
+    <string name="ble_debug_address" translatable="false">Address</string>
+    <string name="ble_debug_service_26eb000d" translatable="false">Service 26eb000d</string>
+    <string name="ble_debug_command_26eb002d" translatable="false">Command 26eb002d</string>
+    <string name="ble_debug_read_request_26eb002c" translatable="false">Read request 26eb002c</string>
+    <string name="ble_debug_notification_writer" translatable="false">Notification writer</string>
+    <string name="ble_debug_manual_command_sender" translatable="false">Manual command sender</string>
+    <string name="ble_debug_optional_label" translatable="false">Optional label</string>
+    <string name="ble_debug_hex_input" translatable="false">HEX input</string>
+    <string name="ble_debug_dry_run" translatable="false">Dry run</string>
+    <string name="ble_debug_clear_log" translatable="false">Clear log</string>
+    <string name="ble_debug_send" translatable="false">Send</string>
+    <string name="ble_debug_sends_raw_read_requests_to_26eb002c_watch_responses_or_errors_should_appear" translatable="false">Sends raw read requests to 26eb002c. Watch responses or errors should appear in the notify log.</string>
+    <string name="ble_debug_display_app_notification" translatable="false">Display / app notification</string>
+    <string name="ble_debug_uses_the_app_notification_encoder_and_notification_characteristic_not_a_gue" translatable="false">Uses the app notification encoder and notification characteristic, not a guessed raw payload.</string>
+    <string name="ble_debug_app_label" translatable="false">App label</string>
+    <string name="ble_debug_title" translatable="false">Title</string>
+    <string name="ble_debug_text" translatable="false">Text</string>
+    <string name="ble_debug_notification_experiments" translatable="false">Notification experiments</string>
+    <string name="ble_debug_select_a_class_then_add_a_payload_in_custom_class_sender" translatable="false">Select a class, then add a payload in Custom class sender.</string>
+    <string name="ble_debug_custom_class_sender" translatable="false">Custom class sender</string>
+    <string name="ble_debug_class" translatable="false">Class</string>
+    <string name="ble_debug_payload_hex" translatable="false">Payload HEX</string>
+    <string name="ble_debug_send_custom" translatable="false">Send custom</string>
+    <string name="ble_debug_repeat_last_command" translatable="false">Repeat last command</string>
+    <string name="ble_debug_no_command_sent_yet" translatable="false">No command sent yet.</string>
+    <string name="ble_debug_stop" translatable="false">Stop</string>
+    <string name="ble_debug_start" translatable="false">Start</string>
+    <string name="ble_debug_response_notify_log" translatable="false">Response / notify log</string>
+    <string name="ble_debug_copy" translatable="false">Copy</string>
+    <string name="ble_debug_clear" translatable="false">Clear</string>
+    <string name="ble_debug_display_notification" translatable="false">Display notification: %1$s</string>
+    <string name="ble_debug_default_app" translatable="false">Cassiopeia</string>
+    <string name="ble_debug_default_title" translatable="false">ABL-100 test</string>
+    <string name="ble_debug_default_text" translatable="false">Hello from BLE Debug</string>
+    <string name="ble_debug_manual_command" translatable="false">Manual command</string>
+    <string name="ble_debug_cassiopeia" translatable="false">Cassiopeia</string>
+    <string name="ble_debug_ble_debug_notification_test" translatable="false">BLE Debug notification test</string>
+    <string name="ble_debug_dry_run_only" translatable="false">Dry run only.</string>
+    <string name="ble_debug_not_connected" translatable="false">Not connected.</string>
+    <string name="ble_debug_notification_characteristic_is_not_available" translatable="false">Notification characteristic is not available.</string>
+    <string name="ble_debug_queued_app_notification_write" translatable="false">Queued app notification write.</string>
+    <string name="ble_debug_repeat" translatable="false">Repeat</string>
+    <string name="ble_debug_no_command_has_been_sent_yet" translatable="false">No command has been sent yet.</string>
+    <string name="ble_debug_invalid_hex_value" translatable="false">Invalid HEX value.</string>
+    <string name="ble_debug_connection" translatable="false">Connection</string>
+    <string name="ble_debug_watch_initialization_completed" translatable="false">Watch initialization completed.</string>
+    <string name="ble_debug_connection_setup_complete" translatable="false">Connection setup complete.</string>
+    <string name="ble_debug_notifications_enabled" translatable="false">Notifications enabled.</string>
+    <string name="ble_debug_disconnected" translatable="false">Disconnected.</string>
+    <string name="ble_debug_device_disappeared" translatable="false">Device disappeared.</string>
+    <string name="ble_debug_connection_failed" translatable="false">Connection failed.</string>
+    <string name="ble_debug_api_error" translatable="false">API error</string>
+    <string name="ble_debug_notify_26eb002d" translatable="false">Notify 26eb002d</string>
+    <string name="ble_debug_received" translatable="false">Received.</string>
+    <string name="ble_debug_notify_logger" translatable="false">Notify logger</string>
+    <string name="ble_debug_ok" translatable="false">OK</string>
+    <string name="ble_debug_error" translatable="false">Error</string>
+    <string name="ble_debug_notification_error" translatable="false">Notification error: %1$s</string>
+    <string name="ble_debug_custom_class_label" translatable="false">Custom class 0x%1$s</string>
+    <string name="ble_debug_repeat_label" translatable="false">Repeat: %1$s</string>
+    <string name="ble_debug_queued_write" translatable="false">Queued %1$s write to %2$s.</string>
+    <string name="ble_debug_write_error" translatable="false">Write error: %1$s</string>
+    <string name="ble_debug_unavailable" translatable="false">Unavailable: %1$s</string>
+    <string name="ble_debug_hex_required" translatable="false">HEX value is required.</string>
+    <string name="ble_debug_hex_odd_length" translatable="false">HEX value must have an even number of digits.</string>
+    <string name="ble_debug_hex_non_hex" translatable="false">HEX value contains non-hex characters.</string>
+    <string name="ble_debug_unlocked" translatable="false">BLE Debug unlocked</string>
+    <string name="ble_debug_already_unlocked" translatable="false">BLE Debug already unlocked</string>
+    <string name="ble_debug_unlock_remaining" translatable="false">%1$d taps to unlock BLE Debug</string>
 </resources>

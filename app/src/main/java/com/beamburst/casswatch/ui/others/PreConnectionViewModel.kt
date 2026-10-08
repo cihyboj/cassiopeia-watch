@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -68,7 +69,7 @@ constructor(
     private val subscriberId = "$EVENT_SUBSCRIBER_ID-${System.identityHashCode(this)}"
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val savedName = LocalDataStorage.get(appContext, KEY_LAST_DEVICE_NAME, noWatchString) ?: noWatchString
             _watchName.value = savedName
             loadPairedDevices()
@@ -174,8 +175,8 @@ constructor(
                 if (!address.isNullOrBlank()) {
                     val normalizedAddress = Utils.sanitizeMacAddress(address)
                     if (normalizedAddress.isBlank()) return@EventAction
-                    viewModelScope.launch {
-                        LocalDataStorage.put(appContext, KEY_LAST_DEVICE_ADDRESS, normalizedAddress)
+                    viewModelScope.launch(Dispatchers.IO) {
+                        LocalDataStorage.putAsync(appContext, KEY_LAST_DEVICE_ADDRESS, normalizedAddress)
                         loadPairedDevices()
                     }
                 }
@@ -197,7 +198,7 @@ constructor(
     }
 
     fun setDevice(address: String, name: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val normalizedAddress = Utils.sanitizeMacAddress(address)
                 if (normalizedAddress.isBlank()) {
@@ -211,16 +212,16 @@ constructor(
                 )
                 Timber.i("Updating local storage: $logDetails")
 
-                LocalDataStorage.put(appContext, KEY_LAST_DEVICE_ADDRESS, normalizedAddress)
+                LocalDataStorage.putAsync(appContext, KEY_LAST_DEVICE_ADDRESS, normalizedAddress)
                 LocalDataStorage.addDeviceAddress(appContext, normalizedAddress)
-                LocalDataStorage.put(appContext, KEY_LAST_DEVICE_NAME, name)
+                LocalDataStorage.putAsync(appContext, KEY_LAST_DEVICE_NAME, name)
                 LocalDataStorage.setDeviceName(appContext, normalizedAddress, name)
 
                 _watchName.value = name
 
                 // Re-sync all associations so CDM presence observers and the BLE
                 // fallback scan are rebuilt for the full, current device list.
-                deviceAssociationManager?.syncAssociations()
+                deviceAssociationManager.syncAssociations()
 
                 loadPairedDevices()
 
@@ -233,7 +234,7 @@ constructor(
 
     @SuppressLint("MissingPermission")
     fun disassociate(context: Context, address: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val normalizedAddress = Utils.sanitizeMacAddress(address)
             try {
                 if (normalizedAddress.isBlank()) {
@@ -258,8 +259,8 @@ constructor(
                 // 3. Clear last device if matching
                 val lastAddress = LocalDataStorage.get(context, KEY_LAST_DEVICE_ADDRESS, "")
                 if (normalizedAddress.equals(lastAddress, ignoreCase = true)) {
-                    LocalDataStorage.put(context, KEY_LAST_DEVICE_ADDRESS, "")
-                    LocalDataStorage.put(context, KEY_LAST_DEVICE_NAME, noWatchString)
+                    LocalDataStorage.putAsync(context, KEY_LAST_DEVICE_ADDRESS, "")
+                    LocalDataStorage.putAsync(context, KEY_LAST_DEVICE_NAME, noWatchString)
                     _watchName.value = noWatchString
                 }
 

@@ -290,7 +290,7 @@ constructor(
         }
     }
 
-    private fun markCurrentSettingsDirty() {
+    private suspend fun markCurrentSettingsDirty() {
         val addr = watchSelector.currentAddress() ?: return
         WatchSettingsCache.save(appContext, addr, buildApiSettings())
     }

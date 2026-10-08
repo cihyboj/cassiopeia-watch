@@ -6,8 +6,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.GsonBuilder
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -220,13 +218,20 @@ object LocalDataStorage {
         address: String,
         seed: Boolean?,
     ): Boolean {
-        val current = getAutoSyncOnReconnect(context, address)
-        if (current != null) {
-            return current
+        val key = stringPreferencesKey(autoSyncOnReconnectKey(address))
+        var resolved = resolveAutoSyncOnReconnect(stored = null, seed = seed)
+        mutex.withLock {
+            context.dataStore.edit { preferences ->
+                resolved = resolveAutoSyncOnReconnect(
+                    stored = preferences[key]?.toBooleanStrictOrNull(),
+                    seed = seed,
+                )
+                if (preferences[key] == null) {
+                    preferences[key] = resolved.toString()
+                }
+            }
         }
-        val initial = seed ?: true
-        setAutoSyncOnReconnect(context, address, initial)
-        return initial
+        return resolved
     }
 
     suspend fun setNtpOffsetCache(context: Context, cache: NtpOffsetCache) {
@@ -278,6 +283,9 @@ object LocalDataStorage {
 
     fun autoSyncOnReconnectKey(address: String): String =
         "AutoSyncOnReconnect_${normalizeDeviceAddress(address)}"
+
+    internal fun resolveAutoSyncOnReconnect(stored: Boolean?, seed: Boolean?): Boolean =
+        stored ?: seed ?: true
 
     fun getDeviceAddresses(context: Context): List<String> {
         val addresses = get(context, "DeviceAddresses", "") ?: ""

@@ -56,6 +56,8 @@ class WeeklyAlarmScheduler @Inject constructor(
     suspend fun applyTodaySchedule() {
         WatchSyncActivity.track {
         val addr = watchSelector.currentAddress() ?: return
+        WatchSettingsCache.reconcileOnConnect(context, addr, api)
+
         val autoTimeSyncEnabled = LocalDataStorage.getOrInitializeAutoSyncOnReconnect(
             context = context,
             address = addr,

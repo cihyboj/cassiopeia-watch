@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.MultiWatchMigrator
+import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.data.local.WatchConnectionTracker
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.pairing.CompanionDevicePresenceMonitor
@@ -92,6 +93,9 @@ class GShockApplication : Application(), IScreenManager {
     @Inject
     lateinit var connectionTracker: WatchConnectionTracker
 
+    @Inject
+    lateinit var connectionSession: WatchConnectionSession
+
     fun init() {
         Timber.i("Initializing GShockApplication")
         weeklyAlarmScheduler.ensureInitialized()
@@ -122,6 +126,7 @@ class GShockApplication : Application(), IScreenManager {
                 watchTimeWriter = watchTimeWriter,
                 watchSelector = watchSelector,
                 connectionTracker = connectionTracker,
+                connectionSession = connectionSession,
             )
         eventHandler.setupEventSubscription()
     }

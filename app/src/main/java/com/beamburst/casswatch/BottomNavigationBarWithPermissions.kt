@@ -16,8 +16,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -38,13 +40,22 @@ import com.beamburst.casswatch.di.ApplicationContextEntryPoint
 import com.beamburst.casswatch.services.InactivityHandler
 import com.beamburst.casswatch.ui.alarms.AlarmsScreen
 import com.beamburst.casswatch.ui.common.AppSnackbar
+import com.beamburst.casswatch.ui.debug.BleDebugScreen
 import com.beamburst.casswatch.ui.events.EventsScreen
 import com.beamburst.casswatch.ui.history.SyncHistoryScreen
 import com.beamburst.casswatch.ui.settings.SettingsScreen
 import com.beamburst.casswatch.ui.time.TimeScreen
 import com.beamburst.casswatch.utils.AppUsageState
 import com.beamburst.casswatch.utils.WatchSyncActivity
+import com.beamburst.casswatch.utils.LocalDataStorage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.content.Context
 import kotlin.time.Duration.Companion.seconds
+
+private const val DEBUG_TAB_UNLOCKED_KEY = "ble_debug_tab_unlocked"
+private const val DEBUG_TAB_UNLOCK_TAPS = 7
 
 @Composable
 fun BottomNavigationBarWithPermissions(
@@ -61,6 +72,16 @@ fun BottomNavigationBarWithPermissions(
             ApplicationContextEntryPoint::class.java
         ).getApplicationContext()
     }
+    var debugUnlocked by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(appContext) {
+        if (BuildConfig.DEBUG) {
+            debugUnlocked = withContext(Dispatchers.IO) {
+                LocalDataStorage.get(appContext, DEBUG_TAB_UNLOCKED_KEY, "false") == "true"
+            }
+        }
+    }
+    var debugUnlockTapCount by remember { mutableIntStateOf(0) }
 
     val inactivityHandler = remember {
         InactivityHandler(
@@ -119,7 +140,7 @@ fun BottomNavigationBarWithPermissions(
                 containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp
             ) {
-                BottomNavigationItem().bottomNavigationItems()
+                BottomNavigationItem().bottomNavigationItems(showDebug = debugUnlocked)
                     .forEachIndexed { _, navigationItem ->
                         NavigationBarItem(
                             selected = navigationItem.route == currentDestination?.route?.substringBefore("?"),
@@ -188,6 +209,11 @@ fun BottomNavigationBarWithPermissions(
                     )
                 )
             }
+            if (BuildConfig.DEBUG && debugUnlocked) {
+                composable(Screens.Debug.route) {
+                    BleDebugScreen()
+                }
+            }
             composable(Screens.Settings.route) {
                 SettingsScreen(
                     onNavigateToHistory = {
@@ -195,7 +221,20 @@ fun BottomNavigationBarWithPermissions(
                             launchSingleTop = true
                             restoreState = false
                         }
-                    }
+                    },
+                    onDebugHeaderTap = debugHeaderTapHandler(
+                        context = appContext,
+                        debugUnlocked = debugUnlocked,
+                        debugUnlockTapCount = debugUnlockTapCount,
+                        onTapCountChange = { debugUnlockTapCount = it },
+                        onUnlocked = {
+                            debugUnlocked = true
+                            scope.launch {
+                                LocalDataStorage.putAsync(appContext, DEBUG_TAB_UNLOCKED_KEY, "true")
+                            }
+                            AppSnackbar(appContext.getString(R.string.ble_debug_unlocked))
+                        },
+                    ),
                 )
             }
             composable(
@@ -215,11 +254,48 @@ fun BottomNavigationBarWithPermissions(
                             launchSingleTop = true
                             restoreState = false
                         }
-                    }
+                    },
+                    onDebugHeaderTap = debugHeaderTapHandler(
+                        context = appContext,
+                        debugUnlocked = debugUnlocked,
+                        debugUnlockTapCount = debugUnlockTapCount,
+                        onTapCountChange = { debugUnlockTapCount = it },
+                        onUnlocked = {
+                            debugUnlocked = true
+                            scope.launch {
+                                LocalDataStorage.putAsync(appContext, DEBUG_TAB_UNLOCKED_KEY, "true")
+                            }
+                            AppSnackbar(appContext.getString(R.string.ble_debug_unlocked))
+                        },
+                    ),
                 )
             }
             composable(Screens.SyncHistory.route) {
                 SyncHistoryScreen(onBack = { navController.popBackStack() })
+            }
+        }
+    }
+}
+
+private fun debugHeaderTapHandler(
+    context: Context,
+    debugUnlocked: Boolean,
+    debugUnlockTapCount: Int,
+    onTapCountChange: (Int) -> Unit,
+    onUnlocked: () -> Unit,
+): (() -> Unit)? {
+    if (!BuildConfig.DEBUG) return null
+    return {
+        if (debugUnlocked) {
+            AppSnackbar(context.getString(R.string.ble_debug_already_unlocked))
+        } else {
+            val newCount = debugUnlockTapCount + 1
+            onTapCountChange(newCount)
+            val remaining = DEBUG_TAB_UNLOCK_TAPS - newCount
+            if (remaining <= 0) {
+                onUnlocked()
+            } else if (remaining <= 3) {
+                AppSnackbar(context.getString(R.string.ble_debug_unlock_remaining, remaining))
             }
         }
     }

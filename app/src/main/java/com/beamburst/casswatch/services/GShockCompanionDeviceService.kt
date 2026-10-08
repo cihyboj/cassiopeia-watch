@@ -65,7 +65,7 @@ class GShockCompanionDeviceService : CompanionDeviceService() {
     }
 
     @SuppressLint("NewApi")
-    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresApi(36)
     override fun onDevicePresenceEvent(event: DevicePresenceEvent) {
         // Deliberately NOT calling super: the platform default forwards BLE_APPEARED /
         // BLE_DISAPPEARED to the AssociationInfo overloads above, which would dispatch

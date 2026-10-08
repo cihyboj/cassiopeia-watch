@@ -1,10 +1,8 @@
 package com.beamburst.casswatch.pairing
 
-import android.content.Context
-import com.beamburst.casswatch.data.repository.GShockRepository
-import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.data.local.WatchConnectionSession
+import org.avmedia.gshockapi.IGShockAPI
 import com.beamburst.casswatch.utils.Utils
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
@@ -20,8 +18,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class WatchConnectCoordinator @Inject constructor(
-    private val repository: GShockRepository,
-    @param:ApplicationContext private val appContext: Context,
+    private val repository: IGShockAPI,
+    private val session: WatchConnectionSession,
 ) {
     companion object {
         const val DEFAULT_TIMEOUT_MS = 30_000L
@@ -48,9 +46,7 @@ class WatchConnectCoordinator @Inject constructor(
     ): Boolean = connectMutex.withLock {
         val requested = Utils.sanitizeMacAddress(address)
         if (repository.isConnected()) {
-            val current = Utils.sanitizeMacAddress(
-                LocalDataStorage.get(appContext, "LastDeviceAddress", "").orEmpty()
-            )
+            val current = session.address.orEmpty()
             if (requested.isNotBlank() && current.equals(requested, ignoreCase = true)) {
                 Timber.i("Already connected to %s; skipping connect", requested)
                 return@withLock true
@@ -69,9 +65,21 @@ class WatchConnectCoordinator @Inject constructor(
             runCatching { repository.disconnect() }
                 .onFailure { Timber.w(it, "Disconnect before takeover failed") }
         }
+        // No live connection from here on: drop any identity left by a Disconnect event that
+        // was missed or not yet delivered, so the wait below sees this attempt's event only.
+        session.disconnected()
         val result = withTimeoutOrNull(timeoutMs) {
             repository.waitForConnection(address)
-            true
+            if (!repository.isConnected()) return@withTimeoutOrNull false
+            // A timed-out attempt can complete late while a different address is being
+            // requested. Only the connection event identifies the watch that actually
+            // connected; never label it with this request's address.
+            val current = session.awaitAddress()
+            val matches = repository.isConnected() && current.equals(requested, ignoreCase = true)
+            if (!matches) {
+                Timber.w("Connection completed for %s while %s was requested", current, requested)
+            }
+            matches
         }
         if (result == null) {
             Timber.w("Connection attempt to %s timed out after %d ms", address, timeoutMs)

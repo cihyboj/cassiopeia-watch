@@ -6,14 +6,14 @@ import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.provider.Settings
 import android.app.AlertDialog
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncTrigger
+import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.data.local.WatchConnectionTracker
+import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.session.WatchSessionUiBridge
 import com.beamburst.casswatch.services.NotificationMonitorService
@@ -40,6 +40,7 @@ class MainEventHandler(
     private val watchTimeWriter: WatchTimeWriter,
     private val watchSelector: CurrentWatchSelector,
     private val connectionTracker: WatchConnectionTracker,
+    private val connectionSession: WatchConnectionSession,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "MainEventHandler"
@@ -51,7 +52,7 @@ class MainEventHandler(
 
     fun setupEventSubscription() {
         val eventActions = arrayOf(
-            EventAction("ConnectionSetupComplete") { safely("ConnectionSetupComplete") { logConnection(SyncTrigger.CONNECTION_CONNECTED, true) } },
+            EventAction("ConnectionSetupComplete") { safely("ConnectionSetupComplete") { handleConnectionSetup() } },
             EventAction("WatchInitializationCompleted") { safely("WatchInitializationCompleted") { handleWatchInitialization() } },
             EventAction("ConnectionFailed") { safely("ConnectionFailed") { handleConnectionFailure() } },
             EventAction("Error") { safely("Error") { handleError() } },
@@ -69,6 +70,13 @@ class MainEventHandler(
      * never take down the process or the event pipeline for other subscribers. */
     private inline fun safely(name: String, block: () -> Unit) {
         runCatching(block).onFailure { Timber.e(it, "Event handler %s failed", name) }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun handleConnectionSetup() {
+        val device = ProgressEvents.getPayload("ConnectionSetupComplete") as? BluetoothDevice
+        device?.address?.let(connectionSession::established)
+        logConnection(SyncTrigger.CONNECTION_CONNECTED, true)
     }
 
     private fun handleWatchInitialization() {
@@ -92,23 +100,25 @@ class MainEventHandler(
      */
     private fun dispatchCacheWarm() {
         val address = watchSelector.currentAddress() ?: return
-        // If the user has Auto-sync-on-reconnect enabled for this watch (the default when
-        // unset), WeeklyAlarmScheduler will issue a (logged, user-visible) time write moments
-        // later that also warms the cache. Running a second concurrent setTime over the same
-        // BLE link wastes work and can confuse the watch firmware (inconsistent "OK" display,
-        // slower first call).
-        if (LocalDataStorage.getAutoSyncOnReconnect(context, address) != false) {
-            return
-        }
-        // AutoSyncCoordinator.runChain() handles prime+write for firmware-initiated syncs
-        if (repository.isAutoTimeStarted()) return
-        val generation = connectionTracker.connectionGeneration(address)
-        val key = "$address@$generation"
-        synchronized(warmedLock) {
-            if (!warmedDispatchedFor.add(key)) return
-        }
         AppScopes.io.launch {
             runCatching {
+                // Reconnect auto-sync already primes the cache. Dirty settings must be
+                // reconciled before time I/O; preference and cache reads stay off main.
+                val watchSettings = WatchSettingsCache.load(context, address)
+                val autoSyncOnReconnect = LocalDataStorage.resolveAutoSyncOnReconnect(
+                    stored = LocalDataStorage.getAutoSyncOnReconnect(context, address),
+                    seed = watchSettings?.timeAdjustment,
+                )
+                if (autoSyncOnReconnect || WatchSettingsCache.isDirty(context, address)) {
+                    return@runCatching
+                }
+                // AutoSyncCoordinator handles firmware-initiated prime+write chains.
+                if (repository.isAutoTimeStarted()) return@runCatching
+                val generation = connectionTracker.connectionGeneration(address)
+                val key = "$address@$generation"
+                synchronized(warmedLock) {
+                    if (!warmedDispatchedFor.add(key)) return@runCatching
+                }
                 watchTimeWriter.primeCache(repository)
             }.onFailure { Timber.w(it, "Cache-warm dispatch failed") }
         }
@@ -150,7 +160,7 @@ class MainEventHandler(
     }
 
     private fun handleError() {
-        val message = ProgressEvents.getPayload("Error") as String?
+        val message = ProgressEvents.getPayload("Error") as? String
             ?: context.getString(
                 R.string.apierror_ensure_the_official_g_shock_app_is_not_running
             )
@@ -161,8 +171,9 @@ class MainEventHandler(
 
     @SuppressLint("MissingPermission") // BLUETOOTH_CONNECT is declared in the manifest
     private fun handleDisconnect() {
-        sessionUiBridge.emitDisconnected()
         val disconnectedDevice = ProgressEvents.getPayload("Disconnect") as? BluetoothDevice
+        connectionSession.disconnected(disconnectedDevice?.address)
+        sessionUiBridge.emitDisconnected()
         disconnectedDevice?.let { device ->
             repository.teardownConnection(device)
         }
