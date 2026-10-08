@@ -149,10 +149,7 @@
     <string name="sorry_your_device_does_not_support_bluetooth_exiting">申し訳ありませんが、このデバイスはBluetoothをサポートしていません。終了します…</string>
     <string name="permission_required_to_turn_on_bluetooth">Bluetoothをオンにするには権限が必要です。</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">Bluetoothをオンにする権限がありません。手動でオンにしてください。</string>
-    <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">権限が永続的に拒否されました。アプリ設定で有効にしてください。</string>
     <string name="timer_set">タイマー設定済み</string>
-    <string name="press_and_hold_for_3_seconds">3秒間\n長押し</string>
-    <string name="short_press_to_run_actions">押して\n実行</string>
 
     <string name="app_is_running">Cassiopeia Watch が実行中です</string>
     <string name="app_is_not_running">Cassiopeia Watch は実行されていません</string>
@@ -161,7 +158,6 @@
     <string name="cover_hold_to_unlock">長押ししてロック解除</string>
     <string name="cover_connected">接続済み</string>
     <!-- "時間" means "hours"; can be abbreviated as "h" if preferred -->
-    <string name="find_phone_instruction">アクションを実行するには、時計で「携帯電話を探す」機能を開始してください</string>
     <string name="press_and_hold_connection_button_to_continue">ペアリングするには、時計の接続ボタン（通常は左下）を3秒間押し続けてください。</string>
     <string name="looking_for_a_device">デバイスを探しています。</string>
     <string name="add_watch">時計を追加</string>

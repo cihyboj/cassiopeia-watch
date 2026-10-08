@@ -22,6 +22,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.beamburst.casswatch.R
@@ -40,6 +41,7 @@ import java.util.Locale
 @Composable
 fun BackupSection(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val scope = rememberCoroutineScope()
     // rememberSaveable so the dialog survives the activity restart that the SAF picker can
     // trigger on some devices (the picker briefly puts the host activity into the background
@@ -53,11 +55,11 @@ fun BackupSection(modifier: Modifier = Modifier) {
         scope.launch {
             runCatching { BackupExporter.export(context, uri) }
                 .onSuccess { count ->
-                    AppSnackbar(context.getString(R.string.backup_export_success, count))
+                    AppSnackbar(resources.getString(R.string.backup_export_success, count))
                 }
                 .onFailure { error ->
                     AppSnackbar(
-                        context.getString(
+                        resources.getString(
                             R.string.backup_export_failed,
                             error.message ?: error.javaClass.simpleName,
                         ),
@@ -79,13 +81,13 @@ fun BackupSection(modifier: Modifier = Modifier) {
                     importSuccessCount = result.entryCount
                 }
                 is ImportResult.Malformed ->
-                    AppSnackbar(context.getString(R.string.backup_import_malformed, result.message))
+                    AppSnackbar(resources.getString(R.string.backup_import_malformed, result.message))
                 is ImportResult.UnsupportedVersion ->
                     AppSnackbar(
-                        context.getString(R.string.backup_import_version_mismatch, result.found),
+                        resources.getString(R.string.backup_import_version_mismatch, result.found),
                     )
                 is ImportResult.IoError ->
-                    AppSnackbar(context.getString(R.string.backup_import_failed, result.message))
+                    AppSnackbar(resources.getString(R.string.backup_import_failed, result.message))
             }
         }
     }

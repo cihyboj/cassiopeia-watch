@@ -143,10 +143,7 @@
     <string name="sorry_your_device_does_not_support_bluetooth_exiting">Извините, ваше устройство не поддерживает Bluetooth. Закрытие…</string>
     <string name="permission_required_to_turn_on_bluetooth">Требуется разрешение для включения Bluetooth.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">У вас нет разрешений для включения Bluetooth. Пожалуйста, включите его вручную.</string>
-    <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Разрешения навсегда отклонены. Пожалуйста, включите их в настройках приложения.</string>
     <string name="timer_set">Таймер установлен</string>
-    <string name="press_and_hold_for_3_seconds">Удерживать\n3 сек</string>
-    <string name="short_press_to_run_actions">Нажать для\nдействий</string>
     <string name="app_is_running">Cassiopeia Watch запущен</string>
     <string name="app_is_not_running">Cassiopeia Watch не запущен</string>
     <string name="preventing_the_app_from_closing">Предотвращение закрытия приложения</string>
@@ -154,7 +151,6 @@
     <string name="cover_hold_to_unlock">Удерживайте для разблокировки</string>
     <string name="cover_connected">Подключено</string>
     <!-- "ч" = "час" (hour) -->
-    <string name="find_phone_instruction">Чтобы выполнить действия, запустите функцию «Найти телефон» на часах</string>
     <string name="press_and_hold_connection_button_to_continue">Нажмите и удерживайте кнопку подключения (обычно НИЖНЯЯ ЛЕВАЯ) на часах в течение 3 секунд для сопряжения.</string>
     <string name="looking_for_a_device">Поиск устройства.</string>
     <string name="add_watch">Добавить часы</string>

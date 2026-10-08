@@ -144,10 +144,7 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="sorry_your_device_does_not_support_bluetooth_exiting">Entschuldigung, Ihr Gerät unterstützt Bluetooth nicht. Wird beendet…</string>
     <string name="permission_required_to_turn_on_bluetooth">Berechtigung erforderlich, um Bluetooth zu aktivieren.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">Sie haben keine Berechtigung, Bluetooth zu aktivieren. Bitte aktivieren Sie es manuell.</string>
-    <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Berechtigungen sind dauerhaft abgelehnt. Bitte aktivieren Sie sie in den App-Einstellungen.</string>
     <string name="timer_set">Timer eingestellt</string>
-    <string name="press_and_hold_for_3_seconds">Halte\n3 Sek</string>
-    <string name="short_press_to_run_actions">Drücken für\nAktionen</string>
 
     <string name="app_is_running">Cassiopeia Watch wird ausgeführt</string>
     <string name="app_is_not_running">Cassiopeia Watch läuft nicht.</string>
@@ -156,7 +153,6 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="cover_hold_to_unlock">Zum Entsperren halten</string>
     <string name="cover_connected">Verbunden</string>
     <!-- "h" as in hours = "Stunden", abbreviated as "Std" -->
-    <string name="find_phone_instruction">Um Aktionen auszuführen, starten Sie die Funktion „Telefon finden“ auf der Uhr</string>
     <string name="press_and_hold_connection_button_to_continue">Halten Sie die Verbindungstaste (normalerweise UNTEN LINKS) an Ihrer Uhr 3 Sekunden lang gedrückt, um sie zu koppeln.</string>
     <string name="looking_for_a_device">Suche nach einem Gerät.</string>
     <string name="add_watch">Uhr hinzufügen</string>

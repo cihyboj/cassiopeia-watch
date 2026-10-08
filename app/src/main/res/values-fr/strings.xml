@@ -152,10 +152,7 @@ si votre montre est en avance de 2,5 secondes par rapport à l\'heure réelle, d
     <string name="sorry_your_device_does_not_support_bluetooth_exiting">Désolé, votre appareil ne prend pas en charge le Bluetooth. Fermeture…</string>
     <string name="permission_required_to_turn_on_bluetooth">Permission requise pour activer le Bluetooth.</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">Vous n\'avez pas de permission pour activer le Bluetooth. Veuillez l\'activer manuellement.</string>
-    <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Les permissions sont définitivement refusées. Veuillez les activer dans les paramètres de l\'application.</string>
     <string name="timer_set">Minuteur réglé</string>
-    <string name="press_and_hold_for_3_seconds">Maintenir\n3 sec</string>
-    <string name="short_press_to_run_actions">Appuyer pour\nactions</string>
 
     <string name="app_is_running">Cassiopeia Watch est en cours d’exécution</string>
     <string name="app_is_not_running">Cassiopeia Watch n’est pas en cours d’exécution</string>
@@ -165,7 +162,6 @@ si votre montre est en avance de 2,5 secondes par rapport à l\'heure réelle, d
     <string name="cover_connected">Connecté</string>
 
     <!-- "h" is standard for "heure" -->
-    <string name="find_phone_instruction">Pour exécuter des actions, lancez la fonction «Rechercher le téléphone» sur la montre</string>
     <string name="press_and_hold_connection_button_to_continue">Maintenez enfoncé le bouton de CONNEXION (généralement en BAS À GAUCHE) de votre montre pendant 3 secondes pour effectuer le couplage.</string>
     <string name="looking_for_a_device">Recherche d\'un appareil.</string>
     <string name="add_watch">Ajouter une montre</string>

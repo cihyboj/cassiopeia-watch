@@ -199,10 +199,7 @@
 	<string name="sorry_your_device_does_not_support_bluetooth_exiting">Przepraszamy, twoje urządzenie nie obsługuje Bluetooth. Wychodzę…</string>
     <string name="permission_required_to_turn_on_bluetooth">Wymagane uprawnienia Bluetooth</string>
     <string name="you_have_no_permissions_to_turn_on_bluetooth_please_turn_it_on_manually">Brak uprawnień do włączenia Bluetooth. Włącz Bluetooth ręcznie.</string>
-    <string name="permissions_are_permanently_denied_please_enable_them_in_the_app_settings">Uprawnienia są trwale odrzucone. Proszę je włącz w ustawieniach aplikacji.</string>
     <string name="timer_set">Timer ustawiony</string>
-    <string name="press_and_hold_for_3_seconds">Przytrzymaj\n3 sekundy</string>
-    <string name="short_press_to_run_actions">Krótkie naciśnięcie\naby uruchomić\nAkcje</string>
     <string name="app_is_running">Cassiopeia Watch jest uruchomiony</string>
     <string name="preventing_the_app_from_closing">Zapobieganie zamknięciu aplikacji</string>
     <string name="app_is_not_running">Cassiopeia Watch nie jest uruchomiony.</string>
@@ -223,8 +220,6 @@
     <string name="exact_alarm_dialog_body">Jeśli zegarek nie jest połączony, gdy alarm powinien dzwonić, telefon może go wysłać przez domyślną aplikację zegarka. Ta funkcja wymaga uprawnień do zaplanowania dokładnych alarmów.</string>
     <string name="exact_alarm_dialog_settings">Otwórz ustawienia</string>
     <string name="exact_alarm_dialog_not_now">Nie teraz</string>
-
-    <string name="find_phone_instruction">Aby uruchomić akcje, uruchom funkcję "Znajdź telefon" na zegarku</string>	
     <string name="press_and_hold_connection_button_to_continue">Przytrzymaj przycisk połączenia (zwykle lewy dolny) na zegarku 3 sekundy, aby połączyć.</string>
 	<string name="looking_for_a_device">Szukanie urządzenia.</string>
     <string name="add_watch">Dodaj zegarek</string>
