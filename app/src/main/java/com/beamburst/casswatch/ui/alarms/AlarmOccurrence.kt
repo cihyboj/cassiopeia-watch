@@ -58,7 +58,10 @@ internal fun reconcileAlarmState(state: AlarmState, clock: Clock, zone: ZoneId):
     val payloads = state.watchPayloads.filterValues {
         it.zoneId == zone.id && it.utcOffsetSeconds == zone.rules.getOffset(clock.instant()).totalSeconds
     }
-    return state.copy(alarms = alarms, dirty = state.dirty || alarms != state.alarms, watchPayloads = payloads,
+    val interrupted = state.writePending?.deadline?.let { it <= clock.millis() } == true
+    return state.copy(alarms = alarms, dirty = state.dirty || alarms != state.alarms || interrupted,
+        writePending = state.writePending.takeUnless { interrupted },
+        watchPayloads = if (interrupted) emptyMap() else payloads,
         clockNeedsSync = state.clockNeedsSync || payloads.size != state.watchPayloads.size)
 }
 

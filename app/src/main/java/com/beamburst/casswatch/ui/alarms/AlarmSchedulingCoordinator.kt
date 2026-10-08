@@ -22,6 +22,8 @@ import javax.inject.Singleton
 
 interface AlarmSchedulingCoordinator {
     val unavailable: StateFlow<Set<AlarmKey>>
+    suspend fun beginWrite(address: String, pending: AlarmWritePending)
+    suspend fun finishWrite(address: String, pending: AlarmWritePending, transform: (AlarmState) -> AlarmState)
     suspend fun reconcile(address: String)
     suspend fun reconcileAll()
     suspend fun cancelWatch(address: String)
@@ -46,6 +48,7 @@ internal interface AlarmPersistence {
 }
 
 internal interface AlarmScheduleBackend {
+    fun recovery(address: String, instant: Long) = Unit
     fun cancel(key: AlarmKey)
     fun cancelFallback(key: AlarmKey)
     fun cancelLegacy(slot: Int)
@@ -79,6 +82,14 @@ internal class PersistedAlarmSchedulingCoordinator(
         persistence.addresses().forEach { reconcileLocked(it) }
         // A crash anywhere above leaves the migration retryable; cancellation and rebuilding are idempotent.
         persistence.finishMigration()
+    }
+
+    override suspend fun beginWrite(address: String, pending: AlarmWritePending) {
+        update(address) { it.copy(writePending = pending) }
+    }
+
+    override suspend fun finishWrite(address: String, pending: AlarmWritePending, transform: (AlarmState) -> AlarmState) {
+        update(address) { if (it.writePending == pending) transform(it).copy(writePending = null) else it }
     }
 
     override suspend fun reconcile(address: String) = serialized {
@@ -129,6 +140,10 @@ internal class PersistedAlarmSchedulingCoordinator(
         val addresses = persistence.addresses()
         if (key.normalizedAddress !in addresses) return@serialized false
         val state = persistence.load(key.normalizedAddress)
+        if (state.writePending != null) {
+            reconcileLocked(key.normalizedAddress)
+            return@serialized false
+        }
         if (!validFallbackCallback(key, addresses, state, instant, hash, clock, zone())) {
             // Late, duplicate and obsolete broadcasts still advance recurring schedules.
             reconcileLocked(key.normalizedAddress)
@@ -177,6 +192,7 @@ internal class PersistedAlarmSchedulingCoordinator(
         val old = persistence.load(key.normalizedAddress)
         val state = reconcileAlarmState(old, clock, zone())
         if (old != state) persistence.save(key.normalizedAddress, state)
+        state.writePending?.let { backend.recovery(key.normalizedAddress, it.deadline) }
         val unavailable = unavailableKeys.value.filterNot { it.normalizedAddress == key.normalizedAddress }.toMutableSet()
         state.alarms.forEachIndexed { slot, alarm ->
             val alarmKey = key.copy(slot = slot)
@@ -184,7 +200,7 @@ internal class PersistedAlarmSchedulingCoordinator(
             backend.expiry(alarmKey, if (days.isEmpty() && alarm.enabled && alarm.firedAt == null)
                 alarm.occurrence()?.resolveInstant(zone())?.toEpochMilli() else null)
             val instant = nextAlarmOccurrence(alarm, days, clock, zone())?.toEpochMilli()
-            if (instant == null || alarm.fallbackAttemptAt == instant ||
+            if (state.writePending != null || instant == null || alarm.fallbackAttemptAt == instant ||
                 (alarm.fallbackStatus == "failed" && alarm.fallbackStatusAt == instant) || watchHasOccurrence(alarmKey, alarm, instant, state.confirmedPayloads(), clock.millis(), zone())) {
                 backend.cancelFallback(alarmKey)
             } else if (backend.schedule(alarmKey, alarm, instant) == FallbackAvailability.UNAVAILABLE) {

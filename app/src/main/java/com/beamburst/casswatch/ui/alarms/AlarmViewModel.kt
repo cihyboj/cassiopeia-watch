@@ -542,7 +542,7 @@ class AlarmViewModel @Inject constructor(
                 val payload = if (WatchInfo.chimeInSettings) scheduled else AlarmSchedulePlanner.mirrorChime(scheduled, target)
                 val result = runCatching {
                     watch.setScratchpadData(alarmNameStorage.getBuffer().copyOf(), alarmNameStorage.getStorageOffset())
-                    payloadWriter.write(ready, payload, snapshot, SyncTrigger.MANUAL_SEND_ALARMS, target, confirm) { actual ->
+                    payloadWriter.write(ready, payload, snapshot, SyncTrigger.MANUAL_SEND_ALARMS, target, confirm, { watch.getAlarms() }) { actual ->
                         watch.setAlarms(ArrayList(actual))
                     }
                     if (WatchInfo.chimeInSettings) {

@@ -28,6 +28,7 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
         const val EXTRA_EXPECTED_HASH = "expected_hash"
         const val EXTRA_FIRE_INSTANT = "fire_instant"
         const val EXTRA_DEVICE_ADDRESS = "device_address"
+        const val ACTION_RECONCILE = "com.beamburst.casswatch.RECONCILE_ALARMS"
         const val ACTION_EXPIRE = "com.beamburst.casswatch.EXPIRE_ALARM"
     }
 
@@ -39,8 +40,9 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val key = AlarmKey.from(intent.getStringExtra(EXTRA_DEVICE_ADDRESS), intent.getIntExtra(EXTRA_ALARM_INDEX, -1)) ?: return
-        val expiry = intent.action == ACTION_EXPIRE
-        if (intent.data?.toString() != if (expiry) "${key.uri}/expiry" else key.uri) return
+        val reconcile = intent.action == ACTION_RECONCILE
+        val expiry = intent.action == ACTION_EXPIRE || reconcile
+        if (intent.data?.toString() != if (reconcile) "${key.uri}/reconcile" else if (expiry) "${key.uri}/expiry" else key.uri) return
         val hash = intent.getStringExtra(EXTRA_EXPECTED_HASH)
         if (!expiry && hash == null) return
         val receivedAt = SystemClock.elapsedRealtime()

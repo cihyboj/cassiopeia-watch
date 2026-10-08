@@ -1,6 +1,12 @@
 package com.beamburst.casswatch.ui.alarms
 
+import CachedIO
 import android.content.Context
+import com.beamburst.casswatch.pairing.awaitWatchResponse
+import com.beamburst.casswatch.pairing.WATCH_ALARMS_TIMEOUT_MS
+import com.beamburst.casswatch.pairing.WATCH_RESPONSE_TIMEOUT_MS
+import kotlinx.coroutines.withTimeout
+import java.util.UUID
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncTrigger
@@ -56,7 +62,7 @@ internal fun hourlySignalAlarmPayload(
     if (index in consumedSlots || oneShotOccurrences[index]?.isElapsed(clock, zone) == true) alarm.copy(enabled = false) else alarm
 }, target)
 
-/** Invalidate before transport I/O: a thrown/cancelled/unknown write cannot retain old truth. */
+/** Every alarm-register writer shares fresh readback and persisted bounded in-flight state. */
 internal data class AlarmPayloadRecord(
     val address: String,
     val payload: List<Alarm>,
@@ -90,54 +96,58 @@ class AlarmPayloadWriter internal constructor(
         trigger: SyncTrigger,
         target: Boolean,
         confirm: suspend () -> Unit,
+        readBack: suspend () -> List<Alarm>,
         send: suspend (List<Alarm>) -> Unit,
     ) {
         confirm()
-        coordinator.update(ready.address) { current ->
-            checkSession(ready)
-            current.copy(watchPayloads = emptyMap())
-        }
-        val syncZone = time.zone()
-        val syncClock = Clock.fixed(time.clock.instant(), syncZone)
+        checkSession(ready)
+        val pending = AlarmWritePending(UUID.randomUUID().toString(), time.clock.millis() + ALARM_WRITE_TIMEOUT_MS)
         var actual = payload
-        var writtenEvidence: Map<Int, WatchAlarmPayload> = emptyMap()
-        suspend fun discardUnconfirmedResult() {
-            if (writtenEvidence.isEmpty()) return
-            // A session can end while the awaited DataStore write commits. Never retain
-            // that result as confirmation; preserve any newer payload from another writer.
-            runCatching {
-                withContext(NonCancellable) {
-                    coordinator.update(ready.address) { current ->
-                        if (current.watchPayloads == writtenEvidence) current.copy(watchPayloads = emptyMap()) else current
-                    }
-                }
-            }.onFailure { Timber.w(it, "Cannot discard unconfirmed alarm write for %s", ready.address) }
-        }
+        var writtenEvidence: Map<Int, WatchAlarmPayload>? = null
         try {
-            // Awaited invalidation/storage must not make an enabled one-time payload stale.
-            actual = payload.mapIndexed { slot, alarm ->
-                if (slot in snapshot.firedAts() || snapshot.oneShotOccurrences()[slot]?.isElapsed(time.clock, time.zone()) == true)
-                    alarm.copy(enabled = false) else alarm
-            }
-            send(actual)
-            confirm()
-            writtenEvidence = watchPayloadsAfterWrite(ready.address, actual, syncClock, syncZone)
-            coordinator.update(ready.address) { current ->
+            withTimeout(ALARM_WRITE_TIMEOUT_MS) {
+                coordinator.beginWrite(ready.address, pending)
                 checkSession(ready)
-                current.copy(watchPayloads = writtenEvidence)
+                actual = payload.mapIndexed { slot, alarm ->
+                    if (slot in snapshot.firedAts() || snapshot.oneShotOccurrences()[slot]?.isElapsed(time.clock, time.zone()) == true)
+                        alarm.copy(enabled = false) else alarm
+                }
+                send(actual)
+                confirm()
+                checkSession(ready)
+                // AlarmsIO.request uses this cache key. Remove it after queuing SETs,
+                // immediately before GETs, under the guarded generation's I/O mutex.
+                CachedIO.remove("GET_ALARMS")
+                val received = awaitWatchResponse(WATCH_ALARMS_TIMEOUT_MS) { readBack() }
+                confirm()
+                checkSession(ready)
+                check(alarmRegistersMatch(actual, received)) { "Alarm readback did not match the sent registers" }
+                val syncZone = time.zone()
+                val evidence = watchPayloadsAfterWrite(ready.address, actual, time.clock, syncZone)
+                writtenEvidence = evidence
+                coordinator.finishWrite(ready.address, pending) { current ->
+                    checkSession(ready)
+                    current.copy(watchPayloads = evidence)
+                }
+                confirm()
+                checkSession(ready)
+                record(AlarmPayloadRecord(ready.address, actual, trigger, target, true))
             }
-            confirm()
-            record(AlarmPayloadRecord(ready.address, actual, trigger, target, true))
-        } catch (cancelled: CancellationException) {
-            discardUnconfirmedResult()
-            throw cancelled
-        } catch (changed: WatchConnectionChangedException) {
-            discardUnconfirmedResult()
-            throw changed
         } catch (error: Exception) {
-            discardUnconfirmedResult()
-            confirm()
-            record(AlarmPayloadRecord(ready.address, actual, trigger, target, false, error.message))
+            // Disconnect cancels generation work. Await cleanup/history outside that
+            // cancellation; the persisted deadline also recovers a killed process.
+            withContext(NonCancellable) {
+                withTimeout(WATCH_RESPONSE_TIMEOUT_MS) {
+                    coordinator.update(ready.address) { current ->
+                        if (current.writePending == pending ||
+                            (current.writePending == null && writtenEvidence != null && current.watchPayloads == writtenEvidence)) {
+                            current.copy(watchPayloads = emptyMap(), writePending = null, dirty = true)
+                        } else current
+                    }
+                    record(AlarmPayloadRecord(ready.address, actual, trigger, target, false,
+                        "Alarm registers unconfirmed: ${error.message ?: error.javaClass.simpleName}"))
+                }
+            }
             throw error
         }
     }
@@ -156,7 +166,7 @@ class AlarmPayloadWriter internal constructor(
     ) {
         val snapshot = coordinator.snapshot(ready.address)
         applyHourlySignalToWatch(api, settings, now, snapshot, time.clock, time.zone()) { payload ->
-            write(ready, payload, snapshot, trigger, HourlySignalEvaluator.shouldChimeAt(now, settings), confirm) { actual ->
+            write(ready, payload, snapshot, trigger, HourlySignalEvaluator.shouldChimeAt(now, settings), confirm, { api.getAlarms() }) { actual ->
                 api.setAlarms(ArrayList(actual))
             }
         }
@@ -186,3 +196,13 @@ suspend fun applyReconciledHourlySignal(
     confirm: suspend () -> Unit,
 ) = EntryPointAccessors.fromApplication(context.applicationContext, AlarmPayloadEntryPoint::class.java)
     .alarmPayloadWriter().hourlySignal(api, ready, settings, now, trigger, confirm)
+
+internal const val ALARM_WRITE_TIMEOUT_MS = WATCH_ALARMS_TIMEOUT_MS + WATCH_RESPONSE_TIMEOUT_MS
+
+internal fun alarmRegistersMatch(sent: List<Alarm>, received: List<Alarm>): Boolean =
+    sent.isNotEmpty() && received.size >= sent.size && sent.indices.all { slot ->
+        val expected = sent[slot]
+        val actual = received[slot]
+        expected.hour == actual.hour && expected.minute == actual.minute &&
+            expected.enabled == actual.enabled && expected.hasHourlyChime == actual.hasHourlyChime
+    }

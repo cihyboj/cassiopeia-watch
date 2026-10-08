@@ -23,6 +23,7 @@ data class AlarmState(
     val dirty: Boolean = false,
     val watchPayloads: Map<Int, WatchAlarmPayload> = emptyMap(),
     val clockNeedsSync: Boolean = false,
+    val writePending: AlarmWritePending? = null,
 ) {
     fun confirmedPayloads(): Map<Int, WatchAlarmPayload> = if (clockNeedsSync) emptyMap() else watchPayloads
     fun watchAlarms(): List<Alarm> = alarms.map { Alarm(it.hour, it.minute, it.enabled, it.hasHourlyChime, it.name) }
@@ -32,6 +33,8 @@ data class AlarmState(
     fun oneShotLocalDates(): Map<Int, String> = alarms.mapIndexedNotNull { i, a -> a.oneShotLocalDate?.let { i to it } }.toMap()
     fun firedAts(): Map<Int, Long> = alarms.mapIndexedNotNull { i, a -> a.firedAt?.let { i to it } }.toMap()
 }
+
+data class AlarmWritePending(val id: String, val deadline: Long)
 
 /** Actual daily alarm registers last written to this watch; history is display-only. */
 data class WatchAlarmPayload(
@@ -72,6 +75,7 @@ object AlarmSyncStorage {
         put("days", encodeDays(state.days))
         put("dirty", state.dirty)
         put("clockNeedsSync", state.clockNeedsSync)
+        state.writePending?.let { put("writePending", JSONObject().put("id", it.id).put("deadline", it.deadline)) }
         put("watchPayloads", JSONObject().apply {
             state.watchPayloads.forEach { (slot, payload) ->
                 put(slot.toString(), JSONObject().apply {
@@ -111,7 +115,10 @@ object AlarmSyncStorage {
             }
         }
         return AlarmState(decodeAlarms(obj.getString("alarms")), decodeDays(obj.getString("days")),
-            obj.getBoolean("dirty"), decoded, obj.optBoolean("clockNeedsSync", false))
+            obj.getBoolean("dirty"), decoded, obj.optBoolean("clockNeedsSync", false),
+            obj.optJSONObject("writePending")?.let { pending ->
+                AlarmWritePending(pending.getString("id"), pending.getLong("deadline")).also { require(it.deadline >= 0) }
+            })
     }
 
     internal fun decodeAlarms(raw: String): List<StoredAlarm> {
