@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -197,25 +198,31 @@ fun SettingsList(
     HorizontalDivider()
     // ── Existing settings rows ─────────────────────────────────────────────
 
-    SettingsSectionTitle(stringResource(R.string.settings_section_locale))
-    Locale(settingsViewModel::onSettingUpdated)
+    val settingsState by settingsViewModel.state.collectAsState()
+    if (settingsState.hasBaseline) {
+        SettingsSectionTitle(stringResource(R.string.settings_section_locale))
+        Locale(settingsViewModel::onSettingUpdated)
 
-    SettingsSectionTitle(stringResource(R.string.settings_section_watch_behavior))
-    OperationalTone(settingsViewModel::onSettingUpdated)
-    Light(settingsViewModel::onSettingUpdated)
-    if (WatchInfo.hasPowerSavingMode) {
-        PowerSavings(settingsViewModel::onSettingUpdated)
-    }
-    if (WatchInfo.hasMultipleFonts) {
-        Font(settingsViewModel::onSettingUpdated)
-    }
+        SettingsSectionTitle(stringResource(R.string.settings_section_watch_behavior))
+        OperationalTone(settingsViewModel::onSettingUpdated)
+        Light(settingsViewModel::onSettingUpdated)
+        if (WatchInfo.hasPowerSavingMode) {
+            PowerSavings(settingsViewModel::onSettingUpdated)
+        }
+        if (WatchInfo.hasMultipleFonts) {
+            Font(settingsViewModel::onSettingUpdated)
+        }
 
-    SettingsSectionTitle(
-        text = stringResource(R.string.settings_section_sync),
-        highlighted = highlightSync,
-        modifier = Modifier.onGloballyPositioned { onSyncSectionPositioned(it.positionInParent().y.toInt()) },
-    )
-    TimeAdjustment(settingsViewModel::onSettingUpdated)
+        SettingsSectionTitle(
+            text = stringResource(R.string.settings_section_sync),
+            highlighted = highlightSync,
+            modifier = Modifier.onGloballyPositioned { onSyncSectionPositioned(it.positionInParent().y.toInt()) },
+        )
+        TimeAdjustment(settingsViewModel::onSettingUpdated)
+    } else {
+        CircularProgressIndicator()
+        AppText(stringResource(R.string.connect_to_read_watch))
+    }
     SyncHistoryRow(onNavigate = onNavigateToHistory)
 
     SettingsSectionTitle(stringResource(R.string.settings_section_advanced))
@@ -246,7 +253,8 @@ private fun SettingsSectionTitle(
 @Composable
 fun BottomRow(modifier: Modifier, settingsViewModel: SettingsViewModel = hiltViewModel()) {
     val isConnected by settingsViewModel.isConnected.collectAsState()
-    if (!isConnected) return
+    val state by settingsViewModel.state.collectAsState()
+    if (!isConnected || !state.hasBaseline) return
 
     SendToWatchActionBar(
         onClick = { settingsViewModel.sendToWatch() },
