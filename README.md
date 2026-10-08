@@ -75,10 +75,14 @@ If you already have an earlier build of this app that was signed with a differen
 ## Known limitations
 
 - This is an experimental prerelease, and only one watch model has been tested.
-- The phone alarm fallback is best-effort. When the watch may not have received an alarm change, the app can schedule an alarm in the phone's clock app shortly before it should ring. This depends on the exact-alarm permission, on the clock app, and on the phone not restricting background work.
-- Weekly alarms and one-time alarms that the phone manages are written to the watch when the app next connects to it. If the watch does not reconnect before the alarm is due, the watch does not have the change.
+- The watch stores every alarm as a daily alarm. A one-time alarm keeps ringing daily after its date, and a weekly alarm can ring on excluded days, until the app connects again and updates the watch or you turn the alarm off on the watch.
+- The phone alarm fallback is best-effort. When the watch may not have received an alarm change, the app asks the phone's clock app to set an alarm shortly before it should ring. The request carries a time but no date, is not confirmed, and cannot be cancelled by the app. It needs the exact-alarm permission and does not work after a restart until the phone has been unlocked once.
+- Alarm writes are confirmed by reading them back from the watch. Time, settings, timer and reminder writes are reported as sent, not as received.
+- Changes made directly on the watch are not merged into the app's saved state and can be overwritten by the next sync.
 - Background connection behaviour varies between Android versions and manufacturers' battery management.
 - Calendar events with some recurrence rules cannot be represented on the watch.
+
+The release notes for each version list further limitations.
 
 ## Building from source
 

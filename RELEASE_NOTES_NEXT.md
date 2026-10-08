@@ -23,8 +23,25 @@ This version is signed with a different key than earlier builds, so Android cann
 
 ## Known limitations
 
-- The phone alarm fallback for watch alarms is best-effort.
-- Weekly and one-time alarms managed by the phone are written to the watch when the app next connects, so they depend on the watch reconnecting in time.
+Alarms:
+
+- The watch stores every alarm as a daily alarm. A one-time alarm keeps ringing every day after its date, and a weekly alarm can ring on excluded days, until the app connects to the watch again and updates it, or you turn the alarm off on the watch.
+- The phone alarm fallback is best-effort. It hands the alarm to the phone's clock app with a time but no date, cannot confirm that the clock app created it, and cannot cancel it afterwards.
+- The fallback needs the exact-alarm permission. If that permission is denied the fallback does not run, and the app does not currently show this.
+- After the phone restarts, the fallback does not work until the phone has been unlocked once.
+
+Syncing:
+
+- Alarm writes are confirmed by reading the alarms back from the watch. Time, settings, timer and reminder writes are not confirmed: the app reports them as sent, not as received.
+- Changes made directly on the watch are not merged into what the app has saved. The next sync can overwrite them.
+- With more than one paired watch, the app refuses to send changes when the selected watch is not the connected one.
+- After the three-minute inactivity disconnect the phone may reconnect to the watch straight away.
+- Phone notifications that arrive while the watch is disconnected are not sent later.
+- Time accuracy below one second depends on the watch firmware and Bluetooth timing.
+
+Other:
+
+- Find my phone depends on the phone's sound and Do Not Disturb settings. Without notification permission there is no stop button; pressing the watch button again stops the ringing, or it stops after 30 seconds.
 - Some calendar recurrence rules cannot be represented on the watch.
 - Background connection behaviour differs between Android versions and manufacturers.
 - Some strings in Settings are English only.
