@@ -120,8 +120,10 @@ class NotificationMonitorService : NotificationListenerService() {
         // each forward is a BLE write and would echo back through this listener.
         if (sbn.packageName == packageName) return false
         // Ongoing/persistent notifications (media players, navigation, downloads) re-post
-        // continuously and aren't discrete events worth buzzing the watch for.
-        if (sbn.isOngoing) return false
+        // continuously and aren't discrete events worth buzzing the watch for — except
+        // incoming calls, which many dialers mark ongoing for the duration of the ring.
+        val isCall = sbn.notification.category == Notification.CATEGORY_CALL
+        if (sbn.isOngoing && !isCall) return false
         if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return false
 
         // Debounce updates to the same notification key.

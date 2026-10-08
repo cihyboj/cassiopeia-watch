@@ -103,7 +103,7 @@ class MultiWatchViewModel @Inject constructor(
                 previouslySelected?.let { tracker.mark(it, ConnectionState.DISCONNECTED) }
                 if (repository.isConnected()) repository.disconnect()
                 tracker.mark(normalizedAddress, ConnectionState.CONNECTING)
-                if (!connectCoordinator.connect(normalizedAddress)) {
+                if (!connectCoordinator.connect(normalizedAddress, takeover = true)) {
                     error("Connection attempt timed out")
                 }
                 tracker.mark(normalizedAddress, ConnectionState.CONNECTED)

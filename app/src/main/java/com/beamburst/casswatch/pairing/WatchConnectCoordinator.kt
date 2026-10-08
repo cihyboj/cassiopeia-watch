@@ -1,6 +1,10 @@
 package com.beamburst.casswatch.pairing
 
+import android.content.Context
 import com.beamburst.casswatch.data.repository.GShockRepository
+import com.beamburst.casswatch.utils.LocalDataStorage
+import com.beamburst.casswatch.utils.Utils
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
@@ -17,6 +21,7 @@ import javax.inject.Singleton
 @Singleton
 class WatchConnectCoordinator @Inject constructor(
     private val repository: GShockRepository,
+    @param:ApplicationContext private val appContext: Context,
 ) {
     companion object {
         const val DEFAULT_TIMEOUT_MS = 30_000L
@@ -26,21 +31,51 @@ class WatchConnectCoordinator @Inject constructor(
 
     /**
      * Attempts to connect to [address], waiting for any in-flight attempt to finish first.
-     * @return true when connected, false when the attempt timed out.
+     *
+     * An existing connection only counts as success when it is to the REQUESTED watch
+     * (verified against the address the API reported at connect time) — otherwise a
+     * presence-triggered connection to watch A completing while a request for watch B
+     * waits on the mutex would be misreported as B being connected. On a mismatch:
+     * with [takeover] the existing connection is dropped and the requested watch is
+     * connected; without it the attempt reports failure and leaves the connection alone.
+     *
+     * @return true when connected to the requested watch, false on timeout or mismatch.
      */
-    suspend fun connect(address: String, timeoutMs: Long = DEFAULT_TIMEOUT_MS): Boolean =
-        connectMutex.withLock {
-            if (repository.isConnected()) {
-                Timber.i("Already connected; skipping connect to %s", address)
+    suspend fun connect(
+        address: String,
+        takeover: Boolean = false,
+        timeoutMs: Long = DEFAULT_TIMEOUT_MS,
+    ): Boolean = connectMutex.withLock {
+        val requested = Utils.sanitizeMacAddress(address)
+        if (repository.isConnected()) {
+            val current = Utils.sanitizeMacAddress(
+                LocalDataStorage.get(appContext, "LastDeviceAddress", "").orEmpty()
+            )
+            if (requested.isNotBlank() && current.equals(requested, ignoreCase = true)) {
+                Timber.i("Already connected to %s; skipping connect", requested)
                 return@withLock true
             }
-            val result = withTimeoutOrNull(timeoutMs) {
-                repository.waitForConnection(address)
-                true
+            if (!takeover) {
+                Timber.i(
+                    "Connected to %s, not the requested %s; leaving the existing connection",
+                    current.ifBlank { "<unknown>" }, address,
+                )
+                return@withLock false
             }
-            if (result == null) {
-                Timber.w("Connection attempt to %s timed out after %d ms", address, timeoutMs)
-            }
-            result == true
+            Timber.i(
+                "Connected to %s but %s was requested; disconnecting first",
+                current.ifBlank { "<unknown>" }, address,
+            )
+            runCatching { repository.disconnect() }
+                .onFailure { Timber.w(it, "Disconnect before takeover failed") }
         }
+        val result = withTimeoutOrNull(timeoutMs) {
+            repository.waitForConnection(address)
+            true
+        }
+        if (result == null) {
+            Timber.w("Connection attempt to %s timed out after %d ms", address, timeoutMs)
+        }
+        result == true
+    }
 }
