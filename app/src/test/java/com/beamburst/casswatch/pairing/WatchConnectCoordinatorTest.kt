@@ -234,7 +234,7 @@ class WatchConnectCoordinatorTest {
         val t = Transport(this)
         val ready = t.connectReady(watchA)
         val failed = runCatching {
-            t.coordinator.withSession(ready) { awaitWatchResponse(20) { t.api.getSettings() } }
+            t.coordinator.withSession(ready) { check -> t.api.guardWrites(check, responseTimeoutMs = 100).getSettings() }
         }
         assertTrue(failed.exceptionOrNull() is WatchResponseTimeoutException)
         assertTrue(t.readCancelled)
@@ -325,7 +325,7 @@ class WatchConnectCoordinatorTest {
     @Test fun `detached start after timeout is closed when setup arrives Disconnected`() = scenario {
         val t = Transport(this)
         t.startGate = CompletableDeferred()
-        assertFalse(t.coordinator.connect(watchA, timeoutMs = 20))
+        assertFalse(t.coordinator.connect(watchA, timeoutMs = 1_000))
         assertNull(t.pending)
         assertEquals(1, t.closes)
         t.startGate.complete(Unit)
@@ -446,6 +446,39 @@ class WatchConnectCoordinatorTest {
         assertEquals(listOf(watchA to settings), t.settingsDelivered)
         assertTrue(watchB in dirty)
         assertFalse(watchA in dirty)
+    }
+
+    @Test fun `automatic obsolete read ends without refusal feedback`() = scenario {
+        val t = Transport(this)
+        val ready = t.connectReady(watchA)
+        var refused = 0
+        var updated = false
+        val guard = WatchWriteGuard({ watchA }, t.session, t.coordinator) { refused++ }
+        val read = async {
+            guard.readApi(ready, t.api) { api, confirm ->
+                api.getSettings()
+                confirm()
+                updated = true
+            }
+        }
+        t.readStarted.await()
+        t.coordinator.disconnect()
+        read.await()
+        assertFalse(updated)
+        assertEquals(0, refused)
+        assertTrue(t.readCancelled)
+    }
+
+    @Test fun `manual guard rejects old generation after same watch reconnect`() = scenario {
+        val t = Transport(this)
+        val old = t.connectReady(watchA)
+        var refused = 0
+        val guard = WatchWriteGuard({ watchA }, t.session, t.coordinator) { refused++ }
+        t.coordinator.disconnect()
+        t.connectReady(watchA)
+        guard.runApi(old, t.api) { api, _ -> api.setSettings(Settings()) }
+        assertEquals(1, refused)
+        assertTrue(t.settingsDelivered.isEmpty())
     }
 
     @Test fun `presence request for B preserves A and normalized A reuses session`() = scenario {

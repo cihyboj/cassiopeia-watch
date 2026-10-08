@@ -74,7 +74,7 @@ class AutoSyncCoordinator @Inject constructor(
     ) {
         val ready = session.ready ?: return
         val watchTime = watchTimeProvider.nowForWatch(ready.address)
-        val calendar = if (WatchInfo.hasReminders) calendarEvents.getEventsFromCalendar() else null
+        val calendar = if (WatchInfo.hasReminders) runCatching { calendarEvents.getEventsFromCalendar() } else null
         coordinator.withSession(ready) { checkSession ->
             val api = this.api.guardWrites(checkSession)
             WatchSyncActivity.track {
@@ -97,7 +97,7 @@ class AutoSyncCoordinator @Inject constructor(
                     recordedActions += watchTime.syncHistoryActions("Automatic time write", writeResult)
 
                     if (calendar != null) {
-                        EventsModel.refresh(calendar)
+                        EventsModel.refresh(calendar.getOrThrow())
                         checkSession()
                         api.setEvents(EventsModel.events)
                         kinds += SyncKind.EVENTS

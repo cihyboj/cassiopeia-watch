@@ -102,7 +102,7 @@ class WatchButtonDispatcher @Inject constructor(
     }
 
     private suspend fun handleNormalConnection(ready: WatchConnectionSession.Ready) {
-        val calendar = if (WatchInfo.hasReminders) calendarEvents.getEventsFromCalendar() else null
+        val calendar = if (WatchInfo.hasReminders) runCatching { calendarEvents.getEventsFromCalendar() } else null
         coordinator.withSession(ready) { checkSession ->
             val api = this.api.guardWrites(checkSession)
             val kinds = mutableSetOf(SyncKind.CONNECTION)
@@ -111,7 +111,7 @@ class WatchButtonDispatcher @Inject constructor(
             var error: String? = null
             if (calendar != null) {
                 runCatching {
-                    EventsModel.refresh(calendar)
+                    EventsModel.refresh(calendar.getOrThrow())
                     checkSession()
                     api.setEvents(EventsModel.events)
                     kinds += SyncKind.EVENTS

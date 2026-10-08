@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.time
 
+import com.beamburst.casswatch.pairing.watchOperationError
 import com.beamburst.casswatch.pairing.confirmWatchWrite
 import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.data.local.WatchConnectionSession
@@ -186,7 +187,7 @@ class TimeViewModel @Inject constructor(
                                 AppSnackbar(appContext.getString(R.string.time_set))
                                 refreshState()
                             } else {
-                                AppSnackbar(result.exceptionOrNull()?.message ?: appContext.getString(R.string.api_error))
+                                AppSnackbar(appContext.watchOperationError(result.exceptionOrNull()))
                             }
                         }
                     }
@@ -202,7 +203,7 @@ class TimeViewModel @Inject constructor(
             if (!isSelectedWatchConnected(watchSelector.currentAddress())) return@launch
             runCatching {
                 val ready = connectionSession.ready ?: return@runCatching
-                writeGuard.runApi(ready, api) { api, confirm ->
+                writeGuard.readApi(ready, api) { api, confirm ->
                     val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
                     val battery = api.getBatteryLevel()
                     val temperature = api.getWatchTemperature()
@@ -261,7 +262,7 @@ class TimeViewModel @Inject constructor(
                 )
 
                 val ready = connectionSession.ready ?: return@runCatching
-                writeGuard.runApi(ready, api) { api, confirm ->
+                writeGuard.readApi(ready, api) { api, confirm ->
                     val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
                     val battery = api.getBatteryLevel()
                     val temperature = api.getWatchTemperature()

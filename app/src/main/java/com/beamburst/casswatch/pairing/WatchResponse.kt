@@ -1,5 +1,7 @@
 package com.beamburst.casswatch.pairing
 
+import android.content.Context
+import com.beamburst.casswatch.R
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
@@ -25,3 +27,8 @@ suspend fun confirmWatchWrite(checkSession: () -> Unit) {
     yield()
     checkSession()
 }
+
+/** Timeout diagnostics stay in Timber/history; screen feedback uses existing translations. */
+fun Context.watchOperationError(error: Throwable?): String =
+    if (error is WatchResponseTimeoutException) getString(R.string.api_error)
+    else error?.message ?: getString(R.string.api_error)

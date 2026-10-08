@@ -9,7 +9,10 @@ import org.avmedia.gshockapi.io.IO
 import org.avmedia.gshockapi.io.TimeAdjustmentInfo
 
 /** Recheck at the actual write, including helpers that suspend between a read and a write. */
-fun IGShockAPI.guardWrites(checkSession: () -> Unit): IGShockAPI {
+fun IGShockAPI.guardWrites(
+    checkSession: () -> Unit,
+    responseTimeoutMs: Long = WATCH_RESPONSE_TIMEOUT_MS,
+): IGShockAPI {
     val delegate = this
     return object : IGShockAPI by delegate {
         override suspend fun init(): Boolean = response { delegate.init() }
@@ -35,7 +38,7 @@ fun IGShockAPI.guardWrites(checkSession: () -> Unit): IGShockAPI {
 
         private suspend fun <T> response(block: suspend () -> T): T {
             checkSession()
-            return awaitWatchResponse { block() }.also { confirmWatchWrite(checkSession) }
+            return awaitWatchResponse(responseTimeoutMs) { block() }.also { confirmWatchWrite(checkSession) }
         }
 
         override fun clearEvents() {

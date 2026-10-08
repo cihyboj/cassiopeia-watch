@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.settings
 
+import com.beamburst.casswatch.pairing.watchOperationError
 import com.beamburst.casswatch.pairing.confirmWatchWrite
 import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.data.local.WatchConnectionSession
@@ -191,7 +192,7 @@ constructor(
         if (!isSelectedWatchConnected(addr)) return
 
         val ready = connectionSession.matching(addr) ?: return
-        writeGuard.runApi(ready, api) { api, confirm ->
+        writeGuard.readApi(ready, api) { api, confirm ->
             val settings = api.getSettings()
             confirm()
             WatchSettingsCache.saveClean(appContext, ready.address, settings)
@@ -602,7 +603,7 @@ constructor(
                     if (result.isSuccess) {
                         AppSnackbar(appContext.getString(R.string.time_sent_to_watch))
                     } else {
-                        AppSnackbar(result.exceptionOrNull()?.message ?: appContext.getString(R.string.watch_not_connected))
+                        AppSnackbar(appContext.watchOperationError(result.exceptionOrNull()))
                     }
                 }
             }
@@ -632,7 +633,7 @@ constructor(
                         errorMessage = result.exceptionOrNull()?.message,
                         details = SyncDetails.Empty.copy(actions = listOf("Watch settings sent")),
                     )
-                    result.onFailure { e -> AppSnackbar(e.message ?: appContext.getString(R.string.api_error)) }
+                    result.onFailure { e -> AppSnackbar(appContext.watchOperationError(e)) }
                 }
             }
         }

@@ -101,7 +101,7 @@ class TimerViewModel @Inject constructor(
 
         runCatching {
             val ready = connectionSession.matching(addr) ?: return@runCatching
-            writeGuard.runApi(ready, api) { api, confirm ->
+            writeGuard.readApi(ready, api) { api, confirm ->
                 val timer = api.getTimer()
                 confirm()
                 _state.value = TimerState(timer = timer)

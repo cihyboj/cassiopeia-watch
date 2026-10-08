@@ -6,6 +6,9 @@ import com.beamburst.casswatch.data.local.CurrentWatchSelector
 import com.beamburst.casswatch.data.local.WatchConnectionSession
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import javax.inject.Inject
 
 /**
@@ -43,6 +46,24 @@ class WatchWriteGuard internal constructor(
             coordinator.withSession(expected, selectedAddress, block)
         } catch (_: WatchConnectionChangedException) {
             refused()
+        }
+    }
+
+    /** Automatic screen refreshes quietly abandon obsolete reads. */
+    suspend fun readApi(
+        expected: WatchConnectionSession.Ready,
+        api: org.avmedia.gshockapi.IGShockAPI,
+        block: suspend (api: org.avmedia.gshockapi.IGShockAPI, confirm: suspend () -> Unit) -> Unit,
+    ) {
+        try {
+            coordinator.withSession(expected, selectedAddress) { check ->
+                block(api.guardWrites(check)) { confirmWatchWrite(check) }
+            }
+        } catch (_: WatchConnectionChangedException) {
+            // Selection or generation changed; the next refresh owns the UI.
+        } catch (cancelled: CancellationException) {
+            currentCoroutineContext().ensureActive()
+            if (session.isCurrent(expected)) throw cancelled
         }
     }
 
