@@ -36,6 +36,8 @@ class WeeklyAlarmScheduler @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val watchTimeProvider: WatchTimeProvider,
     private val watchTimeWriter: WatchTimeWriter,
+    private val alarmCoordinator: AlarmSchedulingCoordinator,
+    private val alarmTime: AlarmSchedulingTime,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "WeeklyAlarmScheduler"
@@ -70,10 +72,12 @@ class WeeklyAlarmScheduler @Inject constructor(
             runAutoTimeSyncOnReconnect(ready, checkSession)
         }
 
-        val alarmDays = AlarmSyncStorage.loadDaySelections(context, addr)
-        val storedAlarms = AlarmSyncStorage.loadAlarms(context, addr)
-        val firedAts = AlarmSyncStorage.loadFiredAts(context, addr)
-        val shouldWrite = AlarmSyncStorage.isDirty(context, addr) || !storedAlarms.isNullOrEmpty()
+        // Reconnect must expire one-time alarms even when no Alarms ViewModel exists.
+        val snapshot = alarmCoordinator.snapshot(addr)
+        val alarmDays = snapshot.days
+        val storedAlarms = snapshot.watchAlarms()
+        val firedAts = snapshot.firedAts()
+        val shouldWrite = snapshot.dirty || storedAlarms.isNotEmpty()
 
         if (!shouldWrite) return@withSession
 
@@ -82,8 +86,8 @@ class WeeklyAlarmScheduler @Inject constructor(
             return@withSession
         }
 
-        val desiredAlarms = storedAlarms?.takeIf { it.isNotEmpty() } ?: currentAlarms
-        val now = LocalDateTime.now()
+        val desiredAlarms = storedAlarms.takeIf { it.isNotEmpty() } ?: currentAlarms
+        val now = LocalDateTime.ofInstant(alarmTime.clock.instant(), alarmTime.zone())
         val signalSettings = HourlySignalSettings.load(context, addr)
         val hourlySignalTarget = HourlySignalEvaluator.shouldChimeAt(now, signalSettings)
         val scheduledAlarms = AlarmSchedulePlanner.applyWeeklySchedule(
@@ -91,7 +95,10 @@ class WeeklyAlarmScheduler @Inject constructor(
             alarmDays = alarmDays,
             now = now,
             viewMode = AlarmViewMode.WEEKLY,
-            firedAts = firedAts
+            firedAts = firedAts,
+            oneShotLocalDates = snapshot.oneShotLocalDates(),
+            clock = alarmTime.clock,
+            zone = alarmTime.zone(),
         )
         val alarmsToSend = if (WatchInfo.chimeInSettings) {
             scheduledAlarms
@@ -126,7 +133,9 @@ class WeeklyAlarmScheduler @Inject constructor(
                 Timber.e(it, "Failed to apply per-alarm day schedule")
             }.onSuccess {
                 checkSession()
-                AlarmSyncStorage.saveAlarms(context, addr, desiredAlarms, dirty = false, firedAts = firedAts)
+                alarmCoordinator.update(addr) { current ->
+                    alarmStateAfterSuccessfulSync(current, snapshot)
+                }
             }
         } else {
             checkSession()
@@ -141,10 +150,13 @@ class WeeklyAlarmScheduler @Inject constructor(
                     actions = listOf("Alarm schedule verified on reconnect"),
                 ),
             )
-            if (AlarmSyncStorage.isDirty(context, addr)) {
-                AlarmSyncStorage.saveAlarms(context, addr, desiredAlarms, dirty = false, firedAts = firedAts)
+            if (snapshot.dirty) {
+                alarmCoordinator.update(addr) { current ->
+                    alarmStateAfterSuccessfulSync(current, snapshot)
+                }
             }
         }
+        alarmCoordinator.reconcile(addr)
         }
         }
     }

@@ -170,7 +170,7 @@
     <string name="disconnected_info_title">Watch not connected</string>
     <string name="disconnected_info_body">Connect your watch to send or receive alarms. You can still send current alarms to your phone clock.</string>
     <string name="exact_alarm_dialog_title">Phone-side safety net</string>
-    <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
+    <string name="exact_alarm_dialog_body">Незадолго до времени звонка приложение запрашивает резервный будильник у приложения часов. Создание не подтверждается: передаются только час и минута, без даты и возможности отмены после передачи. Нужно разрешение на точные будильники.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
     <string name="paired_watches_empty" translatable="false">No watches paired yet.</string>
@@ -220,4 +220,5 @@
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">Подключите выбранные часы перед отправкой изменений.</string>
+    <string name="phone_alarm_handoff_limits">Запросы отправлены приложению часов; создание будильников не подтверждено. Одноразовый будильник не содержит даты, и это приложение не может отменить его после передачи.</string>
 </resources>

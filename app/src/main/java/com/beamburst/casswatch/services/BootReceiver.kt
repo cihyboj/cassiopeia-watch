@@ -4,12 +4,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.beamburst.casswatch.pairing.DeviceAssociationManager
+import com.beamburst.casswatch.ui.alarms.AlarmSchedulingCoordinator
 import com.beamburst.casswatch.utils.AppScopes
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -23,6 +23,7 @@ class BootReceiver : BroadcastReceiver() {
     @InstallIn(SingletonComponent::class)
     interface BootEntryPoint {
         fun deviceAssociationManager(): DeviceAssociationManager
+        fun alarmSchedulingCoordinator(): AlarmSchedulingCoordinator
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -37,18 +38,16 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     private fun handleBootCompleted(context: Context) {
-        val manager = EntryPointAccessors.fromApplication(
-            context.applicationContext,
-            BootEntryPoint::class.java,
-        ).deviceAssociationManager()
-
-        // syncAssociations() launches its own coroutine; goAsync keeps the process
-        // alive long enough for it to register the CDM observers and fallback scan.
         val pendingResult = goAsync()
         AppScopes.io.launch {
             try {
-                manager.syncAssociations()
-                delay(5_000)
+                val entryPoint = EntryPointAccessors.fromApplication(
+                    context.applicationContext, BootEntryPoint::class.java,
+                )
+                entryPoint.deviceAssociationManager().syncAssociations().join()
+                entryPoint.alarmSchedulingCoordinator().reconcileAll()
+            } catch (error: Exception) {
+                Timber.e(error, "Failed to rebuild watch detection and alarms after boot")
             } finally {
                 pendingResult.finish()
             }

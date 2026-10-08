@@ -28,6 +28,7 @@ import com.beamburst.casswatch.pairing.DeviceAssociationManager
 import com.beamburst.casswatch.session.WatchSessionUiBridge
 import com.beamburst.casswatch.services.DeviceManager
 import com.beamburst.casswatch.ui.alarms.WeeklyAlarmScheduler
+import com.beamburst.casswatch.ui.alarms.AlarmSchedulingCoordinator
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.ui.common.CrashLogDialog
 import com.beamburst.casswatch.ui.others.CoverScreen
@@ -67,6 +68,9 @@ class GShockApplication : Application(), IScreenManager {
 
     @Inject
     lateinit var weeklyAlarmScheduler: WeeklyAlarmScheduler
+
+    @Inject
+    lateinit var alarmSchedulingCoordinator: AlarmSchedulingCoordinator
 
     @Inject
     lateinit var watchButtonDispatcher: WatchButtonDispatcher
@@ -115,7 +119,11 @@ class GShockApplication : Application(), IScreenManager {
             Timber.plant(Timber.DebugTree())
         }
         installGlobalExceptionHandler()
-        MultiWatchMigrator.migrateIfNeeded(this)
+        val storageMigration = MultiWatchMigrator.migrateIfNeeded(this)
+        AppScopes.io.launch {
+            storageMigration?.join()
+            alarmSchedulingCoordinator.reconcileAll()
+        }
         ActivityProvider.initialize(this)
         eventHandler =
             MainEventHandler(

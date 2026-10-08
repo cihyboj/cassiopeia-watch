@@ -161,7 +161,7 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="disconnected_info_title">Watch not connected</string>
     <string name="disconnected_info_body">Connect your watch to send or receive alarms. You can still send current alarms to your phone clock.</string>
     <string name="exact_alarm_dialog_title">Phone-side safety net</string>
-    <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
+    <string name="exact_alarm_dialog_body">Röviddel a tervezett időpont előtt tartalék ébresztőt kérünk az óraalkalmazástól. A létrehozás nincs megerősítve: csak óra és perc kerül átadásra, dátum és utólagos törlés nélkül. Ehhez pontos ébresztési engedély kell.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
     <string name="paired_watches_empty" translatable="false">No watches paired yet.</string>
@@ -211,4 +211,5 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">A módosítások küldése előtt csatlakoztassa a kiválasztott órát.</string>
+    <string name="phone_alarm_handoff_limits">Kérések elküldve az óraalkalmazásnak; az ébresztők létrehozása nincs megerősítve. Az egyszeri ébresztőnek nincs dátuma, és átadás után itt nem törölhető.</string>
 </resources>

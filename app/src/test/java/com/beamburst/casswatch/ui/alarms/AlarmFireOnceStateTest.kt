@@ -9,7 +9,7 @@ class AlarmFireOnceStateTest {
     fun `showAsEnabled is true when alarm enabled and not yet fired`() {
         val enabled = true
         val firedAt: Long? = null
-        val showAsEnabled = enabled && firedAt == null
+        val showAsEnabled = alarmIsArmed(enabled, firedAt)
         assertTrue(showAsEnabled)
     }
 
@@ -17,22 +17,18 @@ class AlarmFireOnceStateTest {
     fun `showAsEnabled is false when firedAt is set even though enabled is true`() {
         val enabled = true
         val firedAt: Long? = 1234567890L
-        val showAsEnabled = enabled && firedAt == null
+        val showAsEnabled = alarmIsArmed(enabled, firedAt)
         assertFalse(showAsEnabled)
     }
 
     @Test
-    fun `confirming sync clears firedAt and sets enabled false`() {
-        var enabled = true
-        var firedAt: Long? = 1234567890L
-        // Simulate: successful sync with alarm sent disabled
-        val sentDisabled = true // we sent it disabled to the watch
-        if (sentDisabled && firedAt != null) {
-            enabled = false
-            firedAt = null
-        }
-        assertFalse(enabled)
-        assertNull(firedAt)
+    fun `confirming sync retains consumed occurrence`() {
+        val consumed = AlarmState(listOf(AlarmSyncStorage.StoredAlarm(7, 0, true, false, "", firedAt = 123)),
+            mapOf(0 to emptySet()), true)
+        val confirmed = alarmStateAfterSuccessfulSync(consumed, consumed)
+        assertFalse(confirmed.dirty)
+        assertEquals(123L, confirmed.alarms[0].firedAt)
+        assertFalse(alarmIsArmed(confirmed.alarms[0].enabled, confirmed.alarms[0].firedAt))
     }
 
     @Test

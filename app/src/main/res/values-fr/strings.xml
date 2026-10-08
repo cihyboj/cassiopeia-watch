@@ -181,7 +181,7 @@ si votre montre est en avance de 2,5 secondes par rapport à l\'heure réelle, d
     <string name="disconnected_info_title">Watch not connected</string>
     <string name="disconnected_info_body">Connect your watch to send or receive alarms. You can still send current alarms to your phone clock.</string>
     <string name="exact_alarm_dialog_title">Phone-side safety net</string>
-    <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
+    <string name="exact_alarm_dialog_body">Peu avant l’heure prévue, un réveil de secours est demandé à l’application Horloge. Sa création reste non confirmée : seules l’heure et les minutes sont envoyées, sans date ni annulation après transmission. L’autorisation des alarmes exactes est nécessaire.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
     <string name="paired_watches_empty">Aucune montre associée pour le moment.</string>
@@ -231,4 +231,5 @@ si votre montre est en avance de 2,5 secondes par rapport à l\'heure réelle, d
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">Connectez la montre sélectionnée avant d’envoyer les modifications.</string>
+    <string name="phone_alarm_handoff_limits">Demandes envoyées à l’application Horloge ; la création des alarmes n’est pas confirmée. Une alarme unique n’a pas de date et cette application ne peut plus l’annuler après transmission.</string>
 </resources>

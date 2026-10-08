@@ -1,6 +1,8 @@
 package com.beamburst.casswatch.pairing
 
 import com.beamburst.casswatch.utils.AppScopes
+import com.beamburst.casswatch.ui.alarms.AlarmSchedulingCoordinator
+import com.beamburst.casswatch.data.local.PerWatchCacheCleaner
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -27,7 +29,8 @@ import javax.inject.Singleton
 @Singleton
 class DeviceAssociationManager @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val repository: GShockRepository
+    private val repository: GShockRepository,
+    private val alarmCoordinator: AlarmSchedulingCoordinator,
 ) {
     var pendingCrashLog by mutableStateOf<String?>(null)
 
@@ -86,7 +89,10 @@ class DeviceAssociationManager @Inject constructor(
         // 2. Remove them one by one (Safe here because we aren't modifying 'localAddresses')
         addressesToRemove.forEach { address ->
             Timber.i("Cleaning up orphaned local association: $address")
-            LocalDataStorage.removeDeviceAddress(context, address)
+            alarmCoordinator.forgetWatch(address) {
+                LocalDataStorage.removeDeviceAddress(context, address)
+                PerWatchCacheCleaner.wipe(context, address)
+            }
         }
     }
 
@@ -96,9 +102,8 @@ class DeviceAssociationManager @Inject constructor(
     }
 
     @SuppressLint("NewApi")
-    fun syncAssociations() {
-        AppScopes.io.launch {
-            syncMutex.withLock {
+    fun syncAssociations() = AppScopes.io.launch {
+        syncMutex.withLock {
             // 1. Get the list of associations the system knows about
             val systemAssociations = repository.getAssociationsWithNames(context)
 
@@ -175,7 +180,6 @@ class DeviceAssociationManager @Inject constructor(
 
             // Start fallback scan for all active addresses (runs on all API levels)
             startFallbackScan(finalActiveAddresses.toList())
-            }
         }
     }
 

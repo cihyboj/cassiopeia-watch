@@ -177,7 +177,7 @@
     <string name="disconnected_info_title">Watch not connected</string>
     <string name="disconnected_info_body">Connect your watch to send or receive alarms. You can still send current alarms to your phone clock.</string>
     <string name="exact_alarm_dialog_title">Phone-side safety net</string>
-    <string name="exact_alarm_dialog_body">If your watch is not connected when the alarm should ring, the phone can fire it via your default clock app. This needs permission to schedule exact alarms.</string>
+    <string name="exact_alarm_dialog_body">Poc abans de l’hora prevista es demana una alarma de reserva a l’aplicació de rellotge. La creació no es confirma: només s’envien hora i minut, sense data ni cancel·lació posterior. Cal permís per a alarmes exactes.</string>
     <string name="exact_alarm_dialog_settings">Open settings</string>
     <string name="exact_alarm_dialog_not_now">Not now</string>
     <string name="paired_watches_empty" translatable="false">No watches paired yet.</string>
@@ -227,4 +227,5 @@
     <string name="broadcast_help_text">Tasker / MacroDroid / Automate: create an intent-received trigger with the action string above.</string>
     <string name="notify_on_auto_sync">Notify on auto-sync</string>
     <string name="selected_watch_not_connected">Connecta el rellotge seleccionat abans d’enviar els canvis.</string>
+    <string name="phone_alarm_handoff_limits">Peticions enviades a l’aplicació de rellotge; la creació d’alarmes no està confirmada. Una alarma única no té data i aquesta aplicació no la pot cancel·lar després d’enviar-la.</string>
 </resources>

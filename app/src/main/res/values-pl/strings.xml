@@ -220,7 +220,7 @@
     <string name="disconnected_info_title">Zegarek nie jest połączony</string>
     <string name="disconnected_info_body">Połącz zegarek, aby wysyłać alarmy.</string>
     <string name="exact_alarm_dialog_title">Bezpieczeństwo po stronie telefonu</string>
-    <string name="exact_alarm_dialog_body">Jeśli zegarek nie jest połączony, gdy alarm powinien dzwonić, telefon może go wysłać przez domyślną aplikację zegarka. Ta funkcja wymaga uprawnień do zaplanowania dokładnych alarmów.</string>
+    <string name="exact_alarm_dialog_body">Krótko przed planowaną godziną aplikacja poprosi zegar telefonu o alarm zastępczy. Utworzenie nie jest potwierdzone: wysyłane są tylko godzina i minuta, bez daty i możliwości anulowania po przekazaniu. Wymaga to uprawnienia do dokładnych alarmów.</string>
     <string name="exact_alarm_dialog_settings">Otwórz ustawienia</string>
     <string name="exact_alarm_dialog_not_now">Nie teraz</string>
 
@@ -282,4 +282,5 @@
         <p>Jeśli ten problem będzie się powtarzać, proszę zgłosić go na <a href="https://github.com/cihyboj/cassiopeia-watch/issues">GitHub</a> z modelem urządzenia i zegarka.</p>
     ]]></string>
     <string name="selected_watch_not_connected">Połącz wybrany zegarek przed wysłaniem zmian.</string>
+    <string name="phone_alarm_handoff_limits">Wysłano prośby do aplikacji zegara; utworzenie alarmów nie jest potwierdzone. Alarm jednorazowy nie ma daty i ta aplikacja nie może go anulować po przekazaniu.</string>
 </resources>
