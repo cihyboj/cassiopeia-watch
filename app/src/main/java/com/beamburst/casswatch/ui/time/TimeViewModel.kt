@@ -205,7 +205,7 @@ class TimeViewModel @Inject constructor(
             runCatching {
                 val ready = connectionSession.ready ?: return@runCatching
                 writeGuard.readApi(ready, api) { api, confirm ->
-                    val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
+                    val homeTime = if (canReadHomeTime()) api.getHomeTime() else ""
                     val battery = api.getBatteryLevel()
                     val temperature = api.getWatchTemperature()
                     confirm()
@@ -264,7 +264,7 @@ class TimeViewModel @Inject constructor(
 
                 val ready = connectionSession.ready ?: return@runCatching
                 writeGuard.readApi(ready, api) { api, confirm ->
-                    val homeTime = if (WatchInfo.hasHomeTime) api.getHomeTime() else ""
+                    val homeTime = if (canReadHomeTime()) api.getHomeTime() else ""
                     val battery = api.getBatteryLevel()
                     val temperature = api.getWatchTemperature()
                     confirm()
@@ -319,3 +319,13 @@ class TimeViewModel @Inject constructor(
         )
     }
 }
+
+/**
+ * The library reads home time from world-city slot 0 (0x1F). Watches without world
+ * cities (ABL-100WE) answer that read with an error frame and the read never
+ * completes, so it would time out and hold the watch session on every refresh.
+ */
+internal fun canReadHomeTime(
+    hasHomeTime: Boolean = WatchInfo.hasHomeTime,
+    hasWorldCities: Boolean = WatchInfo.hasWorldCities,
+): Boolean = hasHomeTime && hasWorldCities
