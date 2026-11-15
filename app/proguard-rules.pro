@@ -21,3 +21,16 @@
 -keep class * extends com.google.gson.reflect.TypeToken
 
 -dontwarn androidx.concurrent.futures.SuspendToFutureAdapter
+
+# BleLinkStateReset clears these Nordic BLE handler fields by name after close().
+-keepclassmembers class no.nordicsemi.android.ble.BleManager {
+    no.nordicsemi.android.ble.BleManager$BleManagerGattCallback requestHandler;
+}
+-keepclassmembers class no.nordicsemi.android.ble.BleManagerHandler {
+    java.lang.Object LOCK;
+    boolean connected;
+    boolean servicesDiscovered;
+    boolean serviceDiscoveryRequested;
+    boolean ready;
+    boolean deviceNotSupported;
+}
