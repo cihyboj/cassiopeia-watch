@@ -1,6 +1,7 @@
 package com.beamburst.casswatch.pairing
 
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -18,6 +19,20 @@ class BleLinkStateResetTest {
     }
 
     private class FakeGattCallback : FakeHandlerBase()
+
+    // Mirrors Nordic BleManager -> GShockManagerImpl, wrapped by IGShockManager's `by` delegate.
+    @Suppress("unused")
+    private open class FakeBleManager { val requestHandler = FakeGattCallback() }
+    private class FakeManagerImpl : FakeBleManager()
+    private interface FakeGShock
+    private class FakeWrapper(val impl: FakeManagerImpl = FakeManagerImpl()) : FakeGShock
+
+    @Test
+    fun `finds the Nordic handler through the library's delegating wrapper`() {
+        val wrapper = FakeWrapper()
+
+        assertSame(wrapper.impl.requestHandler, BleLinkStateReset.requestHandlerOf(wrapper))
+    }
 
     @Test
     fun `clears stale discovery flags on a closed link, including inherited fields`() {

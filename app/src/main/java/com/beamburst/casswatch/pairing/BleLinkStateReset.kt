@@ -30,10 +30,29 @@ internal object BleLinkStateReset {
             val managerField = Connection::class.java.getDeclaredField("bleManager")
             managerField.isAccessible = true
             val manager = managerField.get(null) ?: return
-            val handler = findField(manager.javaClass, "requestHandler").get(manager) ?: return
+            val handler = requestHandlerOf(manager) ?: return
             if (resetFlags(handler)) Timber.d("Cleared stale BLE discovery state after close")
         }.onFailure { Timber.w(it, "Could not clear BLE discovery state after close") }
     }
+
+    /**
+     * GShockAPI's `IGShockManager` delegates to a private `BleManager` subclass, so the
+     * Nordic handler sits one object down. Look through the wrapper's own fields rather
+     * than relying on the compiler-generated delegate name.
+     */
+    internal fun requestHandlerOf(manager: Any): Any? {
+        handlerFieldOf(manager.javaClass)?.let { return it.get(manager) }
+        for (field in manager.javaClass.declaredFields) {
+            if (field.type.isPrimitive) continue
+            field.isAccessible = true
+            val inner = field.get(manager) ?: continue
+            handlerFieldOf(inner.javaClass)?.let { return it.get(inner) }
+        }
+        return null
+    }
+
+    private fun handlerFieldOf(type: Class<*>): Field? =
+        runCatching { findField(type, "requestHandler") }.getOrNull()
 
     /** Returns false when a link is up again, in which case nothing is changed. */
     internal fun resetFlags(handler: Any): Boolean {
