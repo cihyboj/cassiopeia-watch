@@ -288,4 +288,5 @@
     <string name="alarm_fallback_unlock_limits">Po ponownym uruchomieniu telefonu alarmy zastępcze działają dopiero po pierwszym odblokowaniu.</string>
     <string name="alarm_one_time_watch_limits">Zegarek zapisuje alarm jednorazowy jako codzienny. Po zadzwonieniu dzwoni codziennie do kolejnej synchronizacji z aplikacją lub wyłączenia na zegarku.</string>
     <string name="alarm_fallback_unconfirmed">Utworzenie alarmu telefonu nie jest potwierdzone. Sprawdź lub ustaw go ręcznie w zegarze.</string>
+    <string name="find_phone_notifications_blocked">Funkcja Znajdź telefon dzwoni także bez powiadomień, ale wtedy na telefonie nie ma przycisku Zatrzymaj – wyłączysz ją tylko ponownym naciśnięciem na zegarku. Zezwól na powiadomienia aplikacji i kanał Find phone w ustawieniach.</string>
 </resources>

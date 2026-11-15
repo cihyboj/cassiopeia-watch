@@ -235,4 +235,5 @@
     <string name="alarm_fallback_unlock_limits">スマートフォン再起動後、予備のアラームは最初のロック解除後に再開します。</string>
     <string name="alarm_one_time_watch_limits">腕時計は1回限りのアラームを毎日のアラームとして保存します。一度鳴った後も、再同期するか腕時計で無効にするまで毎日鳴り続けます。</string>
     <string name="alarm_fallback_unconfirmed">アラームの作成は未確認です。時計アプリで確認するか、手動で設定してください。</string>
+    <string name="find_phone_notifications_blocked">「電話を探す」は通知がなくても鳴りますが、その場合は電話に停止ボタンが表示されず、時計のボタンをもう一度押すしか止める方法がありません。設定でアプリの通知と Find phone チャンネルを許可してください。</string>
 </resources>

@@ -142,52 +142,60 @@ private fun ExtraRow(
     onDelete: () -> Unit,
 ) {
     var typeExpanded by remember { mutableStateOf(false) }
-    Row(
+    // Key and type share the first line; the value gets the full dialog width so
+    // longer values are readable instead of squeezed into a third of a row.
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
-        OutlinedTextField(
-            value = extra.key,
-            onValueChange = { onChanged(extra.copy(key = it)) },
-            placeholder = { Text("key") },
-            modifier = Modifier.weight(1f),
-            singleLine = true,
-        )
-        ExposedDropdownMenuBox(
-            expanded = typeExpanded,
-            onExpandedChange = { typeExpanded = it },
-            modifier = Modifier.width(90.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             OutlinedTextField(
-                value = extra.type.name,
-                onValueChange = {},
-                readOnly = true,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
-                modifier = Modifier.menuAnchor(),
+                value = extra.key,
+                onValueChange = { onChanged(extra.copy(key = it)) },
+                label = { Text(stringResource(R.string.broadcast_extra_key)) },
+                modifier = Modifier.weight(1f),
                 singleLine = true,
             )
-            ExposedDropdownMenu(
+            ExposedDropdownMenuBox(
                 expanded = typeExpanded,
-                onDismissRequest = { typeExpanded = false },
+                onExpandedChange = { typeExpanded = it },
+                modifier = Modifier.width(132.dp),
             ) {
-                ExtraType.values().forEach { t ->
-                    DropdownMenuItem(
-                        text = { Text(t.name) },
-                        onClick = { onChanged(extra.copy(type = t)); typeExpanded = false },
-                    )
+                OutlinedTextField(
+                    value = extra.type.name,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(stringResource(R.string.broadcast_extra_type)) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
+                    modifier = Modifier.menuAnchor(),
+                    singleLine = true,
+                )
+                ExposedDropdownMenu(
+                    expanded = typeExpanded,
+                    onDismissRequest = { typeExpanded = false },
+                ) {
+                    ExtraType.values().forEach { t ->
+                        DropdownMenuItem(
+                            text = { Text(t.name) },
+                            onClick = { onChanged(extra.copy(type = t)); typeExpanded = false },
+                        )
+                    }
                 }
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Close, contentDescription = "Remove extra")
             }
         }
         OutlinedTextField(
             value = extra.value,
             onValueChange = { onChanged(extra.copy(value = it)) },
-            placeholder = { Text("value") },
-            modifier = Modifier.weight(1.2f),
-            singleLine = true,
+            label = { Text(stringResource(R.string.broadcast_extra_value)) },
+            modifier = Modifier.fillMaxWidth(),
+            maxLines = 4,
         )
-        IconButton(onClick = onDelete) {
-            Icon(Icons.Default.Close, contentDescription = "Remove extra")
-        }
     }
 }

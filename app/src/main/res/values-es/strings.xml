@@ -229,4 +229,5 @@ Después del segundo pitido doble, la app mostrará la pantalla de ajuste de hor
     <string name="alarm_fallback_unlock_limits">Tras reiniciar el teléfono, las alarmas de respaldo se reanudan después del primer desbloqueo.</string>
     <string name="alarm_one_time_watch_limits">El reloj guarda la alarma única como diaria. Tras sonar, seguirá sonando a diario hasta otra sincronización o hasta que la desactives en el reloj.</string>
     <string name="alarm_fallback_unconfirmed">La creación de la alarma no está confirmada. Compruébala o configúrala manualmente en la app de reloj.</string>
+    <string name="find_phone_notifications_blocked">Buscar mi teléfono suena incluso sin notificaciones, pero entonces no hay botón Detener en el teléfono, solo una segunda pulsación en el reloj. Permite las notificaciones de la app y el canal Find phone en Ajustes.</string>
 </resources>

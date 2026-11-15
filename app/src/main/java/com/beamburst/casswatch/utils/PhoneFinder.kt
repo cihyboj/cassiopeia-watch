@@ -24,7 +24,7 @@ object PhoneFinder {
     private var savedVolume: Int? = null
     private var appContext: Context? = null
 
-    private const val CHANNEL_ID = "find_phone"
+    private const val CHANNEL_ID = FIND_PHONE_NOTIFICATION_CHANNEL
     private const val NOTIFICATION_ID = 4242
 
     // Watch events can arrive on a background dispatcher. Serialize the toggle with

@@ -1,5 +1,6 @@
 package com.beamburst.casswatch.ui.settings
 
+import com.beamburst.casswatch.utils.rememberFindPhoneNotificationRequest
 import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -171,19 +172,24 @@ fun SettingsList(
         }
     )
 
+    val requestFindPhoneNotifications = rememberFindPhoneNotificationRequest(pressCards.findPhone.enabled)
     PressCard(
         title = stringResource(R.string.find_my_phone),
         subtitle = stringResource(R.string.find_phone_card_subtitle),
         enabled = pressCards.findPhone.enabled,
         onEnabledChange = { on ->
             settingsViewModel.onPressCardAction(PressCardAction.ToggleFindPhone(on))
+            if (on) requestFindPhoneNotifications()
         },
         dialogContent = { onDismiss ->
             FindPhoneConfigDialog(
                 volumePercent = pressCards.findPhone.volumePercent,
                 melody = pressCards.findPhone.melody,
                 onDismiss = onDismiss,
-                onTest = settingsViewModel::testFindPhoneConfig,
+                onTest = { volume, melody ->
+                    requestFindPhoneNotifications()
+                    settingsViewModel.testFindPhoneConfig(volume, melody)
+                },
                 onStopTest = settingsViewModel::stopFindPhoneTest,
                 onSave = { volume, melody ->
                     settingsViewModel.onPressCardAction(

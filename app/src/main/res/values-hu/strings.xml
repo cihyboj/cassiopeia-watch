@@ -219,4 +219,5 @@ A második dupla hangjelzés után az alkalmazás megjeleníti az időbeállít�
     <string name="alarm_fallback_unlock_limits">A telefon újraindítása után a tartalék ébresztők csak az első feloldás után működnek.</string>
     <string name="alarm_one_time_watch_limits">Az óra az egyszeri ébresztőt napi ébresztőként tárolja. Ezután naponta csörög a következő szinkronizálásig vagy az órán történő kikapcsolásig.</string>
     <string name="alarm_fallback_unconfirmed">Az ébresztő létrehozása nincs megerősítve. Ellenőrizze vagy állítsa be kézzel az óraalkalmazásban.</string>
+    <string name="find_phone_notifications_blocked">A Telefon keresése értesítések nélkül is csörög, de ekkor a telefonon nincs Leállítás gomb, csak az óra gombjának újbóli megnyomása. Engedélyezd az alkalmazás értesítéseit és a Find phone csatornát a Beállításokban.</string>
 </resources>

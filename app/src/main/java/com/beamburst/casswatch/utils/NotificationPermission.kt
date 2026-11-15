@@ -36,10 +36,19 @@ internal fun canPostNotifications(context: Context): Boolean =
 // Legacy channel used by NotificationProvider for auto-sync outcomes.
 private const val SYNC_NOTIFICATION_CHANNEL = "G_SHOCK_SMART_SYNC_CHANNEL"
 
-private fun canPostSyncNotifications(context: Context): Boolean {
+// Channel PhoneFinder creates for its "Stop" notification.
+internal const val FIND_PHONE_NOTIFICATION_CHANNEL = "find_phone"
+
+private fun canPostSyncNotifications(context: Context): Boolean =
+    canPostOnChannel(context, SYNC_NOTIFICATION_CHANNEL)
+
+internal fun canPostFindPhoneNotifications(context: Context): Boolean =
+    canPostOnChannel(context, FIND_PHONE_NOTIFICATION_CHANNEL)
+
+private fun canPostOnChannel(context: Context, channelId: String): Boolean {
     if (!canPostNotifications(context)) return false
     val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    val channel = manager.getNotificationChannel(SYNC_NOTIFICATION_CHANNEL) ?: return true
+    val channel = manager.getNotificationChannel(channelId) ?: return true
     if (channel.importance == NotificationManager.IMPORTANCE_NONE) return false
     val group = channel.group ?: return true
     return Build.VERSION.SDK_INT < 28 || manager.getNotificationChannelGroup(group)?.isBlocked != true
@@ -47,7 +56,20 @@ private fun canPostSyncNotifications(context: Context): Boolean {
 
 /** Keep the preference enabled, explaining how to unblock delivery when Android blocks it. */
 @Composable
-internal fun rememberSyncNotificationRequest(enabled: Boolean): () -> Unit {
+internal fun rememberSyncNotificationRequest(enabled: Boolean): () -> Unit =
+    rememberNotificationRequest(enabled, R.string.sync_notifications_blocked, ::canPostSyncNotifications)
+
+/** Find my phone rings without notifications, but its only phone-side "Stop" is one. */
+@Composable
+internal fun rememberFindPhoneNotificationRequest(enabled: Boolean): () -> Unit =
+    rememberNotificationRequest(enabled, R.string.find_phone_notifications_blocked, ::canPostFindPhoneNotifications)
+
+@Composable
+private fun rememberNotificationRequest(
+    enabled: Boolean,
+    blockedMessage: Int,
+    canPost: (Context) -> Boolean,
+): () -> Unit {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentEnabled = rememberUpdatedState(enabled)
@@ -57,13 +79,13 @@ internal fun rememberSyncNotificationRequest(enabled: Boolean): () -> Unit {
         ActivityResultContracts.RequestPermission(),
     ) {
         requestPending = false
-        showExplanation = !canPostSyncNotifications(context)
+        showExplanation = !canPost(context)
     }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME && !requestPending) {
-                showExplanation = currentEnabled.value && !canPostSyncNotifications(context)
+                showExplanation = currentEnabled.value && !canPost(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -73,7 +95,7 @@ internal fun rememberSyncNotificationRequest(enabled: Boolean): () -> Unit {
     if (showExplanation) {
         AlertDialog(
             onDismissRequest = { showExplanation = false },
-            text = { AppText(stringResource(R.string.sync_notifications_blocked)) },
+            text = { AppText(stringResource(blockedMessage)) },
             confirmButton = {
                 AppButton(
                     stringResource(R.string.open_settings),
@@ -101,7 +123,7 @@ internal fun rememberSyncNotificationRequest(enabled: Boolean): () -> Unit {
             requestPending = true
             launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            showExplanation = !canPostSyncNotifications(context)
+            showExplanation = !canPost(context)
         }
     }
 }

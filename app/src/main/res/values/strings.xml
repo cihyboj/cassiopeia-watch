@@ -489,4 +489,9 @@
     <string name="alarm_fallback_unlock_limits">After a phone restart, phone alarm fallbacks resume only after the first unlock.</string>
     <string name="alarm_one_time_watch_limits">The watch stores a one-time alarm as daily. After it rings, it keeps ringing daily until the app syncs again or you turn it off on the watch.</string>
     <string name="alarm_fallback_unconfirmed">Phone alarm creation is unconfirmed. Open the clock app to check or set it manually.</string>
+    <!-- Intent extra field labels; Android API terms, kept untranslated. -->
+    <string name="broadcast_extra_key" translatable="false">Key</string>
+    <string name="broadcast_extra_type" translatable="false">Type</string>
+    <string name="broadcast_extra_value" translatable="false">Value</string>
+    <string name="find_phone_notifications_blocked">Find my phone rings even without notifications, but then there is no Stop button on the phone, only a second press on the watch. Allow app notifications and the Find phone channel in Settings.</string>
 </resources>
