@@ -236,4 +236,6 @@
     <string name="alarm_one_time_watch_limits">El rellotge desa l’alarma única com a diària. Després de sonar, continuarà cada dia fins a una altra sincronització o fins que la desactivis al rellotge.</string>
     <string name="alarm_fallback_unconfirmed">La creació de l’alarma no està confirmada. Comprova-la o configura-la manualment al rellotge.</string>
     <string name="find_phone_notifications_blocked">Troba el meu telèfon sona fins i tot sense notificacions, però llavors no hi ha cap botó Atura al telèfon, només una segona pulsació al rellotge. Permet les notificacions de l’app i el canal Find phone a Configuració.</string>
+    <string name="phone_alarm_backup">Alarma de reserva al telèfon</string>
+    <string name="phone_alarm_backup_description">Quan el rellotge no pot fer sonar una alarma, demana a l’aplicació Rellotge del telèfon que en creï una poc abans de l’hora prevista. Aquesta aplicació no pot eliminar aquestes alarmes més endavant.</string>
 </resources>

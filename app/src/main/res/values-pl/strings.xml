@@ -289,4 +289,6 @@
     <string name="alarm_one_time_watch_limits">Zegarek zapisuje alarm jednorazowy jako codzienny. Po zadzwonieniu dzwoni codziennie do kolejnej synchronizacji z aplikacją lub wyłączenia na zegarku.</string>
     <string name="alarm_fallback_unconfirmed">Utworzenie alarmu telefonu nie jest potwierdzone. Sprawdź lub ustaw go ręcznie w zegarze.</string>
     <string name="find_phone_notifications_blocked">Funkcja Znajdź telefon dzwoni także bez powiadomień, ale wtedy na telefonie nie ma przycisku Zatrzymaj – wyłączysz ją tylko ponownym naciśnięciem na zegarku. Zezwól na powiadomienia aplikacji i kanał Find phone w ustawieniach.</string>
+    <string name="phone_alarm_backup">Zapasowy alarm w telefonie</string>
+    <string name="phone_alarm_backup_description">Gdy zegarek nie może uruchomić alarmu, prosi aplikację Zegar w telefonie o utworzenie go krótko przed planowaną godziną. Ta aplikacja nie może później usunąć tych alarmów z Zegara.</string>
 </resources>

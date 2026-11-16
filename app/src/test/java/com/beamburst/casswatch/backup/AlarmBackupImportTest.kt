@@ -17,6 +17,7 @@ class AlarmBackupImportTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-08T23:00:00Z"), zone)
     private val alarm = AlarmSyncStorage.StoredAlarm(7, 0, true, false, "Wake", oneShotLocalDate = "2026-10-09")
     private class Store(var entries: JSONObject) : AlarmPersistence {
+        override suspend fun phoneAlarmBackupEnabled() = entries.optString("phoneAlarmBackupEnabled", "false").toBoolean()
         override suspend fun addresses() = entries.optString("DeviceAddresses", "").split(',').filter(String::isNotBlank)
         override suspend fun load(address: String) = AlarmSyncStorage.readState(address) {
             if (entries.has(it)) entries.getString(it) else null
@@ -42,6 +43,7 @@ class AlarmBackupImportTest {
     }
     private fun entries(vararg addresses: String) = JSONObject().apply {
         put("DeviceAddresses", addresses.joinToString(","))
+        put("phoneAlarmBackupEnabled", "true")
         put(ALARM_FALLBACK_MIGRATION_FLAG, "true")
         addresses.forEach { put(AlarmSyncStorage.stateKey(it), AlarmSyncStorage.encode(AlarmState(listOf(alarm), mapOf(0 to emptySet()), true))) }
     }
@@ -73,6 +75,27 @@ class AlarmBackupImportTest {
             assertEquals("2026-10-09", store.load(a).alarms[0].oneShotLocalDate)
             assertEquals(listOf(a), store.addresses())
             assertEquals(setOf(AlarmKey(a, 0)), backend.scheduled.keys)
+        }
+    }
+    @Test fun `restoring missing or disabled backup setting cancels fallbacks`() = runBlocking {
+        for (enabled in listOf(null, "false", "true")) {
+            val store = Store(entries(b))
+            val backend = Backend()
+            val coordinator = PersistedAlarmSchedulingCoordinator(store, backend, clock) { zone }
+            coordinator.reconcileAll()
+            assertFalse(backend.scheduled.isEmpty())
+            val data = entries(a).apply {
+                if (enabled == null) remove("phoneAlarmBackupEnabled") else put("phoneAlarmBackupEnabled", enabled)
+            }
+            val result = restoreBackup(buildBackupJson(data, 0, "test").toString(), object : BackupRestoreTarget {
+                override suspend fun replace(entries: JSONObject): Int {
+                    coordinator.replaceAll { store.entries = backupEntriesForRestore(entries) }
+                    return entries.length()
+                }
+            })
+            assertTrue(result is ImportResult.Ok)
+            assertEquals(enabled == "true", store.phoneAlarmBackupEnabled())
+            assertEquals(if (enabled == "true") setOf(AlarmKey(a, 0)) else emptySet<AlarmKey>(), backend.scheduled.keys)
         }
     }
     @Test fun `consumed one time alarm stays consumed in both import versions`() = runBlocking {

@@ -16,6 +16,8 @@ class AlarmCoordinatorTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-09T08:00:00Z"), ZoneId.of("UTC"))
     private val initial = AlarmState(listOf(AlarmSyncStorage.StoredAlarm(7, 0, true, false, "", oneShotLocalDate = "2026-10-09")), mapOf(0 to emptySet()))
     private class Store(val states: MutableMap<String, AlarmState>) : AlarmPersistence {
+        var backupEnabled = true
+        override suspend fun phoneAlarmBackupEnabled() = backupEnabled
         var initialization: suspend () -> Unit = {}
         var beforeSave: suspend () -> Unit = {}
         override suspend fun initialize() = initialization()
@@ -29,17 +31,80 @@ class AlarmCoordinatorTest {
     }
     private class Backend : AlarmScheduleBackend {
         val scheduled = mutableMapOf<AlarmKey, Long>()
+        val scheduleCalls = mutableListOf<AlarmKey>()
+        val expiries = mutableMapOf<AlarmKey, Long>()
+        val recoveries = mutableListOf<Long>()
+        val uncertain = mutableListOf<AlarmKey>()
+        override fun recovery(address: String, instant: Long) { recoveries += instant }
+        override fun uncertain(key: AlarmKey) { uncertain += key }
         override fun cancel(key: AlarmKey) { scheduled.remove(key) }
         override fun schedule(key: AlarmKey, alarm: AlarmSyncStorage.StoredAlarm, instant: Long): FallbackAvailability {
+            scheduleCalls += key
             scheduled[key] = instant
             return FallbackAvailability.SCHEDULED
         }
         override fun cancelFallback(key: AlarmKey) = cancel(key)
         override fun cancelLegacy(slot: Int) = Unit
-        override fun expiry(key: AlarmKey, instant: Long?) = Unit
+        override fun expiry(key: AlarmKey, instant: Long?) {
+            if (instant == null) expiries.remove(key) else expiries[key] = instant
+        }
+    }
+    @Test fun `backup off never schedules and cancels armed fallback while retaining expiry`() = runBlocking {
+        val future = initial.copy(alarms = listOf(initial.alarms[0].copy(oneShotLocalDate = "2026-10-10")))
+        val store = Store(mutableMapOf(a to future)).apply { backupEnabled = false }
+        val key = AlarmKey(a, 0)
+        val backend = Backend().apply { scheduled[key] = 123L }
+        val coordinator = PersistedAlarmSchedulingCoordinator(store, backend, clock) { ZoneId.of("UTC") }
+        coordinator.reconcileAll()
+        assertTrue(backend.scheduleCalls.isEmpty())
+        assertTrue(backend.scheduled.isEmpty())
+        assertEquals(Instant.parse("2026-10-10T07:00:00Z").toEpochMilli(), backend.expiries[key])
+        assertTrue(coordinator.unavailable.value.isEmpty())
+    }
+    @Test fun `enabling backup schedules and disabling cancels across watches`() = runBlocking {
+        val future = initial.copy(alarms = listOf(initial.alarms[0].copy(oneShotLocalDate = "2026-10-10")))
+        val store = Store(mutableMapOf(a to future, b to future)).apply { backupEnabled = false }
+        val backend = Backend()
+        val coordinator = PersistedAlarmSchedulingCoordinator(store, backend, clock) { ZoneId.of("UTC") }
+        coordinator.reconcileAll()
+        assertTrue(backend.scheduleCalls.isEmpty())
+        store.backupEnabled = true
+        coordinator.reconcileAll()
+        assertEquals(setOf(AlarmKey(a, 0), AlarmKey(b, 0)), backend.scheduleCalls.toSet())
+        store.backupEnabled = false
+        backend.scheduleCalls.clear()
+        coordinator.reconcileAll()
+        assertTrue(backend.scheduleCalls.isEmpty())
+        assertTrue(backend.scheduled.isEmpty())
+        assertEquals(2, backend.expiries.size)
+    }
+    @Test fun `backup off rejects queued callback without a handoff or recovery notice`() = runBlocking {
+        val moving = MovingClock(Instant.parse("2026-10-09T06:58:00Z"))
+        val store = Store(mutableMapOf(a to initial)).apply { backupEnabled = false }
+        val backend = Backend()
+        val coordinator = PersistedAlarmSchedulingCoordinator(store, backend, moving) { ZoneId.of("UTC") }
+        assertFalse(coordinator.fallback(AlarmKey(a, 0), moving.millis() + 120_000, "07:00:true") { fail("Backup off") })
+        assertNull(store.states[a]!!.alarms[0].fallbackStatus)
+        assertTrue(backend.uncertain.isEmpty())
+        assertTrue(backend.scheduleCalls.isEmpty())
+        // Interrupted watch writes still get durable non-exact reconciliation.
+        coordinator.beginWrite(a, AlarmWritePending("test", moving.millis() + ALARM_WRITE_TIMEOUT_MS))
+        assertFalse(backend.recoveries.isEmpty())
+    }
+    @Test fun `backup off suppresses pending handoff recovery notices`() = runBlocking {
+        val moving = MovingClock(Instant.parse("2026-10-09T06:58:00Z"))
+        val pending = initial.copy(alarms = listOf(initial.alarms[0].copy(
+            fallbackStatus = "pending", fallbackStatusAt = moving.millis() + 120_000,
+        )))
+        val store = Store(mutableMapOf(a to pending)).apply { backupEnabled = false }
+        val backend = Backend()
+        val coordinator = PersistedAlarmSchedulingCoordinator(store, backend, moving) { ZoneId.of("UTC") }
+        coordinator.reconcileAll()
+        assertTrue(backend.uncertain.isEmpty())
+        assertTrue(backend.scheduleCalls.isEmpty())
     }
     @Test fun `reconcile after process death consumes elapsed persisted occurrence without screen`() = runBlocking {
-        val store = Store(mutableMapOf(a to initial))
+        val store = Store(mutableMapOf(a to initial)).apply { backupEnabled = false }
         val coordinator = PersistedAlarmSchedulingCoordinator(store, Backend(), clock) { ZoneId.of("UTC") }
         coordinator.reconcile(a)
         assertNotNull(store.states[a]!!.alarms[0].firedAt)

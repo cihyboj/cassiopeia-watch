@@ -21,6 +21,7 @@ class AlarmPayloadWriterTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-09T06:58:00Z"), zone)
     private val payload = listOf(Alarm(7, 0, true, false, "Wake"))
     private class Store(var state: AlarmState, val address: String) : AlarmPersistence {
+        override suspend fun phoneAlarmBackupEnabled() = true
         var beforeSave: (AlarmState) -> Unit = {}
         override suspend fun addresses() = listOf(address)
         override suspend fun load(address: String) = state

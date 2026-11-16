@@ -221,4 +221,6 @@
     <string name="alarm_one_time_watch_limits">手表将一次性闹钟保存为每日闹钟。响铃后仍会每天响铃，直到再次同步或在手表上关闭。</string>
     <string name="alarm_fallback_unconfirmed">尚未确认手机闹钟已创建。请打开时钟应用检查或手动设置。</string>
     <string name="find_phone_notifications_blocked">“查找手机”在没有通知时也会响铃，但手机上不会显示“停止”按钮，只能再次按手表按钮停止。请在设置中允许应用通知和 Find phone 通知渠道。</string>
+    <string name="phone_alarm_backup">手机备用闹钟</string>
+    <string name="phone_alarm_backup_description">当手表无法响铃时，会在预定时间前不久请求手机的时钟应用创建闹钟。本应用之后无法删除这些时钟闹钟。</string>
 </resources>

@@ -165,7 +165,21 @@ class AlarmViewModel @Inject constructor(
 
     fun openPhoneClock() = openFallbackClock(appContext)
 
-    private var exactAlarmPermissionRequested = false
+    val phoneAlarmBackupEnabled = LocalDataStorage.phoneAlarmBackupEnabledFlow(appContext)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    fun setPhoneAlarmBackupEnabled(enabled: Boolean) = viewModelScope.launch(Dispatchers.IO) {
+        alarmCoordinator.serialized { LocalDataStorage.setPhoneAlarmBackupEnabled(appContext, enabled) }
+        if (enabled && !canScheduleExactAlarms(appContext)) {
+            _uiEvents.emit(UiEvent.RequestExactAlarmPermission)
+        }
+        alarmCoordinator.reconcileAll()
+    }
+
+    fun reconcileAlarmBackup() = viewModelScope.launch(Dispatchers.IO) {
+        alarmCoordinator.reconcileAll()
+    }
+
     private val eventSubscriberName = "AlarmViewModel-${System.identityHashCode(this)}"
     private val warningTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     private val initializedHourlySignalAddresses = mutableSetOf<String>()
@@ -580,12 +594,6 @@ class AlarmViewModel @Inject constructor(
     }
 
     fun upsertAlarm(index: Int, hour: Int, minute: Int, name: String, days: Set<DayOfWeek>) = viewModelScope.launch(Dispatchers.IO) {
-        val isFireOnce = days.isEmpty()
-        if (isFireOnce && !exactAlarmPermissionRequested) {
-            exactAlarmPermissionRequested = true
-            viewModelScope.launch { _uiEvents.emit(UiEvent.RequestExactAlarmPermission) }
-        }
-
         updateAlarm(index, days = days) {
             it.copy(hour = hour, minute = minute, name = name.ifBlank { null }, enabled = true)
         }

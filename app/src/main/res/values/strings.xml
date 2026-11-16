@@ -494,4 +494,6 @@
     <string name="broadcast_extra_type" translatable="false">Type</string>
     <string name="broadcast_extra_value" translatable="false">Value</string>
     <string name="find_phone_notifications_blocked">Find my phone rings even without notifications, but then there is no Stop button on the phone, only a second press on the watch. Allow app notifications and the Find phone channel in Settings.</string>
+    <string name="phone_alarm_backup">Phone alarm backup</string>
+    <string name="phone_alarm_backup_description">When the watch cannot ring an alarm, asks the phone’s Clock app to create one shortly before ring time. This app cannot remove those Clock alarms later.</string>
 </resources>

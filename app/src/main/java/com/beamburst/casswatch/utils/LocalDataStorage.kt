@@ -155,6 +155,15 @@ object LocalDataStorage {
         putAsync(context, "fineTimeAdjustment", fineTimeAdjustment.toString())
     }
 
+    fun phoneAlarmBackupEnabledFlow(context: Context): Flow<Boolean> =
+        context.dataStore.data.map { prefs ->
+            prefs[stringPreferencesKey("phoneAlarmBackupEnabled")]?.toBoolean() ?: false
+        }
+
+    suspend fun setPhoneAlarmBackupEnabled(context: Context, enabled: Boolean) {
+        putBoolean(context, "phoneAlarmBackupEnabled", enabled)
+    }
+
     fun getNtpTimeEnabled(context: Context): Boolean {
         return getBoolean(context, "ntpTimeEnabled")
     }
