@@ -17,6 +17,7 @@ class AlarmLifecycleTest {
     private val alarm = AlarmSyncStorage.StoredAlarm(7, 0, true, false, "Wake", oneShotLocalDate = "2026-10-09")
     private val initial = AlarmState(listOf(alarm), mapOf(0 to emptySet()), true)
     private class Store(val states: MutableMap<String, AlarmState>) : AlarmPersistence {
+        override suspend fun phoneAlarmBackupEnabled() = true
         var beforeSave: (suspend () -> Unit)? = null
         var loads = 0
         override suspend fun addresses() = states.keys.toList()

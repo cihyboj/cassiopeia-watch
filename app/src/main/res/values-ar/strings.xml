@@ -224,4 +224,6 @@
     <string name="alarm_one_time_watch_limits">تخزن الساعة المنبه لمرة واحدة كمنبه يومي. بعد رنينه يستمر يوميًا حتى المزامنة التالية أو إيقافه على الساعة.</string>
     <string name="alarm_fallback_unconfirmed">لم يُؤكد إنشاء منبه الهاتف. افتح تطبيق الساعة للتحقق أو ضبطه يدويًا.</string>
     <string name="find_phone_notifications_blocked">تعمل ميزة العثور على هاتفي حتى دون إشعارات، لكن لن يظهر زر الإيقاف على الهاتف، ويمكن الإيقاف فقط بضغطة ثانية على الساعة. اسمح بإشعارات التطبيق وقناة Find phone في الإعدادات.</string>
+    <string name="phone_alarm_backup">منبه احتياطي على الهاتف</string>
+    <string name="phone_alarm_backup_description">عندما لا تستطيع الساعة تشغيل المنبه، يطلب من تطبيق الساعة على الهاتف إنشاء منبه قبل وقت الرنين بقليل. لا يستطيع هذا التطبيق حذف تلك المنبهات لاحقًا.</string>
 </resources>

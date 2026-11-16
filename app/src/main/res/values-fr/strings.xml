@@ -240,4 +240,6 @@ si votre montre est en avance de 2,5 secondes par rapport à l\'heure réelle, d
     <string name="alarm_one_time_watch_limits">La montre enregistre une alarme unique comme quotidienne. Elle sonne ensuite chaque jour jusqu’à une nouvelle synchronisation ou sa désactivation sur la montre.</string>
     <string name="alarm_fallback_unconfirmed">La création de l’alarme est non confirmée. Vérifiez-la ou réglez-la manuellement dans l’application Horloge.</string>
     <string name="find_phone_notifications_blocked">Localiser mon téléphone sonne même sans notifications, mais il n’y a alors aucun bouton Arrêter sur le téléphone, seulement un second appui sur la montre. Autorisez les notifications de l’app et le canal Find phone dans les paramètres.</string>
+    <string name="phone_alarm_backup">Réveil de secours sur le téléphone</string>
+    <string name="phone_alarm_backup_description">Si la montre ne peut pas faire sonner une alarme, demande à l’application Horloge du téléphone d’en créer une peu avant l’heure prévue. Cette application ne peut pas supprimer ces alarmes par la suite.</string>
 </resources>

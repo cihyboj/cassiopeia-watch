@@ -24,6 +24,7 @@ class WatchTimeWriterTest {
     private val zone = ZoneId.of("UTC")
     private val clock = Clock.fixed(Instant.parse("2026-10-09T06:58:00Z"), zone)
     private class Store(val address: String, var state: AlarmState) : AlarmPersistence {
+        override suspend fun phoneAlarmBackupEnabled() = true
         override suspend fun addresses() = listOf(address)
         override suspend fun load(address: String) = state
         override suspend fun save(address: String, state: AlarmState) { this.state = state }

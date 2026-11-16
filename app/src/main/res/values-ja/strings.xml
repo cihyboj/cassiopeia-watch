@@ -236,4 +236,6 @@
     <string name="alarm_one_time_watch_limits">腕時計は1回限りのアラームを毎日のアラームとして保存します。一度鳴った後も、再同期するか腕時計で無効にするまで毎日鳴り続けます。</string>
     <string name="alarm_fallback_unconfirmed">アラームの作成は未確認です。時計アプリで確認するか、手動で設定してください。</string>
     <string name="find_phone_notifications_blocked">「電話を探す」は通知がなくても鳴りますが、その場合は電話に停止ボタンが表示されず、時計のボタンをもう一度押すしか止める方法がありません。設定でアプリの通知と Find phone チャンネルを許可してください。</string>
+    <string name="phone_alarm_backup">スマートフォンの予備アラーム</string>
+    <string name="phone_alarm_backup_description">腕時計でアラームを鳴らせない場合、予定時刻の少し前にスマートフォンの時計アプリへアラームの作成を要求します。このアプリでは、作成された時計アプリのアラームを後から削除できません。</string>
 </resources>

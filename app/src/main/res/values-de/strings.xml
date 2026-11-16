@@ -231,4 +231,6 @@ Nachdem die Alarme eingestellt wurden, können Sie sie an die Uhr oder an die We
     <string name="alarm_one_time_watch_limits">Die Uhr speichert einen einmaligen Alarm als täglichen Alarm. Nach dem Klingeln klingelt er täglich weiter, bis die App erneut synchronisiert oder du ihn an der Uhr ausschaltest.</string>
     <string name="alarm_fallback_unconfirmed">Die Erstellung des Telefonalarms ist unbestätigt. Prüfe oder stelle ihn manuell in der Uhr-App ein.</string>
     <string name="find_phone_notifications_blocked">„Telefon finden“ klingelt auch ohne Benachrichtigungen, aber dann gibt es auf dem Telefon keine Stopp-Schaltfläche, nur einen zweiten Druck auf der Uhr. Erlaube App-Benachrichtigungen und den Kanal „Find phone“ in den Einstellungen.</string>
+    <string name="phone_alarm_backup">Ersatzalarm auf dem Telefon</string>
+    <string name="phone_alarm_backup_description">Wenn die Armbanduhr einen Alarm nicht auslösen kann, wird die Uhr-App des Telefons kurz vor der Weckzeit gebeten, einen Alarm zu erstellen. Diese App kann solche Alarme später nicht löschen.</string>
 </resources>

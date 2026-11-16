@@ -50,6 +50,7 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
         AppScopes.io.launch {
             var completed = false
             var handoffReturned = false
+            var handoffAttempted = false
             try {
                 val remaining = alarmReceiverTimeRemaining(receivedAt, SystemClock.elapsedRealtime()) ?: return@launch
                 withTimeout(remaining) {
@@ -58,6 +59,7 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
                     if (expiry) coordinator.reconcile(key.normalizedAddress)
                     else {
                         val requested = coordinator.fallback(key, intent.getLongExtra(EXTRA_FIRE_INSTANT, -1), hash!!) { alarm ->
+                            handoffAttempted = true
                             val effectiveTime = alarmTimeAtOccurrence(intent.getLongExtra(EXTRA_FIRE_INSTANT, -1), java.time.ZoneId.systemDefault())
                             val request = Intent(AlarmClock.ACTION_SET_ALARM).apply {
                                 putExtra(AlarmClock.EXTRA_HOUR, effectiveTime.hour)
@@ -78,18 +80,12 @@ class PhoneFallbackReceiver : BroadcastReceiver() {
 
                         }
                         if (requested) postFallbackRecovery(context, key, failed = false)
-                        else {
-                            val alarm = coordinator.snapshot(key.normalizedAddress).alarms.getOrNull(key.slot)
-                            if (alarm?.fallbackStatus == "pending" && activeFallbackStatus(alarm, System.currentTimeMillis()) != null) {
-                                postFallbackRecovery(context, key, failed = false, uncertain = true)
-                            }
-                        }
                     }
                 }
                 completed = true
             } catch (error: Exception) {
                 Timber.e(error, "Phone fallback callback failed for %s", key)
-                if (!expiry) postFallbackRecovery(context, key, failed = !handoffReturned, uncertain = handoffReturned)
+                if (handoffAttempted) postFallbackRecovery(context, key, failed = !handoffReturned, uncertain = handoffReturned)
             } finally {
                 if (!completed) {
                     runCatching { scheduleAlarmReconciliation(context, key.normalizedAddress) }

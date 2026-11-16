@@ -16,6 +16,7 @@ class AlarmMigrationAndFallbackTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-09T06:58:00Z"), zone)
     private val alarm = AlarmSyncStorage.StoredAlarm(7, 0, true, false, "Wake")
     private class Store(val states: MutableMap<String, AlarmState>) : AlarmPersistence {
+        override suspend fun phoneAlarmBackupEnabled() = true
         var done = false
         var history = emptyList<SyncEntry>()
         override suspend fun addresses() = states.keys.toList()

@@ -13,6 +13,7 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Clock
@@ -37,6 +38,7 @@ interface AlarmSchedulingCoordinator {
 
 internal interface AlarmPersistence {
     suspend fun initialize() = Unit
+    suspend fun phoneAlarmBackupEnabled(): Boolean = false
     suspend fun slots(address: String): Set<Int> = (0..5).toSet()
     suspend fun addresses(): List<String>
     suspend fun load(address: String): AlarmState
@@ -141,6 +143,10 @@ internal class PersistedAlarmSchedulingCoordinator(
         initialized = true
     }
     override suspend fun fallback(key: AlarmKey, instant: Long, hash: String, handoff: (AlarmSyncStorage.StoredAlarm) -> Unit): Boolean = serialized {
+        if (!persistence.phoneAlarmBackupEnabled()) {
+            reconcileLocked(key.normalizedAddress)
+            return@serialized false
+        }
         val addresses = persistence.addresses()
         if (key.normalizedAddress !in addresses) return@serialized false
         val state = persistence.load(key.normalizedAddress)
@@ -198,16 +204,17 @@ internal class PersistedAlarmSchedulingCoordinator(
         val old = persistence.load(key.normalizedAddress)
         val state = reconcileAlarmState(old, clock, zone())
         if (old != state) persistence.save(key.normalizedAddress, state)
+        val backupEnabled = persistence.phoneAlarmBackupEnabled()
         state.writePending?.let { backend.recovery(key.normalizedAddress, it.deadline) }
         val unavailable = unavailableKeys.value.filterNot { it.normalizedAddress == key.normalizedAddress }.toMutableSet()
         state.alarms.forEachIndexed { slot, alarm ->
             val alarmKey = key.copy(slot = slot)
-            if (activeFallbackStatus(alarm, clock.millis()) == "pending") backend.uncertain(alarmKey)
+            if (backupEnabled && activeFallbackStatus(alarm, clock.millis()) == "pending") backend.uncertain(alarmKey)
             val days = state.days[slot] ?: AlarmSchedulePlanner.AllDays
             backend.expiry(alarmKey, if (days.isEmpty() && alarm.enabled && alarm.firedAt == null)
                 alarm.occurrence()?.resolveInstant(zone())?.toEpochMilli() else null)
             val instant = nextAlarmOccurrence(alarm, days, clock, zone())?.toEpochMilli()
-            if (state.writePending != null || instant == null || alarm.fallbackAttemptAt == instant ||
+            if (!backupEnabled || state.writePending != null || instant == null || alarm.fallbackAttemptAt == instant ||
                 (alarm.fallbackStatus in setOf("pending", "requested", "failed") && alarm.fallbackStatusAt == instant) || watchHasOccurrence(alarmKey, alarm, instant, state.confirmedPayloads(), clock.millis(), zone())) {
                 backend.cancelFallback(alarmKey)
             } else if (backend.schedule(alarmKey, alarm, instant) == FallbackAvailability.UNAVAILABLE) {
@@ -225,6 +232,7 @@ internal class AndroidAlarmPersistence @Inject constructor(
     private val historyStore: SyncHistoryStore,
 ) : AlarmPersistence {
     private val migrationFlag = ALARM_FALLBACK_MIGRATION_FLAG
+    override suspend fun phoneAlarmBackupEnabled(): Boolean = LocalDataStorage.phoneAlarmBackupEnabledFlow(context).first()
     override suspend fun initialize() = MultiWatchMigrator.migrateIfNeeded(context)
     override suspend fun slots(address: String): Set<Int> {
         // Cancellation must survive even an undecodable state. Include sparse legacy slots.

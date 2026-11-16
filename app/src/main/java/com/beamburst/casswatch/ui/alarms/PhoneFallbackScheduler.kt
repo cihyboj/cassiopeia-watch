@@ -31,16 +31,13 @@ internal class PhoneFallbackScheduler @Inject constructor(
 ) : AlarmScheduleBackend {
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-    fun canScheduleExactAlarms(): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
-
     override fun uncertain(key: AlarmKey) = postFallbackRecovery(context, key, failed = false, uncertain = true)
 
     override fun recovery(address: String, instant: Long) = scheduleAlarmReconciliation(context, address, instant)
 
     override fun schedule(key: AlarmKey, alarm: AlarmSyncStorage.StoredAlarm, instant: Long): FallbackAvailability {
         val wakeAt = fallbackWakeAt(instant, alarmTime.clock.millis()) ?: return FallbackAvailability.ELAPSED
-        return attemptExactFallback(::canScheduleExactAlarms) {
+        return attemptExactFallback({ canScheduleExactAlarms(context) }) {
             val intent = fallbackIntent(context, key).apply {
                 putExtra(PhoneFallbackReceiver.EXTRA_EXPECTED_HASH, alarmHash(alarm.hour, alarm.minute, emptySet(), true))
                 putExtra(PhoneFallbackReceiver.EXTRA_FIRE_INSTANT, instant)
@@ -77,6 +74,9 @@ internal class PhoneFallbackScheduler @Inject constructor(
         }
     }
 }
+
+internal fun canScheduleExactAlarms(context: Context): Boolean =
+    Build.VERSION.SDK_INT < Build.VERSION_CODES.S || context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
 
 internal fun attemptExactFallback(allowed: () -> Boolean, schedule: () -> Unit): FallbackAvailability = try {
     if (!allowed()) FallbackAvailability.UNAVAILABLE

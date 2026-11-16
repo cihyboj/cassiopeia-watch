@@ -19,10 +19,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -39,9 +41,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.beamburst.casswatch.R
 import com.beamburst.casswatch.theme.CassiopeiaWatchTheme
 import com.beamburst.casswatch.theme.Spacing
@@ -248,9 +253,18 @@ fun AlarmsScreen(
     val hourlySignal by alarmViewModel.hourlySignal.collectAsState()
     val timerState by timerViewModel.state.collectAsState()
     val editorTarget by alarmViewModel.editorTarget.collectAsState()
+    val phoneAlarmBackupEnabled by alarmViewModel.phoneAlarmBackupEnabled.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showPermissionDialog by remember { mutableStateOf(false) }
     var activeTab by remember { mutableStateOf(AlarmHubTab.ALARMS) }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        alarmViewModel.reconcileAlarmBackup()
+    }
+
+    LaunchedEffect(phoneAlarmBackupEnabled) {
+        if (!phoneAlarmBackupEnabled) showPermissionDialog = false
+    }
 
     LaunchedEffect(Unit) {
         alarmViewModel.uiEvents.collect { event ->
@@ -263,7 +277,7 @@ fun AlarmsScreen(
         }
     }
 
-    if (showPermissionDialog) {
+    if (showPermissionDialog && phoneAlarmBackupEnabled) {
         ExactAlarmPermissionDialog(
             onDismiss = { showPermissionDialog = false },
             onOpenSettings = { showPermissionDialog = false }
@@ -321,9 +335,38 @@ fun AlarmsScreen(
                 when (activeTab) {
                     AlarmHubTab.ALARMS -> {
                         AlarmList(alarmViewModel)
-                        AppText(text = stringResource(R.string.alarm_fallback_unlock_limits),
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(horizontal = Spacing.lg))
+                        AppCard(modifier = Modifier.padding(horizontal = Spacing.lg)) {
+                            Column(modifier = Modifier.padding(Spacing.lg)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().toggleable(
+                                        value = phoneAlarmBackupEnabled,
+                                        role = Role.Switch,
+                                        onValueChange = alarmViewModel::setPhoneAlarmBackupEnabled,
+                                    ),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    AppText(
+                                        text = stringResource(R.string.phone_alarm_backup),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    Switch(
+                                        checked = phoneAlarmBackupEnabled,
+                                        onCheckedChange = null,
+                                    )
+                                }
+                                AppText(
+                                    text = stringResource(R.string.phone_alarm_backup_description),
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                                if (phoneAlarmBackupEnabled) {
+                                    AppText(
+                                        text = stringResource(R.string.alarm_fallback_unlock_limits),
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                            }
+                        }
                     }
                     AlarmHubTab.TIMER -> TimerCardContent(
                         modifier = Modifier
