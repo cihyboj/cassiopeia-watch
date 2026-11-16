@@ -10,4 +10,12 @@ class PhoneFinderPolicyTest {
         assertFalse(shouldStopPhoneFinder(false))
         assertTrue(shouldStopPhoneFinder(true))
     }
+
+    @Test
+    fun `late permission grant shows Stop only while still ringing`() {
+        assertFalse(shouldShowPhoneFinderStopNotification(isRinging = true, notificationsPermitted = false))
+        assertTrue(shouldShowPhoneFinderStopNotification(isRinging = true, notificationsPermitted = true))
+        assertFalse(shouldShowPhoneFinderStopNotification(isRinging = false, notificationsPermitted = true))
+        assertFalse(shouldShowPhoneFinderStopNotification(isRinging = false, notificationsPermitted = false))
+    }
 }

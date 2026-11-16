@@ -54,12 +54,20 @@ internal object BleLinkStateReset {
     private fun handlerFieldOf(type: Class<*>): Field? =
         runCatching { findField(type, "requestHandler") }.getOrNull()
 
-    /** Returns false when a link is up again, in which case nothing is changed. */
-    internal fun resetFlags(handler: Any): Boolean {
+    /** Returns false when a link is starting or up again, leaving its flags untouched. */
+    internal fun resetFlags(
+        handler: Any,
+        isConnectionActive: () -> Boolean = { Connection.isConnecting() || Connection.isConnected() },
+    ): Boolean {
         val type = handler.javaClass
         val lock = findField(type, "LOCK").get(handler) ?: handler
         synchronized(lock) {
+            if (isConnectionActive()) {
+                Timber.d("Skipping BLE discovery state reset: connection is starting or connected")
+                return false
+            }
             if (findField(type, "connected").getBoolean(handler)) return false
+            // Nordic callbacks do not take LOCK: a connection can still start after these checks.
             for (name in STALE_FLAGS) findField(type, name).setBoolean(handler, false)
         }
         return true

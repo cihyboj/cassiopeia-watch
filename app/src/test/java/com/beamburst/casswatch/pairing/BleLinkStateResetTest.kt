@@ -38,7 +38,7 @@ class BleLinkStateResetTest {
     fun `clears stale discovery flags on a closed link, including inherited fields`() {
         val handler = FakeGattCallback()
 
-        assertTrue(BleLinkStateReset.resetFlags(handler))
+        assertTrue(BleLinkStateReset.resetFlags(handler) { false })
         assertTrue(handler.flags().none { it })
     }
 
@@ -46,7 +46,16 @@ class BleLinkStateResetTest {
     fun `leaves a live link untouched`() {
         val handler = FakeGattCallback().apply { connected = true }
 
-        assertFalse(BleLinkStateReset.resetFlags(handler))
+        assertFalse(BleLinkStateReset.resetFlags(handler) { false })
+        assertTrue(handler.flags().all { it })
+    }
+
+    @Test
+    fun `leaves discovery flags untouched while a new connection is starting`() {
+        val handler = FakeGattCallback()
+
+        assertFalse(BleLinkStateReset.resetFlags(handler) { true })
+        assertFalse(handler.connected)
         assertTrue(handler.flags().all { it })
     }
 }
