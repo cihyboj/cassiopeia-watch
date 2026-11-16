@@ -76,9 +76,10 @@ If you already have an earlier build of this app that was signed with a differen
 
 - This is an experimental prerelease, and only one watch model has been tested.
 - The watch stores every alarm as a daily alarm. A one-time alarm keeps ringing daily after its date, and a weekly alarm can ring on excluded days, until the app connects again and updates the watch or you turn the alarm off on the watch.
-- The phone alarm fallback is best-effort. When the watch may not have received an alarm change, the app asks the phone's clock app to set an alarm shortly before it should ring. The request carries a time but no date, is not confirmed, and cannot be cancelled by the app. It needs the exact-alarm permission and does not work after a restart until the phone has been unlocked once.
+- The phone alarm fallback is off by default; turn on "Phone alarm backup" on the Alarms screen to use it. It is best-effort. When the watch may not have received an alarm change, the app asks the phone's clock app to set an alarm shortly before it should ring. The request carries a time but no date, is not confirmed, and cannot be cancelled or removed by the app, so these alarms stay in your clock app until you delete them. It needs the exact-alarm permission and does not work after a restart until the phone has been unlocked once.
 - Alarm writes are confirmed by reading them back from the watch. Time, settings, timer and reminder writes are reported as sent, not as received.
 - Changes made directly on the watch are not merged into the app's saved state and can be overwritten by the next sync.
+- Only one app can hold the watch's Bluetooth connection at a time. Running this app alongside Casio's official app or another G-Shock app for the same watch makes them compete for the connection; use one at a time.
 - Background connection behaviour varies between Android versions and manufacturers' battery management.
 - Calendar events with some recurrence rules cannot be represented on the watch.
 

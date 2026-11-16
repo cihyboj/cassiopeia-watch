@@ -28,10 +28,9 @@ The core BLE protocol is entirely encapsulated in an external library, **GShockA
 
 # Release to GitHub (uses gh CLI)
 ./release.sh 41.0     # production release (versionCode = major*1000 + minor)
-./release.sh debug    # debug APK upload
 ```
 
-CI (GitHub Actions, `.github/workflows/ci.yml`) runs `test`, `lint`, `assembleDebug`, and `assembleRelease` (unsigned, to exercise R8) on pushes to `main` and `claude/**`. Tag pushes trigger `.github/workflows/build-apk.yml`, which builds, verifies the signature, and uploads the signed APK to a GitHub release.
+CI (GitHub Actions, `.github/workflows/ci.yml`) runs `test`, `lint`, `assembleDebug`, and `assembleRelease` (unsigned, to exercise R8) on pushes to `main` and on pull requests. Tag pushes trigger `.github/workflows/build-apk.yml`, which builds, verifies the signature, and uploads the signed APK to a GitHub release.
 
 ## Architecture
 
