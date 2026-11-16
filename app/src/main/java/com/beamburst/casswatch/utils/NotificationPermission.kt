@@ -62,17 +62,24 @@ internal fun rememberSyncNotificationRequest(enabled: Boolean): () -> Unit =
 /** Find my phone rings without notifications, but its only phone-side "Stop" is one. */
 @Composable
 internal fun rememberFindPhoneNotificationRequest(enabled: Boolean): () -> Unit =
-    rememberNotificationRequest(enabled, R.string.find_phone_notifications_blocked, ::canPostFindPhoneNotifications)
+    rememberNotificationRequest(
+        enabled,
+        R.string.find_phone_notifications_blocked,
+        ::canPostFindPhoneNotifications,
+        PhoneFinder::refreshStopNotification,
+    )
 
 @Composable
 private fun rememberNotificationRequest(
     enabled: Boolean,
     blockedMessage: Int,
     canPost: (Context) -> Boolean,
+    onGranted: (Context) -> Unit = {},
 ): () -> Unit {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentEnabled = rememberUpdatedState(enabled)
+    val currentOnGranted = rememberUpdatedState(onGranted)
     var showExplanation by remember { mutableStateOf(false) }
     var requestPending by remember { mutableStateOf(false) }
     val launcher = rememberLauncherForActivityResult(
@@ -80,12 +87,14 @@ private fun rememberNotificationRequest(
     ) {
         requestPending = false
         showExplanation = !canPost(context)
+        if (!showExplanation) currentOnGranted.value(context)
     }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME && !requestPending) {
                 showExplanation = currentEnabled.value && !canPost(context)
+                if (canPost(context)) currentOnGranted.value(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)

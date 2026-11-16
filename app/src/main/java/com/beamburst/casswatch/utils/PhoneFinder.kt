@@ -77,6 +77,18 @@ object PhoneFinder {
         }
     }
 
+    /** Restore the Stop action if notification permission was granted during a ring. */
+    fun refreshStopNotification(context: Context) {
+        val applicationContext = context.applicationContext
+        handler.post {
+            runCatching {
+                if (shouldShowPhoneFinderStopNotification(player != null, canPostFindPhoneNotifications(applicationContext))) {
+                    showStopNotification(applicationContext)
+                }
+            }.onFailure { Timber.w(it, "Could not refresh find-phone stop notification") }
+        }
+    }
+
     fun stop() {
         handler.removeCallbacks(stopAfterTimeout)
         runCatching { player?.stop(); player?.release() }
@@ -129,3 +141,6 @@ object PhoneFinder {
 }
 
 internal fun shouldStopPhoneFinder(isRinging: Boolean): Boolean = isRinging
+
+internal fun shouldShowPhoneFinderStopNotification(isRinging: Boolean, notificationsPermitted: Boolean): Boolean =
+    isRinging && notificationsPermitted
