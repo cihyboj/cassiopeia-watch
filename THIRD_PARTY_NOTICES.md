@@ -23,7 +23,7 @@ transitive.
 | Group | Modules and resolved versions | Licence | Project |
 |---|---|---|---|
 | `com.github.PhilJay` | `RRule` 1.0.3 | Apache-2.0 (GitHub repository licence) | https://github.com/PhilJay/RRule |
-| `com.github.cihyboj` | `GShockAPI` 042cc1e | MIT | https://github.com/cihyboj/GShockAPI |
+| `com.github.cihyboj` | `GShockAPI` 46018e5 | MIT | https://github.com/cihyboj/GShockAPI |
 | `com.google.android.datatransport` | `transport-api` 4.1.1 | Apache-2.0 | https://developer.android.com/ |
 | `com.google.android.material` | `material` 1.4.0 | Apache-2.0 | https://github.com/material-components/material-components-android |
 | `com.google.code.findbugs` | `jsr305` 3.0.2 | Apache-2.0 | https://findbugs.sourceforge.net/ |
@@ -105,7 +105,7 @@ All Apache-2.0 per their POMs, except as noted.
 ### GShockAPI (MIT)
 
 Cassiopeia Watch builds against a fork of GShockAPI at commit
-`042cc1e2b5d4f5a325d70293dabe0497bc9d11e1`. The fork adds changes to time
+`46018e5de5b2907c81e9f9dec488c83c37615234`. The fork adds changes to time
 setting (removal of an incorrect manual DST adjustment, correct sub-second
 fields in the CURRENT_TIME packet, and a `primeTimeCache()` call). The licence
 text from that repository:

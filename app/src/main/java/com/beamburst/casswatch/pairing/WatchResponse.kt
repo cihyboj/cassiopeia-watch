@@ -9,7 +9,7 @@ import timber.log.Timber
 
 const val WATCH_RESPONSE_TIMEOUT_MS = 8_000L
 
-// GShockAPI 042cc1e: settings = SettingsIO + TimeAdjustmentIO; init = AppInfoIO
+// GShockAPI 46018e5: settings = SettingsIO + TimeAdjustmentIO; init = AppInfoIO
 // + ButtonPressedIO; alarms = two queued GETs (0x2A/0x2B) behind one deferred;
 // one event = EventsIO title + time. TimeIO awaits up to 3 DST states + 6 city
 // DST values + 5 city names (city 0 is encoded locally), for both prime and set.
