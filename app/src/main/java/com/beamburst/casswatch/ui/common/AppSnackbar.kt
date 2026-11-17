@@ -4,12 +4,17 @@ package com.beamburst.casswatch.ui.common
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.Dp
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -18,6 +23,14 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
+
+/**
+ * Height of bottom chrome (the app's navigation bar, including the system
+ * navigation inset) that snackbars must stay above. Zero when none is shown.
+ */
+object SnackbarBottomInset {
+    var height: Dp by mutableStateOf(0.dp)
+}
 
 fun AppSnackbar(message: String) {
     ProgressEvents.onNext("SnackbarMessage", message)
@@ -52,8 +65,13 @@ fun PopupMessageReceiver(duration: SnackbarDuration = SnackbarDuration.Short) {
         onDispose { ProgressEvents.subscriber.stop(subscriberId) }
     }
 
+    val bottomChrome = SnackbarBottomInset.height
     Box(
-            modifier = Modifier.fillMaxSize().systemBarsPadding(),
-            contentAlignment = Alignment.BottomCenter, // Align the popup at the bottom
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                // Sit above the navigation bar when one is shown, so its tabs stay usable.
+                .then(if (bottomChrome > 0.dp) Modifier.padding(bottom = bottomChrome) else Modifier.navigationBarsPadding()),
+            contentAlignment = Alignment.BottomCenter,
     ) { SnackbarHost(hostState = snackbarHostState, modifier = Modifier.padding(16.dp)) }
 }

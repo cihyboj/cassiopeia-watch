@@ -24,7 +24,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import com.beamburst.casswatch.ui.common.SnackbarBottomInset
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -131,13 +134,18 @@ fun BottomNavigationBarWithPermissions(
         }
     }
 
+    val density = LocalDensity.current
+    DisposableEffect(Unit) { onDispose { SnackbarBottomInset.height = 0.dp } }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
             .detectInactivity(inactivityHandler),
         bottomBar = {
             NavigationBar(
-                modifier = Modifier,
+                modifier = Modifier.onGloballyPositioned {
+                    SnackbarBottomInset.height = with(density) { it.size.height.toDp() }
+                },
                 containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp
             ) {
