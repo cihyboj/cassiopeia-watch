@@ -6,14 +6,50 @@ This project is a derivative of [CasioGShockSmartSync](https://github.com/izivko
 
 Status: experimental prerelease. The first version is 40.10.
 
+## Highlights
+
+### Weekly alarms
+
+Set each alarm for specific days of the week, or as a one-time alarm, and give it a name. The watch itself only knows daily alarms, so the app applies the right alarms for each day whenever the watch connects.
+
+For this to work without opening the app, turn on **Time Adjustment** in Settings. The watch then connects by itself four times a day, a few minutes after 00:00, 06:00, 12:00 and 18:00 (you choose how many minutes), and the app updates the alarms, the hourly signal and the time. If automatic sync is off, an alarm can ring on a day you excluded until the next connection.
+
+### Hourly signal on your schedule
+
+Limit the watch's hourly chime to a time window, for example 08:00 to 20:00, and to selected days (weekdays, weekend, every day or your own choice). The app turns the watch's signal on and off during the automatic syncs and shows exactly when it will chime. This also needs **Time Adjustment** turned on.
+
+### Watch buttons as automation triggers
+
+A short press and a long press of the watch button that connects it to the phone can each send an Android broadcast that automation apps such as [Tasker](https://tasker.joaoapps.com/), [MacroDroid](https://www.macrodroid.com/) or [Automate](https://llamalab.com/automate/) can react to:
+
+| Press | Broadcast action |
+|---|---|
+| Short | `com.beamburst.casswatch.RUN_SHORT` |
+| Long | `com.beamburst.casswatch.RUN_LONG` |
+
+You can attach your own extras (text, number or true/false) to each broadcast, so one automation can handle several cases. Some ideas:
+
+- Start or stop a voice recording, for example for notes while driving or cycling.
+- Take a photo remotely: trigger the camera shutter on a phone on a tripod.
+- Toggle the lights or a scene in your smart home (Home Assistant, Philips Hue and similar, through your automation app).
+- Play or pause music, or skip a track.
+- Turn on Do Not Disturb or silent mode when you walk into a meeting.
+- Send your location to a trusted contact, or start a call to them.
+- Log something with a timestamp: a medication taken, a workout set, a baby feed.
+
+The app sends the broadcast; the automation app does the rest. The watch has to connect to the phone first, so expect a few seconds' delay, and test any automation you plan to rely on. Do not depend on it as your only way to call for help in an emergency.
+
+A long press can also ring the phone ("Find my phone") at a volume and melody you choose, with a Stop button in a notification. Whether it is audible depends on the phone's sound and Do Not Disturb settings.
+
 ## Features
 
 - No account or login. The app has no server of its own.
 - Time: send the phone time, time zone and DST setting to the watch. Optionally use an NTP server as the time source, and apply a fine adjustment in milliseconds.
-- Auto-sync on reconnect: when the watch reconnects, the app can sync it automatically.
-- Alarms: read and edit the watch alarms, in a daily or a weekly view, and schedule the hourly signal (chime). Alarm names are stored in the watch's scratchpad memory.
+- Automatic sync: four times a day with Time Adjustment, and when the watch reconnects.
+- Alarms: read and edit the watch alarms in a daily or weekly view, with names and one-time alarms. An optional phone alarm backup can ask the phone's clock app to ring when the watch cannot.
+- Hourly signal with a time window and selected days.
 - Events: send upcoming events from the phone calendar to the watch as reminders. This tab is shown only for watches that support reminders, and some recurrence rules are marked incompatible.
-- Watch buttons: a short press can send a broadcast intent that automation apps such as Tasker or MacroDroid can receive. A long press can send its own broadcast intent and/or ring the phone ("Find my phone").
+- Watch buttons: broadcasts for automation apps on short and long press, and Find my phone on long press.
 - Watch settings: light, power saving, font, locale and similar options, on models that expose them.
 - Multiple watches: more than one watch can be paired, each with its own sync history.
 - Sync history: a local log of recent sync operations for each watch.
