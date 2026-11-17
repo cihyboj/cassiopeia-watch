@@ -150,7 +150,7 @@ The app builds against a fork of the GShockAPI library, `com.github.cihyboj:GSho
 
 ## Privacy
 
-The app has no accounts, analytics, advertising or server of its own, and the developers receive nothing automatically. The app keeps its data on your device and sends data to your watch over Bluetooth. The only network traffic is optional NTP time queries. Data can still leave the app in four ways: broadcast intents that you configure for watch buttons go to other apps on the phone; if you turn on the phone alarm backup, alarm times and names are handed to the phone's clock app; Android auto-backup can store the app's settings with your Google account or transfer them to a new device; and a backup file you export goes wherever the document provider you pick puts it, possibly cloud storage. See the [privacy policy](docs/index.html).
+The app has no accounts, analytics, advertising or server of its own, and the developers receive nothing automatically. The app keeps its data on your device and sends data to your watch over Bluetooth. The only network traffic is optional NTP time queries. Data can still leave the app in four ways: broadcast intents that you configure for watch buttons go to other apps on the phone; if you turn on the phone alarm backup, alarm times and names are handed to the phone's clock app; Android auto-backup can store the app's settings with your Google account or transfer them to a new device; and a backup file you export goes wherever the document provider you pick puts it, possibly cloud storage. See the [privacy policy](https://cihyboj.github.io/cassiopeia-watch/).
 
 ## Contributing and security
 

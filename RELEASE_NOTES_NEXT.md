@@ -49,6 +49,6 @@ Check `cassiopeia-watch-<version>.apk` against `cassiopeia-watch-<version>.apk.s
 
 ## Privacy
 
-No accounts, analytics or advertising, and the developers receive nothing automatically. The only network traffic is optional NTP time queries. See the privacy policy in `docs/index.html`.
+No accounts, analytics or advertising, and the developers receive nothing automatically. The only network traffic is optional NTP time queries. See the privacy policy: https://cihyboj.github.io/cassiopeia-watch/
 
 Report problems at https://github.com/cihyboj/cassiopeia-watch/issues. Report security problems privately, see `SECURITY.md`.
