@@ -1,6 +1,6 @@
 # Cassiopeia Watch 40.10 (experimental prerelease)
 
-This is the first public release of Cassiopeia Watch, an unofficial open-source app for Casio G-Shock, Edifice and Pro Trek Bluetooth watches. It is a derivative of CasioGShockSmartSync by Ivo Zivkov and is not affiliated with Casio.
+This is the first public release of Cassiopeia Watch, an unofficial open-source app built and tested for the Casio ABL-100WE Bluetooth watch. It is a derivative of CasioGShockSmartSync by Ivo Zivkov and is not affiliated with Casio.
 
 ## Status
 

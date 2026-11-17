@@ -1,6 +1,6 @@
 # Cassiopeia Watch
 
-Cassiopeia Watch is an unofficial, open-source Android app for Casio G-Shock, Edifice and Pro Trek Bluetooth watches. It connects to the watch over Bluetooth Low Energy without a Casio account. It can set the watch time, edit watch alarms, send phone calendar events to the watch as reminders, change some watch settings, and let the watch buttons trigger actions on the phone.
+Cassiopeia Watch is an unofficial, open-source Android app built and tested for the Casio ABL-100WE Bluetooth watch. Other Casio Bluetooth watches that the GShockAPI library recognises may work, but they are not the target devices and are untested. It connects to the watch over Bluetooth Low Energy without a Casio account. It can set the watch time, edit watch alarms, send phone calendar events to the watch as reminders, change some watch settings, and let the watch buttons trigger actions on the phone.
 
 This project is a derivative of [CasioGShockSmartSync](https://github.com/izivkov/CasioGShockSmartSync) by Ivo Zivkov. It is not affiliated with, endorsed by, or sponsored by Casio Computer Co., Ltd. "Casio", "G-Shock", "Edifice" and "Pro Trek" are trademarks of their respective owners and are used here only to describe compatibility.
 

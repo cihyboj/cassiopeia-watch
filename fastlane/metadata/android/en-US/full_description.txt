@@ -1,4 +1,4 @@
-Cassiopeia Watch is an unofficial, open-source Android app for Casio G-Shock, Edifice and Pro Trek Bluetooth watches. It works without a Casio account. It is a derivative of CasioGShockSmartSync by Ivo Zivkov and is not affiliated with Casio.
+Cassiopeia Watch is an unofficial, open-source Android app built and tested for the Casio ABL-100WE Bluetooth watch. Other Casio Bluetooth watches may work but are untested. It works without a Casio account. It is a derivative of CasioGShockSmartSync by Ivo Zivkov and is not affiliated with Casio.
 
 Experimental prerelease. Only the ABL-100WE has been tested by the maintainer.
 
