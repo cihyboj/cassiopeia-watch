@@ -15,8 +15,8 @@ android {
         applicationId = "com.beamburst.casswatch"
         minSdk = 26
         targetSdk = 36
-        versionCode = 409
-        versionName = "40.9"
+        versionCode = 40010
+        versionName = "40.10"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         testProguardFiles 'proguard-rules.pro'
