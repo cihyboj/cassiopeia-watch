@@ -47,7 +47,11 @@ Cassiopeia Watch is distributed only as an APK attached to a GitHub prerelease o
    ```
    sha256sum -c cassiopeia-watch-<version>.apk.sha256
    ```
-3. Verify the signer with the Android SDK build tools. The `signer-sha256.txt` file holds one line, the SHA-256 digest of the signing certificate in upper-case hex without colons. Compare it with the `SHA-256 digest` line printed by:
+3. Verify the signer with the Android SDK build tools. Every release is signed with the same certificate, whose SHA-256 digest is:
+   ```
+   D63C4B494FF1B1867D8A245DFA54F888C87BEED04E63ED40CB32683ADFCB4707
+   ```
+   Compare it with the `SHA-256 digest` line printed by the command below. The `signer-sha256.txt` file in each release holds the same value, but because it comes with the APK, check against the digest in this README.
    ```
    apksigner verify --print-certs cassiopeia-watch-<version>.apk
    ```

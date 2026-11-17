@@ -26,8 +26,8 @@ This version is signed with a different key than earlier builds, so Android cann
 Alarms:
 
 - The watch stores every alarm as a daily alarm. A one-time alarm keeps ringing every day after its date, and a weekly alarm can ring on excluded days, until the app connects to the watch again and updates it, or you turn the alarm off on the watch.
-- The phone alarm fallback is best-effort. It hands the alarm to the phone's clock app with a time but no date, cannot confirm that the clock app created it, and cannot cancel it afterwards.
-- The fallback needs the exact-alarm permission. If that permission is denied the fallback does not run, and the app does not currently show this.
+- The phone alarm fallback is off by default. Turn on "Phone alarm backup" on the Alarms screen to use it. It is best-effort: it hands the alarm to the phone's clock app with a time but no date, cannot confirm that the clock app created it, and cannot cancel or remove it afterwards, so these alarms stay in the clock app until you delete them.
+- The fallback needs the exact-alarm permission. Turning the switch on asks for it; if it is denied, the fallback does not run.
 - After the phone restarts, the fallback does not work until the phone has been unlocked once.
 
 Syncing:
@@ -41,14 +41,15 @@ Syncing:
 
 Other:
 
-- Find my phone depends on the phone's sound and Do Not Disturb settings. Without notification permission there is no stop button; pressing the watch button again stops the ringing, or it stops after 30 seconds.
+- Find my phone depends on the phone's sound and Do Not Disturb settings. The app asks for notification permission so it can show a Stop button; without it, press the watch button again to stop the ringing, or it stops after 30 seconds.
 - Some calendar recurrence rules cannot be represented on the watch.
+- Only one app can hold the watch's Bluetooth connection. Do not run Casio's app or another G-Shock app for the same watch at the same time.
 - Background connection behaviour differs between Android versions and manufacturers.
 - Some strings in Settings are English only.
 
 ## Verifying the download
 
-Check `cassiopeia-watch-<version>.apk` against `cassiopeia-watch-<version>.apk.sha256`, and compare the signing certificate digest with `signer-sha256.txt`. Licence notices are in the repository and bundled in the app.
+Check `cassiopeia-watch-<version>.apk` against `cassiopeia-watch-<version>.apk.sha256`, and compare the signing certificate digest with the one published in the README (`D63C4B494FF1B1867D8A245DFA54F888C87BEED04E63ED40CB32683ADFCB4707`). Licence notices are in the repository and bundled in the app.
 
 ## Privacy
 
