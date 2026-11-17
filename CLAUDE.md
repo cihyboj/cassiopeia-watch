@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Cassiopeia Watch** is an unofficial open-source Android app (package `com.beamburst.casswatch`) that controls Casio Bluetooth watches without requiring a Casio account. Its target and only tested device is the Casio ABL-100WE; other watches that GShockAPI supports may work but are untested. It syncs time, calendar events, and alarms, forwards phone notifications to supported watches, and lets watch buttons trigger phone actions (find phone, automation broadcasts).
+**Cassiopeia Watch** is an unofficial open-source Android app (package `com.beamburst.casswatch`) that controls Casio Bluetooth watches without requiring a Casio account. Its target and only tested device is the Casio ABL-100WE; other watches that GShockAPI supports may work but are untested. It syncs time, calendar events, and alarms, and lets watch buttons trigger phone actions (find phone, automation broadcasts).
 
 The core BLE protocol is entirely encapsulated in an external library, **GShockAPI** (`com.github.cihyboj:GShockAPI` via JitPack — a maintained fork of the upstream library, pinned by commit in `gradle/libs.versions.toml`). This app never talks to BLE directly — all watch communication goes through `GShockRepository`, which delegates to `GShockAPI` via Kotlin's `by` delegation. The library's Java package remains `org.avmedia.gshockapi`.
 
@@ -27,7 +27,7 @@ The core BLE protocol is entirely encapsulated in an external library, **GShockA
 ./gradlew lint
 
 # Release to GitHub (uses gh CLI)
-./release.sh 41.0     # production release (versionCode = major*1000 + minor)
+./release.sh 41.0     # opens a release PR (versionCode = major*1000 + minor); tagging the merge builds a draft prerelease
 ```
 
 CI (GitHub Actions, `.github/workflows/ci.yml`) runs `test`, `lint`, `assembleDebug`, and `assembleRelease` (unsigned, to exercise R8) on pushes to `main` and on pull requests. Tag pushes trigger `.github/workflows/build-apk.yml`, which builds, verifies the signature, and uploads the signed APK to a GitHub release.

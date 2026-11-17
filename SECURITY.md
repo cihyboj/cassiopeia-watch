@@ -13,7 +13,7 @@ There is no email address for security reports.
 In scope:
 
 - The Cassiopeia Watch Android app (`com.beamburst.casswatch`) and the code in this repository.
-- Problems in how the app handles data from the watch, from other apps (broadcast intents, notifications), or from import files.
+- Problems in how the app handles data from the watch, from other apps (broadcast intents), or from import files.
 - Flaws in the build or release configuration in this repository that could affect users.
 
 Out of scope:

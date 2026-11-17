@@ -10,8 +10,9 @@ Experimental. Only the Casio ABL-100WE has been tested, by the maintainer. Other
 
 - Pairing a watch and connecting in the background
 - Sending time, time zone and DST to the watch, with an optional NTP time source and fine adjustment
-- Automatic sync when the watch reconnects
-- Reading and editing watch alarms and the hourly signal
+- Automatic sync four times a day and when the watch reconnects
+- Weekly and one-time alarms with names, applied to the watch on each sync
+- Hourly signal limited to a time window and selected days
 - Sending calendar events to the watch as reminders, on watches that support reminders
 - Watch button actions: broadcast intents for automation apps on short and long press, and find my phone on long press
 - More than one paired watch, sync history, and export/import of app settings

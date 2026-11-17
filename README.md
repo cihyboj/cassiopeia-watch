@@ -115,7 +115,7 @@ Cassiopeia Watch is distributed only as an APK attached to a GitHub prerelease o
 |---|---|
 | `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT` (Android 12 and newer) | Find and talk to the watch. `BLUETOOTH_SCAN` is declared with `neverForLocation`. |
 | `BLUETOOTH`, `BLUETOOTH_ADMIN` (Android 11 and older; declared with `maxSdkVersion` 30) | The same, on older Android versions. |
-| `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` (fine location only up to Android 11) | Older Android versions require location permission to deliver Bluetooth scan results. The app does not read or store your location. |
+| `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` (Android 11 and older only) | Older Android versions require location permission to deliver Bluetooth scan results. The app does not read or store your location. |
 | `REQUEST_COMPANION_PROFILE_WATCH`, `REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE`, `REQUEST_COMPANION_RUN_IN_BACKGROUND`, `REQUEST_COMPANION_USE_DATA_IN_BACKGROUND` | Pair the watch through the Android Companion Device Manager and learn when it comes in range, so the app can connect in the background. |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE` | Keep the connection service alive while the watch is connected. |
 | `RECEIVE_BOOT_COMPLETED` | Restore background watch detection after the phone restarts. |

@@ -1,3 +1,4 @@
+// Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE.
 package com.beamburst.casswatch.ui.alarms
 
 import com.beamburst.casswatch.pairing.WatchWriteGuard

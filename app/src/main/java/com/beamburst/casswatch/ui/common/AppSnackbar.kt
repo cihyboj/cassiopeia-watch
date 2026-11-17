@@ -2,6 +2,11 @@
 package com.beamburst.casswatch.ui.common
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -70,6 +75,7 @@ fun PopupMessageReceiver(duration: SnackbarDuration = SnackbarDuration.Short) {
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
+                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
                 // Sit above the navigation bar when one is shown, so its tabs stay usable.
                 .then(if (bottomChrome > 0.dp) Modifier.padding(bottom = bottomChrome) else Modifier.navigationBarsPadding()),
             contentAlignment = Alignment.BottomCenter,

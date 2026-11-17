@@ -27,7 +27,7 @@ See `CLAUDE.md` for the architecture overview. In short:
 
 ## Testing on a real watch
 
-BLE behaviour differs between watch models, firmware versions and phones, and cannot be fully covered by unit tests. If you change connection, time, alarm, event or notification code, test it on a real watch and say in the pull request which model, firmware and Android version you used. If you cannot test a model, say so. Do not post real Bluetooth addresses in issues or pull requests.
+BLE behaviour differs between watch models, firmware versions and phones, and cannot be fully covered by unit tests. If you change connection, time, alarm, event or button-action code, test it on a real watch and say in the pull request which model, firmware and Android version you used. If you cannot test a model, say so. Do not post real Bluetooth addresses in issues or pull requests.
 
 ## Pull requests
 

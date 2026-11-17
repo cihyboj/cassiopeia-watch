@@ -1,3 +1,4 @@
+// Modified from CasioGShockSmartSync (https://github.com/izivkov/CasioGShockSmartSync) for Cassiopeia Watch. See NOTICE.
 /*
  * Created by Ivo Zivkov (izivkov@gmail.com) on 2022-03-30, 9:09 a.m.
  * Copyright (c) 2022 . All rights reserved.

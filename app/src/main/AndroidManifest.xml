@@ -7,7 +7,9 @@
 
     <!-- Location Permissions. FINE is required for BLE scan results on Android 10-11
          (API 29-30); from Android 12 the BLUETOOTH_SCAN permission takes over. -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION"
+        android:maxSdkVersion="30" />
     <uses-permission
         android:name="android.permission.ACCESS_FINE_LOCATION"
         android:maxSdkVersion="30" />
@@ -52,12 +54,6 @@
     <uses-feature
         android:name="android.hardware.bluetooth_le"
         android:required="true" />
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="false" />
-    <uses-feature
-        android:name="android.hardware.telephony"
-        android:required="false" />
 
 
     <!-- Clock resolution is needed before attempting a phone alarm hand-off. -->
