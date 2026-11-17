@@ -99,14 +99,14 @@ jobs:
         run: |
           # A tag moved after this run started must not get a release built from another commit.
           # The API resolves annotated tags to their commit; the checkout keeps no credentials.
-          REMOTE=$(gh api "repos/$GH_REPO/commits/tags/$TAG" --jq .sha)
+          REMOTE=$(gh api "repos/$GH_REPO/commits/refs/tags/$TAG" --jq .sha)
           [ "$REMOTE" = "$(git rev-parse HEAD)" ] || { echo 'Tag no longer points at the validated commit'; exit 1; }
 
       - name: Decode and verify keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_ALIAS: ${{ vars.KEY_ALIAS }}
         run: |
           umask 077
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
@@ -120,7 +120,7 @@ jobs:
         env:
           KEYSTORE_PATH: ${{ runner.temp }}/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_ALIAS: ${{ vars.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Verify signature and prepare release assets
@@ -157,7 +157,7 @@ jobs:
         run: |
           # A tag moved after this run started must not get a release built from another commit.
           # The API resolves annotated tags to their commit; the checkout keeps no credentials.
-          REMOTE=$(gh api "repos/$GH_REPO/commits/tags/$TAG" --jq .sha)
+          REMOTE=$(gh api "repos/$GH_REPO/commits/refs/tags/$TAG" --jq .sha)
           [ "$REMOTE" = "$(git rev-parse HEAD)" ] || { echo 'Tag no longer points at the validated commit'; exit 1; }
 
       - name: Create draft prerelease and upload assets
@@ -168,7 +168,7 @@ jobs:
           prerelease: true
           files: dist/*
           fail_on_unmatched_files: true
-          generate_release_notes: true
+          body_path: RELEASE_NOTES_NEXT.md
 
       - name: Remove signing material
         if: always()
