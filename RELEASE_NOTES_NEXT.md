@@ -6,10 +6,6 @@ This is the first public release of Cassiopeia Watch, an unofficial open-source 
 
 Experimental. Only the Casio ABL-100WE has been tested, by the maintainer. Other models that the GShockAPI library recognises may work but are untested.
 
-## Installing over an earlier build
-
-This version is signed with a different key than earlier builds, so Android cannot update an existing install in place. In the old build, open Settings and export a backup. Uninstall the old build, install this APK, import the backup in Settings, and pair the watch again.
-
 ## What works
 
 - Pairing a watch and connecting in the background

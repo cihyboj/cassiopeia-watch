@@ -2,6 +2,12 @@
 
 **Weekly and one-time alarms, an hourly chime on your schedule, and watch-button automations for the Casio ABL-100WE.** No Casio account, no cloud, no ads.
 
+<p align="center">
+  <img src="docs/screenshots/alarms.png" alt="Alarms list with weekly and named alarms" width="240">
+  <img src="docs/screenshots/hourly-signal.png" alt="Hourly signal limited to 07:00 to 18:00" width="240">
+  <img src="docs/screenshots/button-actions.png" alt="Watch button actions with broadcast names" width="240">
+</p>
+
 Cassiopeia Watch is an unofficial, open-source Android app built and tested for the Casio ABL-100WE Bluetooth watch. Other Casio Bluetooth watches that the GShockAPI library recognises may work, but they are not the target devices and are untested.
 
 This project is a derivative of [CasioGShockSmartSync](https://github.com/izivkov/CasioGShockSmartSync) by Ivo Zivkov. It is not affiliated with, endorsed by, or sponsored by Casio Computer Co., Ltd. "Casio", "G-Shock", "Edifice" and "Pro Trek" are trademarks of their respective owners and are used here only to describe compatibility.
@@ -11,6 +17,8 @@ Status: experimental prerelease. The first version is 40.10. [Download it from t
 ## Highlights
 
 ### Weekly alarms
+
+<img src="docs/screenshots/alarm-editor.png" alt="Alarm editor with a label and repeat days" width="220" align="right">
 
 Set each alarm for specific days of the week, or as a one-time alarm, and give it a name. The watch itself only knows daily alarms, so the app applies the right alarms for each day whenever the watch connects.
 
@@ -43,6 +51,11 @@ The app sends the broadcast; the automation app does the rest. The watch has to 
 A long press can also ring the phone ("Find my phone") at a volume and melody you choose. If the app may post notifications, a notification with a Stop button appears; otherwise press the watch button again, or the ringing stops after 30 seconds. Whether it is audible depends on the phone's sound and Do Not Disturb settings.
 
 ## Getting started
+
+<p>
+  <img src="docs/screenshots/home.png" alt="Home screen with a connected ABL-100WE" width="220">
+  <img src="docs/screenshots/sync-settings.png" alt="Sync settings with Automatic sync turned on" width="220">
+</p>
 
 1. [Install the APK](#installation) and open the app.
 2. Pair the watch with **Add Watch** and accept the system pairing dialog.
@@ -95,8 +108,6 @@ Cassiopeia Watch is distributed only as an APK attached to a GitHub prerelease o
    ```
    (`apksigner` prints lower-case hex; compare ignoring case.)
 4. Allow your browser or file manager to install unknown apps, then open the APK.
-
-If you already have an earlier build of this app that was signed with a different key, Android cannot update it in place. In the old build, open Settings and export a backup. Then uninstall the old build, install the new APK, import the backup in Settings, restart the app, and pair the watch again with **Add Watch**.
 
 ## Permissions
 
