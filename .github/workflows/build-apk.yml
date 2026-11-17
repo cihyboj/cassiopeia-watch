@@ -132,7 +132,7 @@ jobs:
           "$BUILD_TOOLS/apksigner" verify --verbose --print-certs \
             app/build/outputs/apk/release/app-release.apk > "$RUNNER_TEMP/apksigner.txt"
           cat "$RUNNER_TEMP/apksigner.txt"
-          mapfile -t SIGNERS < <(sed -n 's/^Signer #[0-9]* certificate SHA-256 digest: //p' "$RUNNER_TEMP/apksigner.txt")
+          mapfile -t SIGNERS < <(sed -nE 's/^(Signer #[0-9]+|V[0-9.]+ Signer:) certificate SHA-256 digest: //p' "$RUNNER_TEMP/apksigner.txt")
           [ "${#SIGNERS[@]}" -eq 1 ] || { echo 'Expected exactly one APK signer'; exit 1; }
           FINGERPRINT=$(printf '%s' "${SIGNERS[0]}" | tr '[:lower:]' '[:upper:]')
           EXPECTED=$(printf '%s' "$EXPECTED_SIGNER_SHA256" | tr -d ':[:space:]' | tr '[:lower:]' '[:upper:]')
