@@ -1,10 +1,12 @@
 # Cassiopeia Watch
 
-Cassiopeia Watch is an unofficial, open-source Android app built and tested for the Casio ABL-100WE Bluetooth watch. Other Casio Bluetooth watches that the GShockAPI library recognises may work, but they are not the target devices and are untested. It connects to the watch over Bluetooth Low Energy without a Casio account. It can set the watch time, edit watch alarms, send phone calendar events to the watch as reminders, change some watch settings, and let the watch buttons trigger actions on the phone.
+**Weekly and one-time alarms, an hourly chime on your schedule, and watch-button automations for the Casio ABL-100WE.** No Casio account, no cloud, no ads.
+
+Cassiopeia Watch is an unofficial, open-source Android app built and tested for the Casio ABL-100WE Bluetooth watch. Other Casio Bluetooth watches that the GShockAPI library recognises may work, but they are not the target devices and are untested.
 
 This project is a derivative of [CasioGShockSmartSync](https://github.com/izivkov/CasioGShockSmartSync) by Ivo Zivkov. It is not affiliated with, endorsed by, or sponsored by Casio Computer Co., Ltd. "Casio", "G-Shock", "Edifice" and "Pro Trek" are trademarks of their respective owners and are used here only to describe compatibility.
 
-Status: experimental prerelease. The first version is 40.10.
+Status: experimental prerelease. The first version is 40.10. [Download it from the releases page](https://github.com/cihyboj/cassiopeia-watch/releases), then see [Installation](#installation).
 
 ## Highlights
 
@@ -12,11 +14,11 @@ Status: experimental prerelease. The first version is 40.10.
 
 Set each alarm for specific days of the week, or as a one-time alarm, and give it a name. The watch itself only knows daily alarms, so the app applies the right alarms for each day whenever the watch connects.
 
-For this to work without opening the app, turn on **Time Adjustment** in Settings. The watch then connects by itself four times a day, a few minutes after 00:00, 06:00, 12:00 and 18:00 (you choose how many minutes), and the app updates the alarms, the hourly signal and the time. If automatic sync is off, an alarm can ring on a day you excluded until the next connection.
+For this to work without opening the app, turn on **Automatic sync** in Settings. The watch then connects by itself four times a day, at a minute you choose (0–59) after 00:00, 06:00, 12:00 and 18:00, and the app updates the alarms, the hourly signal and the time. If automatic sync is off or a sync fails, an alarm can ring on a day you excluded until the next connection.
 
 ### Hourly signal on your schedule
 
-Limit the watch's hourly chime to a time window, for example 08:00 to 20:00, and to selected days (weekdays, weekend, every day or your own choice). The app turns the watch's signal on and off during the automatic syncs and shows exactly when it will chime. This also needs **Time Adjustment** turned on.
+Limit the watch's hourly chime to a time window and to selected days (weekdays, weekend, every day or your own choice). The app can only switch the watch's signal on and off when the watch syncs (00:00, 06:00, 12:00 and 18:00), so the window follows those syncs: the first chime is the hour after a sync and the last is at a sync hour, for example 07:00 to 18:00. The app shows the scheduled chime hours; keeping to them needs **Automatic sync** turned on and successful syncs.
 
 ### Watch buttons as automation triggers
 
@@ -27,32 +29,33 @@ A short press and a long press of the watch button that connects it to the phone
 | Short | `com.beamburst.casswatch.RUN_SHORT` |
 | Long | `com.beamburst.casswatch.RUN_LONG` |
 
-You can attach your own extras (text, number or true/false) to each broadcast, so one automation can handle several cases. Some ideas:
+You can attach your own extras (text, whole number or true/false) to each broadcast, so one automation can handle several cases. Some ideas:
 
 - Start or stop a voice recording, for example for notes while driving or cycling.
 - Take a photo remotely: trigger the camera shutter on a phone on a tripod.
 - Toggle the lights or a scene in your smart home (Home Assistant, Philips Hue and similar, through your automation app).
 - Play or pause music, or skip a track.
-- Turn on Do Not Disturb or silent mode when you walk into a meeting.
 - Send your location to a trusted contact, or start a call to them.
 - Log something with a timestamp: a medication taken, a workout set, a baby feed.
 
 The app sends the broadcast; the automation app does the rest. The watch has to connect to the phone first, so expect a few seconds' delay, and test any automation you plan to rely on. Do not depend on it as your only way to call for help in an emergency.
 
-A long press can also ring the phone ("Find my phone") at a volume and melody you choose, with a Stop button in a notification. Whether it is audible depends on the phone's sound and Do Not Disturb settings.
+A long press can also ring the phone ("Find my phone") at a volume and melody you choose. If the app may post notifications, a notification with a Stop button appears; otherwise press the watch button again, or the ringing stops after 30 seconds. Whether it is audible depends on the phone's sound and Do Not Disturb settings.
 
-## Features
+## Getting started
 
-- No account or login. The app has no server of its own.
+1. [Install the APK](#installation) and open the app.
+2. Pair the watch with **Add Watch** and accept the system pairing dialog.
+3. In Settings, turn on **Automatic sync**, and **Auto-sync on reconnect** if you want the time sent every time the watch connects.
+4. Set up alarms, the hourly signal and button actions.
+
+## Other features
+
 - Time: send the phone time, time zone and DST setting to the watch. Optionally use an NTP server as the time source, and apply a fine adjustment in milliseconds.
-- Automatic sync: four times a day with Time Adjustment, and when the watch reconnects.
-- Alarms: read and edit the watch alarms in a daily or weekly view, with names and one-time alarms. An optional phone alarm backup can ask the phone's clock app to ring when the watch cannot.
-- Hourly signal with a time window and selected days.
-- Events: send upcoming events from the phone calendar to the watch as reminders. This tab is shown only for watches that support reminders, and some recurrence rules are marked incompatible.
-- Watch buttons: broadcasts for automation apps on short and long press, and Find my phone on long press.
+- Phone alarm backup (optional, off by default): when the app has no confirmation that the watch received an alarm change, it can ask the phone's clock app to set the alarm too. See [Known limitations](#known-limitations).
+- Events: send upcoming events from the phone calendar to the watch as reminders, on watches that support reminders. Some recurrence rules are marked incompatible.
 - Watch settings: light, power saving, font, locale and similar options, on models that expose them.
-- Multiple watches: more than one watch can be paired, each with its own sync history.
-- Sync history: a local log of recent sync operations for each watch.
+- Multiple watches, each with its own local sync history.
 - Backup: export and import the app settings as a JSON file.
 - The interface is translated into several languages (see `app/src/main/res/values-*`). Some newer strings are English only.
 
@@ -64,12 +67,12 @@ Tested:
 
 - Casio ABL-100WE, by the maintainer. This is the only model that has been tested with this app.
 
-Expected to work, untested:
+Recognised by the library, untested:
 
 - Models listed as supported in the GShockAPI documentation: G(M)W-5600, G(M)W-5000, GA-B2100, GST-B500, MSG-B100, G-B001, GBD-800 (partial support), MRG-B5000, GCW-B5000.
 - Models the library has code paths for but does not list in its documentation: DW-H5600, other DW models, GMW-BZ5000, GW-BX5600, GPR, GBD, EQB, ECB-10/20/30.
 
-"Expected to work" means only that the library recognises the model name. It does not mean the features of this app have been checked on that model.
+"Recognised" means only that the library knows the model name. It does not mean the features of this app have been checked on that model.
 
 The app needs Android 8.0 (API 26) or newer, and a phone with Bluetooth Low Energy and companion device pairing support.
 
@@ -93,7 +96,7 @@ Cassiopeia Watch is distributed only as an APK attached to a GitHub prerelease o
    (`apksigner` prints lower-case hex; compare ignoring case.)
 4. Allow your browser or file manager to install unknown apps, then open the APK.
 
-If you already have an earlier build of this app that was signed with a different key, Android cannot update it in place. In the old build, open Settings and export a backup. Then uninstall the old build, install the new APK, import the backup in Settings, and pair the watch again.
+If you already have an earlier build of this app that was signed with a different key, Android cannot update it in place. In the old build, open Settings and export a backup. Then uninstall the old build, install the new APK, import the backup in Settings, restart the app, and pair the watch again with **Add Watch**.
 
 ## Permissions
 
@@ -115,7 +118,7 @@ If you already have an earlier build of this app that was signed with a differen
 - This is an experimental prerelease, and only one watch model has been tested.
 - The watch stores every alarm as a daily alarm. A one-time alarm keeps ringing daily after its date, and a weekly alarm can ring on excluded days, until the app connects again and updates the watch or you turn the alarm off on the watch.
 - The phone alarm fallback is off by default; turn on "Phone alarm backup" on the Alarms screen to use it. It is best-effort. When the watch may not have received an alarm change, the app asks the phone's clock app to set an alarm shortly before it should ring. The request carries a time but no date, is not confirmed, and cannot be cancelled or removed by the app, so these alarms stay in your clock app until you delete them. It needs the exact-alarm permission and does not work after a restart until the phone has been unlocked once.
-- Alarm writes are confirmed by reading them back from the watch. Time, settings, timer and reminder writes are reported as sent, not as received.
+- Alarm time and on/off writes are confirmed by reading them back from the watch; alarm names are not. Time, settings, timer and reminder writes are reported as sent, not as received.
 - Changes made directly on the watch are not merged into the app's saved state and can be overwritten by the next sync.
 - Only one app can hold the watch's Bluetooth connection at a time. Running this app alongside Casio's official app or another G-Shock app for the same watch makes them compete for the connection; use one at a time.
 - Background connection behaviour varies between Android versions and manufacturers' battery management.
@@ -136,7 +139,7 @@ The app builds against a fork of the GShockAPI library, `com.github.cihyboj:GSho
 
 ## Privacy
 
-The app has no accounts, analytics, advertising or server of its own, and the developers receive nothing automatically. The app keeps its data on your device and sends data to your watch over Bluetooth. The only network traffic is optional NTP time queries. Data can still leave the app in three ways: broadcast intents that you configure for watch buttons go to other apps on the phone; Android auto-backup can store the app's settings with your Google account or transfer them to a new device; and a backup file you export goes wherever the document provider you pick puts it, possibly cloud storage. See the [privacy policy](docs/index.html).
+The app has no accounts, analytics, advertising or server of its own, and the developers receive nothing automatically. The app keeps its data on your device and sends data to your watch over Bluetooth. The only network traffic is optional NTP time queries. Data can still leave the app in four ways: broadcast intents that you configure for watch buttons go to other apps on the phone; if you turn on the phone alarm backup, alarm times and names are handed to the phone's clock app; Android auto-backup can store the app's settings with your Google account or transfer them to a new device; and a backup file you export goes wherever the document provider you pick puts it, possibly cloud storage. See the [privacy policy](docs/index.html).
 
 ## Contributing and security
 
