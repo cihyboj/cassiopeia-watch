@@ -18,7 +18,6 @@ This version is signed with a different key than earlier builds, so Android cann
 - Reading and editing watch alarms and the hourly signal
 - Sending calendar events to the watch as reminders, on watches that support reminders
 - Watch button actions: broadcast intents for automation apps on short and long press, and find my phone on long press
-- Forwarding phone notifications on watches that support it
 - More than one paired watch, sync history, and export/import of app settings
 
 ## Known limitations
@@ -36,7 +35,6 @@ Syncing:
 - Changes made directly on the watch are not merged into what the app has saved. The next sync can overwrite them.
 - With more than one paired watch, the app refuses to send changes when the selected watch is not the connected one.
 - After the three-minute inactivity disconnect the phone may reconnect to the watch straight away.
-- Phone notifications that arrive while the watch is disconnected are not sent later.
 - Time accuracy below one second depends on the watch firmware and Bluetooth timing.
 
 Other:
@@ -46,6 +44,7 @@ Other:
 - Only one app can hold the watch's Bluetooth connection. Do not run Casio's app or another G-Shock app for the same watch at the same time.
 - Background connection behaviour differs between Android versions and manufacturers.
 - Some strings in Settings are English only.
+- Forwarding phone notifications to the watch is not included. It needs notification access, which makes Google Play Protect block installing the APK from a browser or file manager, and the tested watch does not support it.
 
 ## Verifying the download
 

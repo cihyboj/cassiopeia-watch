@@ -7,7 +7,6 @@ Features
 - Read and edit watch alarms and the hourly signal
 - Send phone calendar events to the watch as reminders (watches that support reminders)
 - Choose what a short or long watch button press does: send a broadcast intent for automation apps, or ring the phone
-- Forward phone notifications to watches that support it
 - Pair more than one watch; local sync history
 - Export and import app settings
 

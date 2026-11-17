@@ -68,7 +68,7 @@ Conventions:
 - **Handler bodies must not throw** — they run on a shared dispatch thread. Wrap risky work in `runCatching` (see `MainEventHandler.safely`).
 - **Payloads are untrusted**: read with `as?` and handle null.
 
-Key events: `WatchInitializationCompleted`, `ConnectionSetupComplete`, `ButtonPressedInfoReceived`, `DeviceAppeared`, `DeviceDisappeared`, `Disconnect`, `AppNotification`, `CalendarUpdated`, `SnackbarMessage`.
+Key events: `WatchInitializationCompleted`, `ConnectionSetupComplete`, `ButtonPressedInfoReceived`, `DeviceAppeared`, `DeviceDisappeared`, `Disconnect`, `CalendarUpdated`, `SnackbarMessage`.
 
 ### Coroutines
 
@@ -122,7 +122,6 @@ Sync outcomes are recorded via `SyncHistoryLogger`/`SyncHistoryStore` and shown 
 ### Services
 
 - `GShockCompanionDeviceService` — `CompanionDeviceService` that handles CDM presence callbacks; foreground while a watch is present.
-- `NotificationMonitorService` — `NotificationListenerService` that forwards phone notifications to the watch (only for watches that support `AppNotifications`); filters own/ongoing/group-summary notifications and debounces re-posts.
 - `BootReceiver` — re-arms CDM association sync and the BLE fallback scan after device reboot.
 
 ## Key Conventions

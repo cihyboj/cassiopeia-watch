@@ -14,7 +14,6 @@ Status: experimental prerelease. The first version is 40.10.
 - Alarms: read and edit the watch alarms, in a daily or a weekly view, and schedule the hourly signal (chime). Alarm names are stored in the watch's scratchpad memory.
 - Events: send upcoming events from the phone calendar to the watch as reminders. This tab is shown only for watches that support reminders, and some recurrence rules are marked incompatible.
 - Watch buttons: a short press can send a broadcast intent that automation apps such as Tasker or MacroDroid can receive. A long press can send its own broadcast intent and/or ring the phone ("Find my phone").
-- Notifications: for watches that support app notifications, forward phone notifications to the watch (requires notification access).
 - Watch settings: light, power saving, font, locale and similar options, on models that expose them.
 - Multiple watches: more than one watch can be paired, each with its own sync history.
 - Sync history: a local log of recent sync operations for each watch.
@@ -72,7 +71,6 @@ If you already have an earlier build of this app that was signed with a differen
 | `RECEIVE_BOOT_COMPLETED` | Restore background watch detection after the phone restarts. |
 | `POST_NOTIFICATIONS` | Show the app's own notifications, such as the foreground service and find-my-phone notifications. |
 | `READ_CALENDAR` | Read calendar events to send to the watch. Requested when you open the Events tab. |
-| Notification access (a special access you grant in system settings) | Forward phone notifications to watches that support it. |
 | `SCHEDULE_EXACT_ALARM`, `com.android.alarm.permission.SET_ALARM` | The best-effort phone alarm fallback described below. |
 | `INTERNET` | Optional NTP time queries over UDP. The app makes no other network connections. |
 

@@ -21,7 +21,6 @@ import com.beamburst.casswatch.data.local.WatchConnectionTracker
 import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.data.repository.GShockRepository
 import com.beamburst.casswatch.session.WatchSessionUiBridge
-import com.beamburst.casswatch.services.NotificationMonitorService
 import com.beamburst.casswatch.ui.common.AppSnackbar
 import com.beamburst.casswatch.utils.AppUsageState
 import com.beamburst.casswatch.utils.ActivityProvider
@@ -30,7 +29,6 @@ import com.beamburst.casswatch.utils.Utils
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import com.beamburst.casswatch.utils.WatchTimeProvider
 import com.beamburst.casswatch.utils.WatchTimeWriter
-import org.avmedia.gshockapi.AppNotification
 import org.avmedia.gshockapi.EventAction
 import org.avmedia.gshockapi.ProgressEvents
 import timber.log.Timber
@@ -75,7 +73,6 @@ class MainEventHandler(
             EventAction("WaitForConnection") { safely("WaitForConnection") { handleWaitForConnection() } },
             EventAction("Disconnect") { safely("Disconnect") { handleDisconnect() } },
             EventAction("HomeTimeUpdated") {},
-            EventAction("AppNotification") { safely("AppNotification") { handleAppNotification() } },
             EventAction("LocationServicesDisabled") { safely("LocationServicesDisabled") { handleLocationServicesDisabled() } }
         )
 
@@ -124,9 +121,6 @@ class MainEventHandler(
 
     private fun handleWatchInitialization(ready: WatchConnectionSession.Ready) {
         if (!connectionSession.isInitialized(ready) || !repository.isConnected()) return
-        if (repository.supportsAppNotifications()) {
-            NotificationMonitorService.startService(context)
-        }
         watchTimeProvider.refreshNtpInBackground()
         screenManager.showContentSelector(repository)
         showWatchConnectedSnackbar()
@@ -203,22 +197,6 @@ class MainEventHandler(
     private fun resolveWatchDisplayNameForSnackbar(): String {
         val addr = connectionSession.address ?: return ""
         return LocalDataStorage.getDeviceName(context, addr)?.removePrefix("CASIO")?.trim().orEmpty()
-    }
-
-    private fun handleAppNotification() {
-        if (repository.supportsAppNotifications()) {
-            val appNotification = ProgressEvents.getPayload("AppNotification") as AppNotification?
-            if (appNotification != null) {
-                val ready = connectionSession.ready ?: return
-                AppScopes.io.launch {
-                    runCatching {
-                        connectCoordinator.withSession(ready) { check ->
-                            repository.guardWrites(check).sendAppNotification(appNotification)
-                        }
-                    }.onFailure { Timber.w(it, "Notification forwarding failed") }
-                }
-            }
-        }
     }
 
     private fun handleConnectionFailure() {
