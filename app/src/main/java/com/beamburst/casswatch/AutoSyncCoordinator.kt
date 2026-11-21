@@ -88,13 +88,16 @@ class AutoSyncCoordinator @Inject constructor(
 
                 runCatching {
                     val addr = ready.address
-                    WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession)
                     runCatching { watchTimeWriter.primeCache(api) }
                         .onFailure { Timber.w(it, "Auto-sync cache prime failed") }
                     val writeResult = watchTimeWriter.writeAfterPrime(api, watchTime, ready, checkSession)
                     kinds += SyncKind.TIME
                     recordedTimeMs = writeResult.timeMs
                     recordedActions += watchTime.syncHistoryActions("Automatic time write", writeResult)
+
+                    // After the time write: the firmware drops this link ~8-10 s after connecting.
+                    // Only pending user edits are pushed here; a clean cache costs no reads.
+                    WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession, refresh = false)
 
                     if (calendar != null) {
                         EventsModel.refresh(calendar.getOrThrow())

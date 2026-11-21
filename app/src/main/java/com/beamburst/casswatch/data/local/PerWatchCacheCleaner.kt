@@ -17,6 +17,7 @@ object PerWatchCacheCleaner {
             LocalDataStorage.autoSyncOnReconnectKey(addr),
             WatchSettingsCache.cacheKey(addr),
             WatchSettingsCache.dirtyKey(addr),
+            WatchSettingsCache.baselineKey(addr),
         )
         return migratedKeys + extraKeys
     }

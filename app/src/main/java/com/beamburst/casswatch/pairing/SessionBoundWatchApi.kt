@@ -51,6 +51,7 @@ fun IGShockAPI.guardWrites(
                 val adjustment = getTimeAdjustment()
                 settings.timeAdjustment = adjustment.isTimeAdjustmentSet
                 settings.adjustmentTimeMinutes = adjustment.adjustmentTimeMinutes
+                settings.adjustmentTimeHour = adjustment.adjustmentTimeHour
             }
         }
         override suspend fun getBasicSettings(): Settings = response { delegate.getBasicSettings() }

@@ -219,7 +219,7 @@ constructor(
             val draft = buildApiSettings() ?: return@readApi
             withContext(Dispatchers.IO) {
                 if (draft == settings) WatchSettingsCache.saveClean(appContext, ready.address, settings)
-                else WatchSettingsCache.save(appContext, ready.address, draft)
+                else WatchSettingsCache.save(appContext, ready.address, draft, baseline = settings)
             }
         }
     }
@@ -336,9 +336,12 @@ constructor(
             val newMap = state.value.settingsMap.toMutableMap()
             newMap[updatedSetting::class.java] = updatedSetting
             _state.update { it.copy(settings = currentList, settingsMap = newMap, draft = settings) }
+            val baseline = state.value.baseline?.copy()
             viewModelScope.launch {
                 updatedSetting.save()
-                WatchSettingsCache.save(appContext, address, settings)
+                // Phone-only controls (sync notification, fine adjustment) leave the watch
+                // settings unchanged and must not mark them dirty.
+                if (settings != draft) WatchSettingsCache.save(appContext, address, settings, baseline)
             }
         }
     }
@@ -655,6 +658,7 @@ constructor(
 
     fun sendToWatch() {
         val draft = buildApiSettings() ?: return
+        val baseline = state.value.baseline?.copy()
         val ready = writeGuard.capture() ?: return
 
         viewModelScope.launch {
@@ -662,12 +666,14 @@ constructor(
                 WatchSyncActivity.track {
                     val result = runCatching {
                         checkSession()
-                        val settings = if (WatchInfo.chimeInSettings) {
-                            // The hourly-signal writer may have changed this target since load.
-                            CachedIO.remove("GET_SETTINGS")
-                            val current = api.guardWrites(checkSession).getBasicSettings()
-                            draft.copy(hourlyChime = current.hourlyChime)
-                        } else draft
+                        // Fresh full read: the hourly-signal writer or the watch itself may have
+                        // changed fields since load, and GShockAPI rebuilds the 0x11 packet
+                        // (auto-sync hour/minute, timeout) only from bytes read on this connection.
+                        CachedIO.remove("GET_SETTINGS")
+                        CachedIO.remove("GET_TIME_ADJUSTMENT")
+                        val current = api.guardWrites(checkSession).getSettings()
+                        checkSession()
+                        val settings = mergeSettingsRefresh(current, baseline, draft)
                         api.setSettings(settings)
                         confirmWatchWrite(checkSession)
                         // Edits made while the send was in flight are judged against what was
@@ -676,7 +682,7 @@ constructor(
                         acceptSettings(ready.address, settings)
                         val pending = buildApiSettings() ?: return@runCatching
                         if (pending == settings) WatchSettingsCache.saveClean(appContext, ready.address, settings)
-                        else WatchSettingsCache.save(appContext, ready.address, pending)
+                        else WatchSettingsCache.save(appContext, ready.address, pending, baseline = settings)
                         AppSnackbar(appContext.getString(R.string.settings_sent_to_watch))
                     }
                     confirmWatchWrite(checkSession)

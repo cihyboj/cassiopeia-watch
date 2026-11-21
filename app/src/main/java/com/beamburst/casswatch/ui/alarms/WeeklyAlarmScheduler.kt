@@ -67,16 +67,19 @@ class WeeklyAlarmScheduler @Inject constructor(
         connectCoordinator.withSession(ready) { checkSession ->
         val api = this.api.guardWrites(checkSession)
         val addr = ready.address
-        WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession)
+        val firmwareAutoSync = api.isAutoTimeStarted()
 
         val autoTimeSyncEnabled = LocalDataStorage.getOrInitializeAutoSyncOnReconnect(
             context = context,
             address = addr,
             seed = WatchSettingsCache.load(context, addr)?.timeAdjustment,
         )
+        // Time first; settings reads must not delay it.
         if (autoTimeSyncEnabled) {
             runAutoTimeSyncOnReconnect(ready, watchTime, api, checkSession)
         }
+        // On a firmware auto-sync AutoSyncCoordinator pushes pending edits after its time write.
+        if (!firmwareAutoSync) WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession)
 
         // Reconnect must expire one-time alarms even when no Alarms ViewModel exists.
         val snapshot = alarmCoordinator.snapshot(addr)
