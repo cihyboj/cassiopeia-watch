@@ -404,6 +404,8 @@ constructor(
             val appContext: Context,
             var timeAdjustment: Boolean = true,
             var adjustmentTimeMinutes: Int = 0,
+            /** Auto-sync anchor hour read from the watch; -1 = unknown (keep the watch's). */
+            var adjustmentTimeHour: Int = -1,
             var timeAdjustmentNotifications: Boolean =
                     LocalDataStorage.getTimeAdjustmentNotification(appContext),
             var fineAdjustment: Int = LocalDataStorage.getFineTimeAdjustment(appContext),
@@ -450,6 +452,7 @@ constructor(
                 "powerSavingMode" -> handlePowerSavingMode(value, updatedObjects)
                 "timeAdjustment" -> handleTimeAdjustment(value, updatedObjects)
                 "adjustmentTimeMinutes" -> handleAdjustmentTimeMinutes(value, updatedObjects)
+                "adjustmentTimeHour" -> handleAdjustmentTimeHour(value, updatedObjects)
                 "buttonTone" -> handleButtonTone(value, updatedObjects)
                 "keyVibration" -> handleButtonVibration(value, updatedObjects)
                 "autoLight" -> handleAutoLight(value, updatedObjects)
@@ -482,6 +485,14 @@ constructor(
         if (!WatchInfo.alwaysConnected) {
             val setting = settingOrNull(TimeAdjustment::class.java) ?: return
             setting.adjustmentTimeMinutes = (value as? Number)?.toInt() ?: return
+            updatedObjects.add(setting)
+        }
+    }
+
+    private fun handleAdjustmentTimeHour(value: Any, updatedObjects: MutableSet<Setting>) {
+        if (!WatchInfo.alwaysConnected) {
+            val setting = settingOrNull(TimeAdjustment::class.java) ?: return
+            setting.adjustmentTimeHour = (value as? Number)?.toInt() ?: return
             updatedObjects.add(setting)
         }
     }
@@ -732,6 +743,7 @@ internal fun mergeSettingsRefresh(loaded: Settings, baseline: Settings?, draft: 
         keyVibration = if (draft.keyVibration != baseline.keyVibration) draft.keyVibration else loaded.keyVibration,
         timeAdjustment = if (draft.timeAdjustment != baseline.timeAdjustment) draft.timeAdjustment else loaded.timeAdjustment,
         adjustmentTimeMinutes = if (draft.adjustmentTimeMinutes != baseline.adjustmentTimeMinutes) draft.adjustmentTimeMinutes else loaded.adjustmentTimeMinutes,
+        adjustmentTimeHour = if (draft.adjustmentTimeHour != baseline.adjustmentTimeHour) draft.adjustmentTimeHour else loaded.adjustmentTimeHour,
         font = if (draft.font != baseline.font) draft.font else loaded.font,
     )
 }
@@ -758,6 +770,7 @@ internal fun applySettingsEdit(settings: Settings, previous: Setting, updated: S
         previous is SettingsViewModel.TimeAdjustment && updated is SettingsViewModel.TimeAdjustment -> {
             if (previous.timeAdjustment != updated.timeAdjustment) timeAdjustment = updated.timeAdjustment
             if (previous.adjustmentTimeMinutes != updated.adjustmentTimeMinutes) adjustmentTimeMinutes = updated.adjustmentTimeMinutes
+            if (previous.adjustmentTimeHour != updated.adjustmentTimeHour) adjustmentTimeHour = updated.adjustmentTimeHour
         }
         previous is SettingsViewModel.Font && updated is SettingsViewModel.Font -> {
             if (previous.font != updated.font) font = updated.font.value

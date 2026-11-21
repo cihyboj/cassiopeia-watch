@@ -676,7 +676,14 @@ class AlarmViewModel @Inject constructor(
             address = addr,
             seed = settings?.timeAdjustment,
         )
-        val adjustmentTimeMinutes = settings?.adjustmentTimeMinutes ?: 0
+        // The schedule the watch actually follows: unsent edits are not on the watch yet.
+        val onWatch = if (WatchSettingsCache.isDirty(appContext, addr)) {
+            WatchSettingsCache.loadBaseline(appContext, addr) ?: settings
+        } else {
+            settings
+        }
+        val adjustmentTimeMinutes = onWatch?.adjustmentTimeMinutes ?: 0
+        val adjustmentTimeHour = onWatch?.adjustmentTimeHour ?: 0
         val state = AlarmSyncStorage.loadState(appContext, addr)
         _fallbackStatuses.value = state.alarms.mapIndexedNotNull { slot, alarm ->
             when (activeFallbackStatus(alarm, alarmTime.clock.millis())) {
@@ -698,6 +705,7 @@ class AlarmViewModel @Inject constructor(
                 zone = alarmTime.zone(),
                 autoSyncEnabled = autoSyncEnabled,
                 adjustmentTimeMinutes = adjustmentTimeMinutes,
+                adjustmentTimeHour = adjustmentTimeHour,
             )
 
             if (risk != null) {

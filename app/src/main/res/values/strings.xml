@@ -285,6 +285,9 @@
     <string name="auto_time_adjustment_master">Automatic sync</string>
     <string name="auto_time_adjustment_master_caption">The phone updates the watch a few minutes after 00:00, 06:00, 12:00 and 18:00.</string>
     <string name="minutes_after_hour" translatable="false">Minutes after hour</string>
+    <string name="sync_hour_title" translatable="false">Sync hour</string>
+    <string name="sync_hour_caption" translatable="false">Every 6 hours: %1$s</string>
+    <string name="sync_hour_dialog_label" translatable="false">Hour of the first sync (0 to 5)</string>
     <string name="backup_title" translatable="false">Backup</string>
     <string name="backup_caption" translatable="false">Save or restore all app settings, paired watches, alarms, and sync history as a JSON file.</string>
     <string name="backup_export_button" translatable="false">Export…</string>
