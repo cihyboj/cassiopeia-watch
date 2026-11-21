@@ -258,6 +258,9 @@
     <string name="steps_by_hour" translatable="false">Today by hour</string>
     <string name="steps_no_hourly" translatable="false">No hourly data from today yet.</string>
     <string name="steps_last_7_days" translatable="false">Last 7 days</string>
+    <string name="steps_hour_value" translatable="false">%1$02d:00–%2$02d:00: %3$s</string>
+    <string name="steps_day_value" translatable="false">%1$s: %2$s</string>
+    <string name="steps_goal_line" translatable="false">Goal %1$s</string>
     <string name="steps_last_read" translatable="false">Read from the watch: %1$s</string>
     <string name="steps_setting_title" translatable="false">Step history</string>
     <string name="steps_setting_caption" translatable="false">Read the step counter at each connection and keep the history on this phone only.</string>

@@ -1,6 +1,7 @@
 package com.beamburst.casswatch.ui.time
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,12 +16,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -83,9 +87,21 @@ internal fun StepsCardContent(modifier: Modifier, model: StepsChartModel) {
                 )
             }
 
-            AppText(text = stringResource(R.string.steps_by_hour), style = MaterialTheme.typography.labelLarge)
+            var selectedHour by remember(model.hourly) { mutableStateOf<Int?>(null) }
+            ChartHeader(
+                title = stringResource(R.string.steps_by_hour),
+                value = selectedHour?.let { h ->
+                    stringResource(R.string.steps_hour_value, h, (h + 1) % 24, model.hourly[h]?.let(numbers::format) ?: "–")
+                },
+            )
             if (model.hourly.any { it != null }) {
-                BarChart(values = model.hourly, goalLine = null, modifier = Modifier.fillMaxWidth().height(72.dp))
+                BarChart(
+                    values = model.hourly,
+                    goalLine = null,
+                    selected = selectedHour,
+                    onSelect = { selectedHour = it.takeIf { i -> i != selectedHour } },
+                    modifier = Modifier.fillMaxWidth().height(72.dp),
+                )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     listOf("0", "6", "12", "18", "24").forEach { ChartLabel(it) }
                 }
@@ -97,10 +113,20 @@ internal fun StepsCardContent(modifier: Modifier, model: StepsChartModel) {
                 )
             }
 
-            AppText(text = stringResource(R.string.steps_last_7_days), style = MaterialTheme.typography.labelLarge)
+            var selectedDay by remember(model.week) { mutableStateOf<Int?>(null) }
+            val dayFormat = remember { DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault()) }
+            ChartHeader(
+                title = stringResource(R.string.steps_last_7_days),
+                value = selectedDay?.let { i ->
+                    val (date, value) = model.week[i]
+                    stringResource(R.string.steps_day_value, dayFormat.format(date), value?.let(numbers::format) ?: "–")
+                } ?: model.goal?.takeIf { it > 0 }?.let { stringResource(R.string.steps_goal_line, numbers.format(it)) },
+            )
             BarChart(
                 values = model.week.map { it.second },
                 goalLine = model.goal,
+                selected = selectedDay,
+                onSelect = { selectedDay = it.takeIf { i -> i != selectedDay } },
                 modifier = Modifier.fillMaxWidth().height(96.dp),
             )
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -138,13 +164,47 @@ private fun ChartLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** Plain bar chart; `null` values (no data) leave a gap, the optional goal is a dashed line. */
+/** Section label with the tapped bar's value (or other context) on the right. */
 @Composable
-private fun BarChart(values: List<Int?>, goalLine: Int?, modifier: Modifier) {
+private fun ChartHeader(title: String, value: String?) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+        AppText(text = title, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+        if (value != null) {
+            AppText(
+                text = value,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+/**
+ * Plain bar chart; `null` values (no data) leave a gap, the optional goal is a dashed line.
+ * Tapping a bar selects it (the caller shows its value); the other bars dim.
+ */
+@Composable
+private fun BarChart(
+    values: List<Int?>,
+    goalLine: Int?,
+    selected: Int?,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier,
+) {
     val barColor = MaterialTheme.colorScheme.primary
-    val goalColor = MaterialTheme.colorScheme.tertiary
+    val dimColor = barColor.copy(alpha = 0.45f)
+    // Drawn over the bars too, so it needs contrast against both the card and the bar colour.
+    val goalColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
     val baseColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-    Canvas(modifier = modifier) {
+    val count = values.size
+    val currentOnSelect by rememberUpdatedState(onSelect)
+    Canvas(
+        modifier = modifier.pointerInput(count) {
+            detectTapGestures { offset ->
+                if (count > 0) currentOnSelect((offset.x / (size.width.toFloat() / count)).toInt().coerceIn(0, count - 1))
+            }
+        },
+    ) {
         if (values.isEmpty()) return@Canvas
         val max = maxOf(values.maxOf { it ?: 0 }, goalLine ?: 0, 1).toFloat()
         val slot = size.width / values.size
@@ -159,7 +219,7 @@ private fun BarChart(values: List<Int?>, goalLine: Int?, modifier: Modifier) {
             if (value != null && value > 0) {
                 val h = size.height * value / max
                 drawRoundRect(
-                    color = barColor,
+                    color = if (selected == null || selected == i) barColor else dimColor,
                     topLeft = Offset(left, size.height - h),
                     size = Size(barWidth, h),
                     cornerRadius = CornerRadius(barWidth / 4, barWidth / 4),
@@ -172,8 +232,8 @@ private fun BarChart(values: List<Int?>, goalLine: Int?, modifier: Modifier) {
                 color = goalColor,
                 start = Offset(0f, y),
                 end = Offset(size.width, y),
-                strokeWidth = 2f,
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)),
+                strokeWidth = 1.5.dp.toPx(),
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx())),
             )
         }
     }
