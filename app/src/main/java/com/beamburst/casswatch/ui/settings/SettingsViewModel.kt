@@ -207,8 +207,18 @@ constructor(
             (addr?.let { WatchSettingsCache.load(appContext, it) }) to
                 (addr != null && WatchSettingsCache.isDirty(appContext, addr))
         }
+        val savedBaseline = if (dirty && addr != null) {
+            withContext(Dispatchers.IO) { WatchSettingsCache.loadBaseline(appContext, addr) }
+        } else {
+            null
+        }
         if (watchSelector.currentAddress() != addr) return
-        if (cached != null) acceptSettings(addr, cached)
+        when {
+            // Unsent edits: restore them against the watch state they were made on, so Send
+            // still sees them as edits instead of treating the draft as the watch's values.
+            cached != null && savedBaseline != null -> acceptSettings(addr, savedBaseline, pendingDraft = cached)
+            cached != null -> acceptSettings(addr, cached)
+        }
         if (ready == null || dirty) return
 
         writeGuard.readApi(ready, api) { boundApi, confirm ->
@@ -224,8 +234,12 @@ constructor(
         }
     }
 
-    private fun acceptSettings(addr: String?, settings: Settings) {
-        val refreshed = state.value.withBaseline(addr, settings)
+    private fun acceptSettings(addr: String?, settings: Settings, pendingDraft: Settings? = null) {
+        val refreshed = if (pendingDraft != null) {
+            state.value.copy(address = addr, baseline = settings.copy(), draft = pendingDraft.copy())
+        } else {
+            state.value.withBaseline(addr, settings)
+        }
         val localAdjustment = state.value.settingsMap[TimeAdjustment::class.java] as? TimeAdjustment
         updateSettingsAndMap(defaultSettings())
         val loaded = fromJson(Gson().toJson(refreshed.draft))
