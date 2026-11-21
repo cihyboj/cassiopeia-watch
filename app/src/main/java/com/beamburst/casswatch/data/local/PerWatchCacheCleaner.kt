@@ -1,6 +1,7 @@
 package com.beamburst.casswatch.data.local
 
 import android.content.Context
+import com.beamburst.casswatch.steps.StepHistoryStore
 import com.beamburst.casswatch.utils.LocalDataStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,6 +28,7 @@ object PerWatchCacheCleaner {
             wipeKeys(addr).forEach { key ->
                 LocalDataStorage.deleteAsync(context, key)
             }
+            StepHistoryStore(context).wipe(addr)
         }
     }
 }

@@ -16,6 +16,7 @@ import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.services.NotificationProvider
+import com.beamburst.casswatch.steps.StepSyncer
 import com.beamburst.casswatch.ui.alarms.HourlySignalEvaluator
 import com.beamburst.casswatch.ui.alarms.applyReconciledHourlySignal
 import com.beamburst.casswatch.ui.events.CalendarEvents
@@ -48,6 +49,7 @@ class AutoSyncCoordinator @Inject constructor(
     private val coordinator: WatchConnectCoordinator,
     private val watchTimeProvider: WatchTimeProvider,
     private val watchTimeWriter: WatchTimeWriter,
+    private val stepSyncer: StepSyncer,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "AutoSyncCoordinator"
@@ -143,6 +145,11 @@ class AutoSyncCoordinator @Inject constructor(
                 // which would cause a spurious cache-prime timeout in the sync log.
                 checkSession()
                 api.preventReconnection()
+
+                // Optional, queued behind the rest of this connection's work.
+                if (success) {
+                    stepSyncer.schedule(ready, trigger, StepSyncer.AUTO_SYNC_BUDGET_MS, readGoal = false)
+                }
             }
         }
     }

@@ -252,6 +252,15 @@
     <string name="settings_section_advanced" translatable="false">Advanced</string>
     <string name="ntp_time_title" translatable="false">NTP time source</string>
     <string name="ntp_time_caption" translatable="false">Use network time when writing the watch time.</string>
+    <string name="steps_title" translatable="false">Steps</string>
+    <string name="steps_today" translatable="false">%1$s today</string>
+    <string name="steps_today_of_goal" translatable="false">%1$s / %2$s</string>
+    <string name="steps_by_hour" translatable="false">Today by hour</string>
+    <string name="steps_no_hourly" translatable="false">No hourly data from today yet.</string>
+    <string name="steps_last_7_days" translatable="false">Last 7 days</string>
+    <string name="steps_last_read" translatable="false">Read from the watch: %1$s</string>
+    <string name="steps_setting_title" translatable="false">Step history</string>
+    <string name="steps_setting_caption" translatable="false">Read the step counter at each connection and keep the history on this phone only.</string>
     <string name="ntp_time_server" translatable="false">Server</string>
     <string name="ntp_time_server_dialog_title" translatable="false">NTP server</string>
     <string name="ntp_time_server_blank_default" translatable="false">Leave blank to use %1$s.</string>

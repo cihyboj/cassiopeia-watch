@@ -177,6 +177,7 @@ private fun SyncEntryRow(entry: SyncEntry, expanded: Boolean, onClick: () -> Uni
             SyncKind.SETTINGS -> "settings"
             SyncKind.CONNECTION -> "conn"
             SyncKind.ACTION -> "action"
+            SyncKind.STEPS -> "steps"
         }
     }
     val glyph = if (entry.success) "✓" else "✗"

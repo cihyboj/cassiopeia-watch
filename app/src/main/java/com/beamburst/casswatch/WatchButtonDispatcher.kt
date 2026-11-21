@@ -12,6 +12,7 @@ import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
 import com.beamburst.casswatch.ui.events.CalendarEvents
 import com.beamburst.casswatch.ui.events.EventsModel
+import com.beamburst.casswatch.steps.StepSyncer
 import com.beamburst.casswatch.utils.PhoneFinder
 import com.beamburst.casswatch.utils.SyncHistoryLogger
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -38,6 +39,7 @@ class WatchButtonDispatcher @Inject constructor(
     private val syncLogger: SyncHistoryLogger,
     private val session: WatchConnectionSession,
     private val coordinator: WatchConnectCoordinator,
+    private val stepSyncer: StepSyncer,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "WatchButtonDispatcher"
@@ -139,6 +141,8 @@ class WatchButtonDispatcher @Inject constructor(
                     actions = actions,
                 ),
             )
+            stepSyncer.schedule(ready, SyncTrigger.WATCH_NORMAL_CONNECTION,
+                StepSyncer.NORMAL_CONNECTION_BUDGET_MS, readGoal = true)
         }
     }
 

@@ -17,7 +17,7 @@ enum class SyncTrigger {
     CONNECTION_FAILED,
 }
 
-enum class SyncKind { TIME, ALARMS, EVENTS, HOURLY_SIGNAL, SETTINGS, CONNECTION, ACTION }
+enum class SyncKind { TIME, ALARMS, EVENTS, HOURLY_SIGNAL, SETTINGS, CONNECTION, ACTION, STEPS }
 
 data class SyncEntry(
     val timestamp: Long,
