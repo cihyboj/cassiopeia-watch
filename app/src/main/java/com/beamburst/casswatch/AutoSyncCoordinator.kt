@@ -9,7 +9,13 @@ import com.beamburst.casswatch.utils.WatchSyncActivity
 import com.beamburst.casswatch.utils.AppScopes
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import com.beamburst.casswatch.pairing.WatchConnectionChangedException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.beamburst.casswatch.data.local.HourlySignalSettings
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
@@ -87,21 +93,26 @@ class AutoSyncCoordinator @Inject constructor(
                 var recordedEventCount: Int? = null
                 var recordedHourlyTarget: Boolean? = null
                 val recordedActions = actions.orEmpty().toMutableList()
+                // Which step was running, so a link the watch drops mid-chain is still diagnosable.
+                var stage = "cache prime"
 
                 runCatching {
                     val addr = ready.address
                     runCatching { watchTimeWriter.primeCache(api) }
                         .onFailure { Timber.w(it, "Auto-sync cache prime failed") }
+                    stage = "time write"
                     val writeResult = watchTimeWriter.writeAfterPrime(api, watchTime, ready, checkSession)
                     kinds += SyncKind.TIME
                     recordedTimeMs = writeResult.timeMs
                     recordedActions += watchTime.syncHistoryActions("Automatic time write", writeResult)
+                    stage = "settings"
 
                     // After the time write: the firmware drops this link ~8-10 s after connecting.
                     // Only pending user edits are pushed here; a clean cache costs no reads.
                     WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession, refresh = false)
 
                     if (calendar != null) {
+                        stage = "events"
                         EventsModel.refresh(calendar.getOrThrow())
                         checkSession()
                         api.setEvents(EventsModel.events)
@@ -109,6 +120,7 @@ class AutoSyncCoordinator @Inject constructor(
                         recordedEventCount = EventsModel.events.size
                     }
 
+                    stage = "hourly signal"
                     val signalSettings = HourlySignalSettings.load(context, addr)
                     val now = LocalDateTime.now()
                     val target = HourlySignalEvaluator.shouldChimeAt(now, signalSettings)
@@ -118,25 +130,41 @@ class AutoSyncCoordinator @Inject constructor(
                     kinds += SyncKind.HOURLY_SIGNAL
                     recordedHourlyTarget = target
                 }.onFailure {
-                    success = false
-                    error = it.message
+                    val linkGone = it is CancellationException || it is WatchConnectionChangedException
+                    if (linkGone && recordedTimeMs != null) {
+                        // The time is on the watch; the watch just ended the link early.
+                        recordedActions += "Link ended during $stage"
+                    } else {
+                        success = false
+                        error = "$stage: ${it.message}"
+                    }
                 }
 
-                confirmWatchWrite(checkSession)
-                syncLogger.record(
-                    address = ready.address,
-                    trigger = trigger,
-                    kinds = kinds,
-                    success = success,
-                    errorMessage = error,
-                    details = SyncDetails(
-                        alarmHashes = null,
-                        eventCount = recordedEventCount,
-                        hourlySignalTarget = recordedHourlyTarget,
-                        timeMs = recordedTimeMs,
-                        actions = recordedActions.ifEmpty { null },
-                    ),
-                )
+                // Record the outcome even when the watch has already dropped the link: firmware
+                // auto-syncs end ~4-10 s after connecting, and a lost entry hides what happened.
+                val linkEnded = runCatching { confirmWatchWrite(checkSession) }.isFailure
+                if (linkEnded) recordedActions += "Link ended before the chain finished"
+                if (kinds.isEmpty()) kinds += SyncKind.TIME
+                // The session's work is cancelled when the link ends; the entry must still land.
+                withContext(NonCancellable) {
+                    syncLogger.record(
+                        address = ready.address,
+                        trigger = trigger,
+                        kinds = kinds,
+                        success = success,
+                        errorMessage = error,
+                        details = SyncDetails(
+                            alarmHashes = null,
+                            eventCount = recordedEventCount,
+                            hourlySignalTarget = recordedHourlyTarget,
+                            timeMs = recordedTimeMs,
+                            actions = recordedActions.ifEmpty { null },
+                        ),
+                    )
+                }
+
+                // Recorded; nothing else may run once this work was cancelled.
+                currentCoroutineContext().ensureActive()
 
                 if (success && LocalDataStorage.getTimeAdjustmentNotification(context) && !WatchInfo.alwaysConnected) {
                     postSyncNotification()
