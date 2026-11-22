@@ -51,7 +51,9 @@ class WeeklyAlarmScheduler @Inject constructor(
             EVENT_SUBSCRIBER_ID,
             arrayOf(
                 EventAction("WatchInitializationCompleted") {
-                    AppScopes.io.launch { applyTodaySchedule() }
+                    // On a firmware auto-sync the time goes first: AutoSyncCoordinator runs
+                    // this schedule itself right after its time write.
+                    if (!api.isAutoTimeStarted()) AppScopes.io.launch { applyTodaySchedule() }
                 }
             )
         )
@@ -62,7 +64,8 @@ class WeeklyAlarmScheduler @Inject constructor(
     suspend fun applyTodaySchedule() {
         WatchSyncActivity.track {
         val ready = session.ready ?: return
-        val watchTime = watchTimeProvider.nowForWatch(ready.address)
+        // No time write on a firmware auto-sync here, so no NTP wait either.
+        val watchTime = if (api.isAutoTimeStarted()) null else watchTimeProvider.nowForWatch(ready.address)
         try {
         connectCoordinator.withSession(ready) { checkSession ->
         val api = this.api.guardWrites(checkSession)
@@ -75,7 +78,7 @@ class WeeklyAlarmScheduler @Inject constructor(
             seed = WatchSettingsCache.load(context, addr)?.timeAdjustment,
         )
         // Time first; settings reads must not delay it.
-        if (autoTimeSyncEnabled) {
+        if (autoTimeSyncEnabled && watchTime != null) {
             runAutoTimeSyncOnReconnect(ready, watchTime, api, checkSession)
         }
         // On a firmware auto-sync AutoSyncCoordinator pushes pending edits after its time write.

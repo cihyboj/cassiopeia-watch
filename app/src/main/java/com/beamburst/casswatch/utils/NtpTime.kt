@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import com.beamburst.casswatch.data.local.SyncDetails
 import com.beamburst.casswatch.data.local.SyncKind
 import com.beamburst.casswatch.data.local.SyncTrigger
@@ -170,7 +171,11 @@ class WatchTimeProvider @Inject constructor(
     private val scope = AppScopes.io
     private val ntpSamples = NtpSampleCache()
 
-    suspend fun nowForWatch(address: String? = session.address): WatchTime {
+    /**
+     * @param maxNtpWaitMs caps a fresh NTP query (DNS included); on expiry phone time is used.
+     *   Firmware auto-syncs pass a short cap: the watch drops the link within seconds.
+     */
+    suspend fun nowForWatch(address: String? = session.address, maxNtpWaitMs: Long? = null): WatchTime {
         val fineAdjustment = LocalDataStorage.getFineTimeAdjustment(context).toLong()
         val latencyCompensation = address
             ?.let { LocalDataStorage.getLearnedTimeWriteCompensation(context, it) }
@@ -197,7 +202,12 @@ class WatchTimeProvider @Inject constructor(
         }
 
         return runCatching {
-            refreshNtpOffset(server, FOREGROUND_NTP_TIMEOUT_MILLIS)
+            if (maxNtpWaitMs == null) {
+                refreshNtpOffset(server, FOREGROUND_NTP_TIMEOUT_MILLIS)
+            } else {
+                withTimeoutOrNull(maxNtpWaitMs) { refreshNtpOffset(server, FOREGROUND_NTP_TIMEOUT_MILLIS) }
+                    ?: throw IllegalStateException("No NTP answer within $maxNtpWaitMs ms")
+            }
         }.map { cache ->
             WatchTime(
                 ntpCache = cache,

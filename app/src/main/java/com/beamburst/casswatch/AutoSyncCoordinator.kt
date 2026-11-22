@@ -24,6 +24,7 @@ import com.beamburst.casswatch.data.local.WatchSettingsCache
 import com.beamburst.casswatch.services.NotificationProvider
 import com.beamburst.casswatch.steps.StepSyncer
 import com.beamburst.casswatch.ui.alarms.HourlySignalEvaluator
+import com.beamburst.casswatch.ui.alarms.WeeklyAlarmScheduler
 import com.beamburst.casswatch.ui.alarms.applyReconciledHourlySignal
 import com.beamburst.casswatch.ui.events.CalendarEvents
 import com.beamburst.casswatch.ui.events.EventsModel
@@ -56,9 +57,13 @@ class AutoSyncCoordinator @Inject constructor(
     private val watchTimeProvider: WatchTimeProvider,
     private val watchTimeWriter: WatchTimeWriter,
     private val stepSyncer: StepSyncer,
+    private val weeklyAlarmScheduler: WeeklyAlarmScheduler,
 ) {
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "AutoSyncCoordinator"
+
+        /** The watch drops an auto-sync link ~10 s in; a slow NTP answer must not eat it. */
+        const val AUTO_SYNC_NTP_WAIT_MS = 700L
     }
 
     private val scope = AppScopes.io
@@ -81,7 +86,9 @@ class AutoSyncCoordinator @Inject constructor(
         actions: List<String>? = null,
     ) {
         val ready = session.ready ?: return
-        val watchTime = watchTimeProvider.nowForWatch(ready.address)
+        // Only a firmware auto-sync skipped the alarm schedule at initialization.
+        val firmwareAutoSync = api.isAutoTimeStarted()
+        val watchTime = watchTimeProvider.nowForWatch(ready.address, maxNtpWaitMs = AUTO_SYNC_NTP_WAIT_MS)
         val calendar = if (WatchInfo.hasReminders) runCatching { calendarEvents.getEventsFromCalendar() } else null
         coordinator.withSession(ready) { checkSession ->
             val api = this.api.guardWrites(checkSession)
@@ -147,7 +154,7 @@ class AutoSyncCoordinator @Inject constructor(
                 if (kinds.isEmpty()) kinds += SyncKind.TIME
                 // The session's work is cancelled when the link ends; the entry must still land.
                 withContext(NonCancellable) {
-                    syncLogger.record(
+                    runCatching { syncLogger.record(
                         address = ready.address,
                         trigger = trigger,
                         kinds = kinds,
@@ -160,7 +167,7 @@ class AutoSyncCoordinator @Inject constructor(
                             timeMs = recordedTimeMs,
                             actions = recordedActions.ifEmpty { null },
                         ),
-                    )
+                    ) }.onFailure { Timber.w(it, "Auto-sync history entry not saved") }
                 }
 
                 // Recorded; nothing else may run once this work was cancelled.
@@ -174,9 +181,16 @@ class AutoSyncCoordinator @Inject constructor(
                 checkSession()
                 api.preventReconnection()
 
-                // Optional, queued behind the rest of this connection's work.
-                if (success) {
-                    stepSyncer.schedule(ready, trigger, StepSyncer.AUTO_SYNC_BUDGET_MS, readGoal = false)
+                // Time first, then the alarm schedule, then the optional step read; each waits
+                // for this session's work mutex, so they run after this chain.
+                scope.launch {
+                    if (firmwareAutoSync) {
+                        runCatching { weeklyAlarmScheduler.applyTodaySchedule() }
+                            .onFailure { Timber.w(it, "Alarm schedule after auto-sync failed") }
+                    }
+                    if (success) {
+                        stepSyncer.schedule(ready, trigger, StepSyncer.AUTO_SYNC_BUDGET_MS, readGoal = false)
+                    }
                 }
             }
         }
