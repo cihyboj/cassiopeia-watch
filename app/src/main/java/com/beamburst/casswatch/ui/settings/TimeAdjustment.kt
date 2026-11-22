@@ -37,6 +37,7 @@ fun TimeAdjustment(
 ) {
     val classType = SettingsViewModel.TimeAdjustment::class.java
     val state by settingsViewModel.state.collectAsState()
+    val watchName by settingsViewModel.selectedWatchName.collectAsState()
     val timeAdjustmentSetting: SettingsViewModel.TimeAdjustment =
         settingsViewModel.getSetting(classType)
 
@@ -129,7 +130,7 @@ fun TimeAdjustment(
                         )
                     }
                 }
-                if (AutoSyncSchedule.supportsHour() && adjustmentHour >= 0) {
+                if (AutoSyncSchedule.supportsHour(watchName) && adjustmentHour >= 0) {
                     SyncHourRow(
                         hour = adjustmentHour,
                         minute = adjustmentMinutes.toIntOrNull() ?: 0,

@@ -20,8 +20,15 @@ object AutoSyncSchedule {
     /** First sync hour of the day for any anchor (`-1` = unknown, treated as 0). */
     fun firstHour(anchorHour: Int): Int = anchorHour.coerceAtLeast(0) % CYCLE_HOURS
 
-    /** Only the ABL-100WE has been verified to honour the hour bits. */
-    fun supportsHour(): Boolean = WatchInfo.model == WatchInfo.WatchModel.ABL_100
+    /**
+     * Only the ABL-100WE has been verified to honour the hour bits. [WatchInfo.model] is only
+     * known while connected, so the saved watch name (e.g. "CASIO ABL-100WE") is checked too.
+     */
+    fun supportsHour(deviceName: String? = null): Boolean =
+        WatchInfo.model == WatchInfo.WatchModel.ABL_100 || isAbl100Name(deviceName)
+
+    internal fun isAbl100Name(deviceName: String?): Boolean =
+        deviceName?.trim()?.split(" ")?.getOrNull(1)?.startsWith("ABL-100") == true
 
     /** Sync hours of the day for an anchor hour (`-1` = unknown, treated as 0), ascending. */
     fun hours(anchorHour: Int): List<Int> {

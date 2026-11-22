@@ -1,6 +1,8 @@
 package com.beamburst.casswatch.data.local
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDateTime
 
@@ -32,5 +34,13 @@ class AutoSyncScheduleTest {
         assertEquals(LocalDateTime.of(2026, 11, 21, 21, 7), AutoSyncSchedule.next(now, 3, 7))
         assertEquals(LocalDateTime.of(2026, 11, 22, 3, 7), AutoSyncSchedule.next(now.withHour(22), 9, 7))
         assertEquals(LocalDateTime.of(2026, 11, 22, 0, 30), AutoSyncSchedule.next(now.withHour(23), 0, 30))
+    }
+
+    @Test
+    fun `saved ABL-100 name enables the hour picker while offline`() {
+        assertTrue(AutoSyncSchedule.isAbl100Name("CASIO ABL-100WE"))
+        assertFalse(AutoSyncSchedule.isAbl100Name("CASIO GW-B5600"))
+        assertFalse(AutoSyncSchedule.isAbl100Name("ABL-100WE"))
+        assertFalse(AutoSyncSchedule.isAbl100Name(null))
     }
 }

@@ -156,11 +156,16 @@ constructor(
     private val _isConnected = MutableStateFlow(false)
     val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
 
+    /** Name the selected watch was saved under; lets model-specific rows show while offline. */
+    private val _selectedWatchName = MutableStateFlow<String?>(null)
+    val selectedWatchName: StateFlow<String?> = _selectedWatchName.asStateFlow()
+
     init {
         initializeSettings()
         loadNtpTimeSettings()
         observeSelectedWatchSettings()
         observeConnectionState()
+        observeSelectedWatchName()
         loadPressCards()
     }
 
@@ -185,6 +190,16 @@ constructor(
             settingsReloads(watchSelector.selected, connectionSession.initialized).collectLatest { (addr, ready) ->
                 runCatching { loadSettingsForAddress(addr, ready) }
                     .onFailure { Timber.w(it, "Failed to load settings for %s", addr) }
+            }
+        }
+    }
+
+    private fun observeSelectedWatchName() {
+        viewModelScope.launch {
+            watchSelector.selected.collectLatest { addr ->
+                _selectedWatchName.value = addr?.let {
+                    withContext(Dispatchers.IO) { LocalDataStorage.getDeviceName(appContext, it) }
+                }
             }
         }
     }
