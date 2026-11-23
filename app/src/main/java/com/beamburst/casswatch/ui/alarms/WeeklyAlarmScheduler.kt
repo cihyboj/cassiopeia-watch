@@ -84,6 +84,33 @@ class WeeklyAlarmScheduler @Inject constructor(
         // On a firmware auto-sync AutoSyncCoordinator pushes pending edits after its time write.
         if (!firmwareAutoSync) WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession)
 
+        writeScheduleInSession(ready, api, checkSession)
+        }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Timber.w(error, "Reconnect synchronization failed for %s", ready.address)
+            syncLogger.record(
+                address = ready.address,
+                trigger = SyncTrigger.AUTO_ON_RECONNECT,
+                kinds = setOf(SyncKind.SETTINGS, SyncKind.ALARMS),
+                success = false,
+                errorMessage = error.message,
+            )
+        }
+        }
+    }
+
+    /**
+     * Writes today's alarm schedule inside a session the caller already holds. Firmware
+     * auto-syncs call this from their own chain, before the time write.
+     */
+    suspend fun writeScheduleInSession(
+        ready: WatchConnectionSession.Ready,
+        api: org.avmedia.gshockapi.IGShockAPI,
+        checkSession: () -> Unit,
+    ) {
+        val addr = ready.address
         // Reconnect must expire one-time alarms even when no Alarms ViewModel exists.
         val snapshot = alarmCoordinator.snapshot(addr)
         val alarmDays = snapshot.days
@@ -91,7 +118,7 @@ class WeeklyAlarmScheduler @Inject constructor(
         val firedAts = snapshot.firedAts()
         val shouldWrite = snapshot.dirty || storedAlarms.isNotEmpty()
 
-        if (!shouldWrite) return@withSession
+        if (!shouldWrite) return
 
         val currentAlarms = api.getAlarms()
 
@@ -131,20 +158,6 @@ class WeeklyAlarmScheduler @Inject constructor(
             alarmStateAfterSuccessfulSync(current, snapshot)
         }
         alarmCoordinator.reconcile(addr)
-        }
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (error: Exception) {
-            Timber.w(error, "Reconnect synchronization failed for %s", ready.address)
-            syncLogger.record(
-                address = ready.address,
-                trigger = SyncTrigger.AUTO_ON_RECONNECT,
-                kinds = setOf(SyncKind.SETTINGS, SyncKind.ALARMS),
-                success = false,
-                errorMessage = error.message,
-            )
-        }
-        }
     }
 
     private suspend fun runAutoTimeSyncOnReconnect(

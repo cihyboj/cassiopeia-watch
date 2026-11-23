@@ -19,6 +19,7 @@ class StepHistoryMergeTest {
         daily: List<Int?> = emptyList(),
         byHour: List<Int?> = List(24) { null },
         warnings: List<String> = emptyList(),
+        bcd: Int? = null,
     ) = StepCounterData(
         timestamp = at,
         hourlySteps = emptyList(),
@@ -28,7 +29,22 @@ class StepHistoryMergeTest {
         distanceMeters = today?.let { it / 2 },
         hourlyByHour = byHour,
         warnings = warnings,
+        bcdTotalSteps = bcd,
     )
+
+    @Test
+    fun `today uses the total the watch displays`() {
+        val h = StepHistoryMerge.merge(StepHistory(), reading(nov21.atTime(13, 55), 1459, bcd = 1457), 1L)
+        assertEquals(1457, h.days[nov21]?.steps)
+    }
+
+    @Test
+    fun `a zero or larger display total falls back to the record total`() {
+        val zero = StepHistoryMerge.merge(StepHistory(), reading(nov21.atTime(13, 55), 1459, bcd = 0), 1L)
+        assertEquals(1459, zero.days[nov21]?.steps)
+        val larger = StepHistoryMerge.merge(StepHistory(), reading(nov21.atTime(13, 55), 1459, bcd = 9000), 1L)
+        assertEquals(1459, larger.days[nov21]?.steps)
+    }
 
     @Test
     fun `today and the 7 daily summaries land on their dates`() {
@@ -104,5 +120,27 @@ class StepHistoryMergeTest {
         assertNull(nextDay.todaySteps)
         assertTrue(nextDay.hourly.isEmpty())
         assertNull(stepsChartModel(StepHistory(), nov21))
+    }
+
+    @Test
+    fun `a record emptied by a closed transaction never lowers known days or hours`() {
+        val byHour = List(24) { h -> if (h == 8) 400 else if (h == 9) 50 else null }
+        val first = StepHistoryMerge.merge(StepHistory(), reading(nov21.atTime(9, 30), 900, listOf(7000), byHour), 1L)
+        // After the close the watch returns only the newer hour, emptied summaries and zeros.
+        val later = List(24) { h -> if (h == 9) 120 else if (h == 8) 0 else null }
+        val next = StepHistoryMerge.merge(first, reading(nov21.atTime(9, 55), 970, listOf(0), later), 2L)
+        assertEquals(7000, next.days[nov21.minusDays(1)]?.steps)
+        assertEquals(970, next.days[nov21]?.steps)
+        assertEquals(400, next.hourly[8])
+        assertEquals(120, next.hourly[9])
+    }
+
+    @Test
+    fun `a new day starts a fresh hourly list`() {
+        val first = StepHistoryMerge.merge(StepHistory(), reading(nov21.atTime(22, 0), 900, byHour = List(24) { 10 }), 1L)
+        val next = StepHistoryMerge.merge(first, reading(nov21.plusDays(1).atTime(1, 30), 20, byHour = List(24) { if (it == 0) 20 else null }), 2L)
+        assertEquals(nov21.plusDays(1), next.hourlyDate)
+        assertEquals(20, next.hourly[0])
+        assertNull(next.hourly[5])
     }
 }

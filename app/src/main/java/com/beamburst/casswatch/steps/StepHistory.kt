@@ -26,8 +26,9 @@ data class DaySteps(
  * Step history kept on the phone for one watch. The watch only holds today, ~one day of
  * hourly records and 7 daily summaries, so every read is merged into this history.
  *
- * [hourly] is the 24 hour slots of the latest reading's day ([hourlyDate]); it is replaced,
- * not accumulated, until the hourly record semantics are verified on hardware.
+ * [hourly] is the 24 hour slots of the latest reading's day ([hourlyDate]). Readings of the
+ * same day are merged slot by slot: once a read closes the watch's transaction, the next one
+ * returns only the newer records, so a missing slot never erases a known one.
  */
 data class StepHistory(
     val days: Map<LocalDate, DaySteps> = emptyMap(),
@@ -63,7 +64,7 @@ object StepHistoryMerge {
         val today = timestamp.toLocalDate()
         val days = history.days.toMutableMap()
 
-        data.currentDaySteps?.let { steps ->
+        todaySteps(data)?.let { steps ->
             put(days, today, DaySteps(steps, data.distanceMeters, DaySource.TODAY, fetchedAtMs))
         }
         data.dailyHistory.forEachIndexed { index, steps ->
@@ -75,17 +76,42 @@ object StepHistoryMerge {
         days.keys.removeAll { it < cutoff }
 
         val newer = history.watchTimestamp == null || !timestamp.isBefore(history.watchTimestamp)
+        val readHourly = hourlyUpTo(data.hourlyByHour, timestamp.hour)
+        val (hourlyDate, hourly) = when {
+            history.hourlyDate == today -> today to mergeHourly(history.hourly, readHourly)
+            newer -> today to readHourly
+            else -> history.hourlyDate to history.hourly
+        }
         return history.copy(
             days = days,
-            hourlyDate = if (newer) today else history.hourlyDate,
-            hourly = if (newer) hourlyUpTo(data.hourlyByHour, timestamp.hour) else history.hourly,
+            hourlyDate = hourlyDate,
+            hourly = hourly,
             watchTimestamp = if (newer) timestamp else history.watchTimestamp,
             fetchedAtMs = fetchedAtMs,
         )
     }
 
+    /**
+     * Today's count as the watch displays it. The record holds two totals: a binary one
+     * (equal to the sum of the hourly records) and a BCD one, which is what the watch face
+     * shows; on the ABL-100WE the BCD one was 2 lower in both readings checked on 2026-11-23
+     * (475/477, 1457/1459). An all-zero or larger BCD value is not trusted.
+     */
+    fun todaySteps(data: StepCounterData): Int? {
+        val binary = data.currentDaySteps ?: return null
+        return data.bcdTotalSteps?.takeIf { it in 1..binary } ?: binary
+    }
+
     fun withGoal(history: StepHistory, goal: Int, readOn: LocalDate): StepHistory =
         history.copy(goal = goal, goalReadOn = readOn)
+
+    /** An hour's count only grows; a slot the watch no longer returns keeps its known value. */
+    private fun mergeHourly(old: List<Int?>, new: List<Int?>): List<Int?> =
+        List(HOURS) { h ->
+            val a = old.getOrNull(h)
+            val b = new.getOrNull(h)
+            if (a == null || b == null) a ?: b else maxOf(a, b)
+        }
 
     /** Slots after the reading's hour can only be wrapped-around yesterday data. */
     private fun hourlyUpTo(byHour: List<Int?>, hour: Int): List<Int?> =
@@ -93,14 +119,14 @@ object StepHistoryMerge {
 
     private fun put(days: MutableMap<LocalDate, DaySteps>, date: LocalDate, new: DaySteps) {
         val old = days[date]
+        // A day's count only grows: an older running total, or a record the watch returns
+        // emptied after its transaction was closed, must never lower a known value.
         days[date] = when {
             old == null -> new
-            // A finished day's summary beats any running total read during that day.
-            old.source == DaySource.SUMMARY && new.source == DaySource.TODAY -> old
-            new.source == DaySource.SUMMARY && old.source == DaySource.TODAY -> new
-            // A running total only grows within a day; an older read must not lower it.
-            new.source == DaySource.TODAY -> if (new.steps >= old.steps) new else old
-            new.fetchedAtMs >= old.fetchedAtMs -> new
+            new.steps > old.steps -> new
+            new.steps < old.steps -> old
+            // Same count: a finished day's summary is the better label.
+            new.source == DaySource.SUMMARY -> new
             else -> old
         }
     }

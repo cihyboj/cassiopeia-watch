@@ -62,7 +62,7 @@ class AutoSyncCoordinator @Inject constructor(
     companion object {
         private const val EVENT_SUBSCRIBER_ID = "AutoSyncCoordinator"
 
-        /** The watch drops an auto-sync link ~10 s in; a slow NTP answer must not eat it. */
+        /** The watch may drop an auto-sync link within seconds; a slow NTP answer must not eat it. */
         const val AUTO_SYNC_NTP_WAIT_MS = 700L
     }
 
@@ -72,10 +72,14 @@ class AutoSyncCoordinator @Inject constructor(
         ProgressEvents.runEventActions(EVENT_SUBSCRIBER_ID, arrayOf(
             EventAction("ButtonPressedInfoReceived") {
                 if (api.isAutoTimeStarted()) scope.launch {
-                    runChain(
-                        trigger = SyncTrigger.AUTO,
-                        actions = listOf("Auto time adjustment requested by watch"),
-                    )
+                    try {
+                        runChain(
+                            trigger = SyncTrigger.AUTO,
+                            actions = listOf("Auto time adjustment requested by watch"),
+                        )
+                    } catch (_: WatchConnectionChangedException) {
+                        // The watch ended the link; the chain has already recorded its outcome.
+                    }
                 }
             },
         ))
@@ -105,6 +109,34 @@ class AutoSyncCoordinator @Inject constructor(
 
                 runCatching {
                     val addr = ready.address
+                    if (firmwareAutoSync) {
+                        // The watch waits for the time (>= 15 s, tested 2026-11-22) but ends the
+                        // link ~2 s after receiving it, without answering a step read started
+                        // then (2026-11-23 01:55), so the steps and the alarm schedule go first.
+                        // The step read closes the lifelog transaction: an open (peek) one keeps
+                        // the watch waiting ~60 s after the time and it shows ERR (01:30). The
+                        // closed records are gone from the watch; the phone keeps the history.
+                        stage = "steps"
+                        try {
+                            checkSession()
+                            stepSyncer.read(this@AutoSyncCoordinator.api, addr, trigger,
+                                StepSyncer.AUTO_SYNC_BUDGET_MS, readGoal = false, closeTransaction = true)
+                        } catch (error: Exception) {
+                            rethrowIfLinkGone(error)
+                            Timber.w(error, "Auto-sync step read failed")
+                        }
+                        stage = "alarms"
+                        writeAlarmSchedule(ready, api, checkSession)
+                        stage = "settings"
+                        try {
+                            // Only unsent user edits; a clean cache costs nothing.
+                            WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession, refresh = false)
+                        } catch (error: Exception) {
+                            rethrowIfLinkGone(error)
+                            Timber.w(error, "Auto-sync settings push failed; edits stay pending")
+                        }
+                        stage = "cache prime"
+                    }
                     runCatching { watchTimeWriter.primeCache(api) }
                         .onFailure { Timber.w(it, "Auto-sync cache prime failed") }
                     stage = "time write"
@@ -112,11 +144,11 @@ class AutoSyncCoordinator @Inject constructor(
                     kinds += SyncKind.TIME
                     recordedTimeMs = writeResult.timeMs
                     recordedActions += watchTime.syncHistoryActions("Automatic time write", writeResult)
-                    stage = "settings"
-
-                    // After the time write: the firmware drops this link ~8-10 s after connecting.
-                    // Only pending user edits are pushed here; a clean cache costs no reads.
-                    WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession, refresh = false)
+                    if (!firmwareAutoSync) {
+                        stage = "settings"
+                        // Only pending user edits are pushed here; a clean cache costs no reads.
+                        WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession, refresh = false)
+                    }
 
                     if (calendar != null) {
                         stage = "events"
@@ -147,8 +179,8 @@ class AutoSyncCoordinator @Inject constructor(
                     }
                 }
 
-                // Record the outcome even when the watch has already dropped the link: firmware
-                // auto-syncs end ~4-10 s after connecting, and a lost entry hides what happened.
+                // Record the outcome even when the watch has already dropped the link: a lost
+                // entry hides what happened.
                 val linkEnded = runCatching { confirmWatchWrite(checkSession) }.isFailure
                 if (linkEnded) recordedActions += "Link ended before the chain finished"
                 if (kinds.isEmpty()) kinds += SyncKind.TIME
@@ -181,18 +213,48 @@ class AutoSyncCoordinator @Inject constructor(
                 checkSession()
                 api.preventReconnection()
 
-                // Time first, then the alarm schedule, then the optional step read; each waits
-                // for this session's work mutex, so they run after this chain.
-                scope.launch {
-                    if (firmwareAutoSync) {
-                        runCatching { weeklyAlarmScheduler.applyTodaySchedule() }
-                            .onFailure { Timber.w(it, "Alarm schedule after auto-sync failed") }
-                    }
-                    if (success) {
-                        stepSyncer.schedule(ready, trigger, StepSyncer.AUTO_SYNC_BUDGET_MS, readGoal = false)
-                    }
+                // Other chains (always-connected button presses) read steps afterwards, queued
+                // behind this work on the session's mutex.
+                if (success && !firmwareAutoSync) {
+                    stepSyncer.schedule(ready, trigger, StepSyncer.AUTO_SYNC_BUDGET_MS, readGoal = false)
                 }
             }
+        }
+    }
+
+    /** Alarm failures are recorded and do not stop the time write; a lost link does. */
+    private suspend fun writeAlarmSchedule(
+        ready: WatchConnectionSession.Ready,
+        api: IGShockAPI,
+        checkSession: () -> Unit,
+    ) {
+        try {
+            weeklyAlarmScheduler.writeScheduleInSession(ready, api, checkSession)
+        } catch (error: Exception) {
+            rethrowIfLinkGone(error)
+            Timber.w(error, "Auto-sync alarm schedule failed for %s", ready.address)
+            withContext(NonCancellable) {
+                runCatching {
+                    syncLogger.record(
+                        address = ready.address,
+                        trigger = SyncTrigger.AUTO_ON_RECONNECT,
+                        kinds = setOf(SyncKind.ALARMS),
+                        success = false,
+                        errorMessage = error.message,
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Ended session work and a lost link stop the chain. A local operation timeout (also a
+     * CancellationException) while this work is still active is an ordinary failure.
+     */
+    private suspend fun rethrowIfLinkGone(error: Exception) {
+        if (error is WatchConnectionChangedException) throw error
+        if (error is CancellationException) {
+            currentCoroutineContext().ensureActive()
         }
     }
 
