@@ -13,6 +13,7 @@ import com.beamburst.casswatch.utils.AppScopes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -140,7 +141,9 @@ class StepSyncer @Inject constructor(
     ) {
         val readDone = CompletableDeferred<Unit>()
         val generation = store.generation(address)
-        AppScopes.io.launch(NonCancellable) {
+        // UNDISPATCHED: the request goes out now, on the connection the caller just checked,
+        // not later when a thread is free (by then another watch could be connected).
+        AppScopes.io.launch(NonCancellable, start = CoroutineStart.UNDISPATCHED) {
             var data: StepCounterData? = null
             var readError: String? = null
             try {
