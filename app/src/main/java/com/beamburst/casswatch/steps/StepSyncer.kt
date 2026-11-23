@@ -12,6 +12,7 @@ import com.beamburst.casswatch.pairing.guardWrites
 import com.beamburst.casswatch.utils.AppScopes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -19,7 +20,6 @@ import org.avmedia.gshockapi.IGShockAPI
 import org.avmedia.gshockapi.WatchInfo
 import org.avmedia.gshockapi.model.StepCounterData
 import timber.log.Timber
-import java.io.File
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -82,10 +82,14 @@ class StepSyncer @Inject constructor(
         clock: () -> Long = System::currentTimeMillis,
     ) {
         if (!WatchInfo.hasStepCounter || !StepHistoryStore.isReadingEnabled(context)) return
+        if (closeTransaction) {
+            readAndClose(api, address, trigger, budgetMs, clock)
+            return
+        }
         var data: StepCounterData? = null
         var readError: String? = null
         try {
-            data = withTimeoutOrNull(budgetMs) { api.getStepCount(peek = !closeTransaction) }
+            data = withTimeoutOrNull(budgetMs) { api.getStepCount(peek = true) }
             if (data == null) readError = "Step read timed out after $budgetMs ms"
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -97,15 +101,6 @@ class StepSyncer @Inject constructor(
             Timber.w(e, "Step read failed")
             readError = e.message ?: e::class.java.simpleName
         }
-        if (closeTransaction) {
-            // The records are already gone from the watch: save them even if this work is
-            // cancelled, and keep storage off the caller's path (the time write follows).
-            val read = data
-            AppScopes.io.launch(NonCancellable) {
-                persist(address, trigger, read, readError, closed = true, clock = clock)
-            }
-            return
-        }
         val actions = persist(address, trigger, data, readError, closed = false, clock = clock, record = !readGoal)
         if (!readGoal || actions == null) return
         var goalError: String? = null
@@ -114,7 +109,7 @@ class StepSyncer @Inject constructor(
             if (store.load(address).goalReadOn != today) {
                 withTimeoutOrNull(budgetMs) { api.getExerciseProfile() }?.let { profile ->
                     store.update(address) { StepHistoryMerge.withGoal(it, profile.stepGoal, today) }
-                    actions += "Step goal: ${profile.stepGoal}"
+                    actions += "Step goal read"
                 }
             }
         } catch (cancelled: CancellationException) {
@@ -126,6 +121,44 @@ class StepSyncer @Inject constructor(
             goalError = "Step goal: ${e.message ?: e::class.java.simpleName}"
         }
         recordResult(address, trigger, success = goalError == null, error = goalError, actions = actions)
+    }
+
+    /**
+     * The library sends the close as soon as the whole record has arrived, so from then on the
+     * phone holds the only copy. The read and the save therefore run outside the caller's
+     * coroutine: cancelling the session (link drop) or the caller's [budgetMs] cannot drop a
+     * record the watch has already let go of. The caller only waits for the read itself, at
+     * most [budgetMs]: a slower read may finish after the caller's next writes (the time), but
+     * holding the time back for it would risk the sync itself; the record is saved either way.
+     */
+    private suspend fun readAndClose(
+        api: IGShockAPI,
+        address: String,
+        trigger: SyncTrigger,
+        budgetMs: Long,
+        clock: () -> Long,
+    ) {
+        val readDone = CompletableDeferred<Unit>()
+        val generation = store.generation(address)
+        AppScopes.io.launch(NonCancellable) {
+            var data: StepCounterData? = null
+            var readError: String? = null
+            try {
+                // The library ends a pending read when the link drops; this is only a backstop.
+                data = withTimeoutOrNull(CLOSING_READ_LIMIT_MS) { api.getStepCount(peek = false) }
+                if (data == null) readError = "Step read timed out after $CLOSING_READ_LIMIT_MS ms"
+            } catch (gone: WatchConnectionChangedException) {
+                Timber.i("Step read skipped: connection ended")
+                readDone.complete(Unit)
+                return@launch
+            } catch (e: Exception) {
+                Timber.w(e, "Step read failed")
+                readError = e.message ?: e::class.java.simpleName
+            }
+            readDone.complete(Unit)
+            persist(address, trigger, data, readError, closed = true, clock = clock, generation = generation)
+        }
+        withTimeoutOrNull(budgetMs) { readDone.await() }
     }
 
     /**
@@ -141,6 +174,7 @@ class StepSyncer @Inject constructor(
         closed: Boolean,
         clock: () -> Long,
         record: Boolean = true,
+        generation: Long? = null,
     ): MutableList<String>? {
         val actions = mutableListOf<String>()
         var error = readError
@@ -148,15 +182,19 @@ class StepSyncer @Inject constructor(
             if (closed && data?.raw != null) {
                 // The library closes the transaction as soon as the whole record has arrived.
                 actions += "Transaction closed"
-                saveRaw(data.raw!!, clock())
+                store.saveRaw(address, data.raw!!, clock(), generation)
             }
             when {
                 data == null -> Unit
-                !StepHistoryMerge.isUsable(data) ->
-                    error = "Step record unusable: ${data.warnings.joinToString("; ").ifEmpty { "no data" }}"
+                !StepHistoryMerge.isUsable(data) -> {
+                    // Warnings can quote step counts; sync history is backed up, so log them only.
+                    Timber.w("Step record unusable: %s", data.warnings)
+                    error = "Step record unusable"
+                }
                 else -> {
-                    store.update(address) { StepHistoryMerge.merge(it, data, clock()) }
-                    actions += "Steps today: ${StepHistoryMerge.todaySteps(data)} (record ${data.currentDaySteps})"
+                    store.update(address, generation) { StepHistoryMerge.merge(it, data, clock()) }
+                    // Sync history is in Android backup; step counts stay in the step store only.
+                    actions += "Step history updated"
                 }
             }
         } catch (cancelled: CancellationException) {
@@ -196,18 +234,9 @@ class StepSyncer @Inject constructor(
         )
     }
 
-    /** Closing reads consume the watch's records; keep the bytes until the format is verified. */
-    private fun saveRaw(raw: ByteArray, atMs: Long) {
-        runCatching {
-            val dir = File(File(context.filesDir, RAW_DIR), "raw").apply { mkdirs() }
-            File(dir, "$atMs.hex").writeText(raw.joinToString("") { "%02x".format(it) })
-            dir.listFiles()?.sortedBy { it.name }?.dropLast(MAX_RAW_FILES)?.forEach { it.delete() }
-        }.onFailure { Timber.w(it, "Raw step record not saved") }
-    }
-
     companion object {
-        private const val RAW_DIR = "step_history"
-        private const val MAX_RAW_FILES = 60
+        /** Backstop for a closing read that outlives its caller's budget. */
+        private const val CLOSING_READ_LIMIT_MS = 30_000L
 
         /** Firmware auto-sync: whatever is left of the ~8-10 s link after the time write. */
         const val AUTO_SYNC_BUDGET_MS = 3_000L
