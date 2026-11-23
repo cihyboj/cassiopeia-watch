@@ -146,7 +146,7 @@ Requirements: JDK 21 and the Android SDK (compile SDK 36). If your environment d
 ./gradlew test lint
 ```
 
-The app builds against a fork of the GShockAPI library, `com.github.cihyboj:GShockAPI`, pinned to commit `46018e5de5b2907c81e9f9dec488c83c37615234` and resolved through [JitPack](https://jitpack.io). The fork (MIT licence, Copyright Ivo Zivkov) changes how the time is written to the watch: it removes an incorrect manual DST adjustment, writes the sub-second field of the time packet correctly, and adds a `primeTimeCache()` call. Release builds need signing credentials supplied through environment variables; see `app/build.gradle`.
+The app builds against a fork of the GShockAPI library, `com.github.cihyboj:GShockAPI`, pinned to commit `f8b50feab335dfdefe4db4b2c4366c682137b09d` and resolved through [JitPack](https://jitpack.io). The fork (MIT licence, Copyright Ivo Zivkov) changes how the time is written to the watch: it removes an incorrect manual DST adjustment, writes the sub-second field of the time packet correctly, adds a `primeTimeCache()` call, keeps the auto-sync hour when settings are written, reads the ABL-100WE step counter, and reports a connection only once the watch is ready. Release builds need signing credentials supplied through environment variables; see `app/build.gradle`.
 
 ## Privacy
 
