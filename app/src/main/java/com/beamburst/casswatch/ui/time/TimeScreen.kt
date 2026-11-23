@@ -57,6 +57,12 @@ fun TimeScreen(timeViewModel: TimeViewModel = hiltViewModel()) {
                         .padding(horizontal = Spacing.lg)
                 )
 
+                StepsCard(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.lg)
+                )
+
                 PairedWatchList(
                     modifier = Modifier
                         .fillMaxWidth()

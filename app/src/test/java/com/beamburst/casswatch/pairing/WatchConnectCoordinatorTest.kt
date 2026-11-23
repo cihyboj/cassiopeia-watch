@@ -664,11 +664,14 @@ class WatchConnectCoordinatorTest {
         val ready = t.connectReady(watchA)
         var dirty = true
         t.afterWrite = { t.connected = false; t.session.ended(ready) }
+        t.response.complete(Settings())
+        val baseline = Settings()
+        val edited = Settings(autoLight = true)
         val work = async {
             runCatching {
                 t.coordinator.withSession(ready) { check ->
-                    reconcileConnectedSettings(t.api, check, Settings(), dirty,
-                        save = { error("Unexpected read") }, clearDirty = { dirty = false })
+                    reconcileConnectedSettings(t.api, check, edited, baseline, dirty,
+                        saveClean = { dirty = false })
                 }
             }
         }
@@ -682,15 +685,75 @@ class WatchConnectCoordinatorTest {
     @Test fun `presence reconciles connected address and preserves another watch dirty data`() = scenario {
         val t = Transport(this)
         val ready = t.connectReady(watchA)
-        val settings = Settings()
+        val settings = Settings(autoLight = true)
+        t.response.complete(Settings())
         val dirty = mutableSetOf(watchA, watchB)
         t.coordinator.withSession(ready) { check ->
-            reconcileConnectedSettings(t.api, check, settings, true,
-                save = { error("Unexpected read") }, clearDirty = { dirty.remove(ready.address) })
+            reconcileConnectedSettings(t.api, check, settings, Settings(), true,
+                saveClean = { dirty.remove(ready.address) })
         }
-        assertEquals(listOf(watchA to settings), t.settingsDelivered)
+        // Transport reports auto-sync hour 0, minute 42; unedited fields come from the watch.
+        assertEquals(listOf(watchA to settings.copy(adjustmentTimeMinutes = 42, adjustmentTimeHour = 0)), t.settingsDelivered)
         assertTrue(watchB in dirty)
         assertFalse(watchA in dirty)
+    }
+
+    @Test fun `reconcile without edits refreshes the cache and writes nothing`() = scenario {
+        val t = Transport(this)
+        val ready = t.connectReady(watchA)
+        val fresh = Settings()
+        t.response.complete(fresh)
+        var saved: Settings? = null
+        t.coordinator.withSession(ready) { check ->
+            reconcileConnectedSettings(t.api, check, Settings(adjustmentTimeMinutes = 30), Settings(), false,
+                saveClean = { saved = it })
+        }
+        runCurrent()
+        assertTrue(t.settingsDelivered.isEmpty())
+        assertEquals(fresh, saved)
+    }
+
+    @Test fun `firmware auto sync with a clean cache does not touch the watch`() = scenario {
+        val t = Transport(this)
+        val ready = t.connectReady(watchA)
+        var saved = false
+        // The response is never completed: any read would suspend this test.
+        t.coordinator.withSession(ready) { check ->
+            reconcileConnectedSettings(t.api, check, Settings(), Settings(), false,
+                saveClean = { saved = true }, refresh = false)
+        }
+        runCurrent()
+        assertTrue(t.settingsDelivered.isEmpty())
+        assertFalse(saved)
+    }
+
+    @Test fun `dirty cache without real edits does not revert auto sync changed on the watch`() = scenario {
+        val t = Transport(this)
+        val ready = t.connectReady(watchA)
+        // Transport reports auto-sync minute 42, as if it was changed on the watch.
+        val stale = Settings(adjustmentTimeMinutes = 30)
+        t.response.complete(Settings())
+        t.coordinator.withSession(ready) { check ->
+            reconcileConnectedSettings(t.api, check, stale, stale, true, saveClean = {})
+        }
+        runCurrent()
+        assertTrue(t.settingsDelivered.isEmpty())
+    }
+
+    @Test fun `pending edit is merged onto fresh watch values`() = scenario {
+        val t = Transport(this)
+        val ready = t.connectReady(watchA)
+        val baseline = Settings(adjustmentTimeMinutes = 30)
+        // Transport reports auto-sync minute 42, as if it was changed on the watch.
+        t.response.complete(Settings(hourlyChime = true))
+        t.coordinator.withSession(ready) { check ->
+            reconcileConnectedSettings(t.api, check, baseline.copy(autoLight = true), baseline, true, saveClean = {})
+        }
+        runCurrent()
+        assertEquals(
+            listOf(watchA to Settings(adjustmentTimeMinutes = 42, adjustmentTimeHour = 0, hourlyChime = true, autoLight = true)),
+            t.settingsDelivered,
+        )
     }
 
     @Test fun `automatic obsolete read ends without refusal feedback`() = scenario {

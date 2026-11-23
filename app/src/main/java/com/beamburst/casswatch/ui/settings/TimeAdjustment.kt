@@ -25,6 +25,7 @@ import com.beamburst.casswatch.R
 import com.beamburst.casswatch.ui.common.InfoButton
 import com.beamburst.casswatch.ui.common.ValueSelectionDialog
 import org.avmedia.gshockapi.WatchInfo
+import com.beamburst.casswatch.data.local.AutoSyncSchedule
 import androidx.compose.runtime.mutableIntStateOf
 import com.beamburst.casswatch.theme.Spacing
 import androidx.compose.foundation.clickable
@@ -36,6 +37,7 @@ fun TimeAdjustment(
 ) {
     val classType = SettingsViewModel.TimeAdjustment::class.java
     val state by settingsViewModel.state.collectAsState()
+    val watchName by settingsViewModel.selectedWatchName.collectAsState()
     val timeAdjustmentSetting: SettingsViewModel.TimeAdjustment =
         settingsViewModel.getSetting(classType)
 
@@ -43,12 +45,14 @@ fun TimeAdjustment(
     var notifyMe by remember { mutableStateOf(timeAdjustmentSetting.timeAdjustmentNotifications) }
     val requestNotifications = rememberSyncNotificationRequest(notifyMe)
     var adjustmentMinutes by remember { mutableStateOf(timeAdjustmentSetting.adjustmentTimeMinutes.toString()) }
+    var adjustmentHour by remember { mutableIntStateOf(timeAdjustmentSetting.adjustmentTimeHour) }
     var fineAdjustment by remember { mutableIntStateOf(timeAdjustmentSetting.fineAdjustment) }
 
     LaunchedEffect(state) {
         autoAdjust = timeAdjustmentSetting.timeAdjustment
         notifyMe = timeAdjustmentSetting.timeAdjustmentNotifications
         adjustmentMinutes = timeAdjustmentSetting.adjustmentTimeMinutes.toString()
+        adjustmentHour = timeAdjustmentSetting.adjustmentTimeHour
         fineAdjustment = timeAdjustmentSetting.fineAdjustment
     }
 
@@ -126,6 +130,16 @@ fun TimeAdjustment(
                         )
                     }
                 }
+                if (AutoSyncSchedule.supportsHour(watchName) && adjustmentHour >= 0) {
+                    SyncHourRow(
+                        hour = adjustmentHour,
+                        minute = adjustmentMinutes.toIntOrNull() ?: 0,
+                        onConfirm = { newValue ->
+                            adjustmentHour = newValue
+                            onUpdate(timeAdjustmentSetting.copy(adjustmentTimeHour = newValue))
+                        },
+                    )
+                }
                 FineAdjustmentRow(
                     modifier = Modifier
                         .padding(top = Spacing.xs),
@@ -197,4 +211,47 @@ private fun NotifyMeRow(
 @Composable
 fun PreviewTimeAdjustment() {
     TimeAdjustment(onUpdate = {})
+}
+
+/**
+ * ABL-100WE: the first auto-sync of the day (00:xx to 05:xx); the watch repeats it every 6 hours,
+ * so the other three times are shown live from it.
+ */
+@Composable
+private fun SyncHourRow(hour: Int, minute: Int, onConfirm: (Int) -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+    val firstHour = AutoSyncSchedule.firstHour(hour)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            SettingsLabel(text = stringResource(id = R.string.sync_hour_title))
+            AppText(
+                text = stringResource(id = R.string.sync_hour_caption, AutoSyncSchedule.format(firstHour, minute)),
+                style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        AppTextLink(
+            text = "%02d:%02d".format(java.util.Locale.ROOT, firstHour, minute.coerceIn(0, 59)),
+            modifier = Modifier
+                .clickable { showDialog = true }
+                .padding(Spacing.sm),
+        )
+    }
+    if (showDialog) {
+        ValueSelectionDialog(
+            initialValue = firstHour,
+            range = AutoSyncSchedule.FIRST_HOURS,
+            onDismiss = { showDialog = false },
+            onConfirm = { newValue ->
+                showDialog = false
+                onConfirm(newValue)
+            },
+            title = stringResource(R.string.sync_hour_title),
+            label = stringResource(R.string.sync_hour_dialog_label),
+            unit = "h",
+        )
+    }
 }

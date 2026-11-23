@@ -12,14 +12,14 @@
 </head>
 <body>
 <h1>Cassiopeia Watch privacy policy</h1>
-<p>Last updated: 17 November 2026. Applies to Cassiopeia Watch (package <code>com.beamburst.casswatch</code>), version 40.10 and later.</p>
+<p>Last updated: 21 November 2026. Applies to Cassiopeia Watch (package <code>com.beamburst.casswatch</code>), version 40.10 and later.</p>
 <p>Cassiopeia Watch is an unofficial, open-source app for Casio Bluetooth watches, developed by volunteers. It is not affiliated with Casio. This policy describes what the app does with data, based on its source code.</p>
 
 <h2>Summary</h2>
 <p>The app has no accounts, no analytics, no advertising and no server of its own. It does not collect, sell or share personal data. Its data stays on your phone, is sent to your watch over Bluetooth, or goes to an NTP time server if you turn that option on.</p>
 
 <h2>Bluetooth and your watch</h2>
-<p>The app scans for, pairs with and connects to your watch using Bluetooth Low Energy and the Android Companion Device Manager. It exchanges data with the watch to do what you ask: time and time zone, alarms and alarm names, hourly signal, watch settings, calendar reminders, timer values, button presses and battery level. This data goes only to your watch. The app stores the Bluetooth addresses and names of your paired watches on your phone.</p>
+<p>The app scans for, pairs with and connects to your watch using Bluetooth Low Energy and the Android Companion Device Manager. It exchanges data with the watch to do what you ask: time and time zone, alarms and alarm names, hourly signal, watch settings, calendar reminders, timer values, button presses and battery level. On watches with a step counter (ABL-100WE) the app also reads the step count, the daily step totals and distances, and the step goal from the watch. Data sent to the watch goes only to your watch. The app stores the Bluetooth addresses and names of your paired watches on your phone.</p>
 
 <h2>Phone alarm backup</h2>
 <p>This option is off by default. If you turn it on and the app has no confirmation that the watch received an alarm change, it asks the phone's clock app to set an alarm shortly before the alarm time. The request contains the alarm's time and name. What happens to it afterwards is up to the clock app; this app cannot remove alarms it handed over.</p>
@@ -41,12 +41,13 @@
 <ul>
   <li>Settings, paired watch addresses and names, alarm drafts and cached watch settings, kept in the app's private storage (DataStore).</li>
   <li>A sync history of recent operations for each watch (for example when time or alarms were sent, and whether it succeeded), kept in the same storage. You can clear it in the app.</li>
+  <li>Step history, if your watch has a step counter and "Step history" is on in Settings (it is on by default): daily step totals and distances, today's steps by hour and the step goal, kept for up to 400 days in a separate file in the app's private storage. It is not included in Android backup or in exported backup files. You can turn reading off in Settings; removing the watch from the app deletes its step history.</li>
   <li>Crash logs. An uncaught exception can cause the app to write a log to its private cache directory. A log contains the app version, the phone manufacturer, model and Android version, the stack trace, and the stored watch addresses and names. Logs are not uploaded. On the next launch the app shows the latest log in a dialog only after a crash related to pairing; for other crashes the log stays in the cache directory and is not displayed. In both cases you decide whether to include any of it in a bug report.</li>
 </ul>
 <p>Uninstalling the app removes this data.</p>
 
 <h2>Android backup</h2>
-<p>The app allows Android automatic backup. Per its backup rules, the DataStore files (settings, paired watch addresses and names, alarm drafts, sync history) are included in Android cloud backup and in device-to-device transfer. Crash logs are excluded. Where the backup is stored, and who can read it, is determined by Android and your Google account or phone manufacturer settings. You can turn backup off in Android settings.</p>
+<p>The app allows Android automatic backup. Per its backup rules, the DataStore files (settings, paired watch addresses and names, alarm drafts, sync history) are included in Android cloud backup and in device-to-device transfer. Step history and crash logs are excluded. Where the backup is stored, and who can read it, is determined by Android and your Google account or phone manufacturer settings. You can turn backup off in Android settings.</p>
 
 <h2>Exported backup files</h2>
 <p>In Settings you can export the app's settings to a JSON file in a location you choose, and import such a file again. The file contains the same stored settings, including the Bluetooth addresses and names of paired watches. The app does not send the file anywhere. Keep it private or remove those entries if you share it.</p>

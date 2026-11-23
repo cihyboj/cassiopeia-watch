@@ -252,6 +252,18 @@
     <string name="settings_section_advanced" translatable="false">Advanced</string>
     <string name="ntp_time_title" translatable="false">NTP time source</string>
     <string name="ntp_time_caption" translatable="false">Use network time when writing the watch time.</string>
+    <string name="steps_title" translatable="false">Steps</string>
+    <string name="steps_today" translatable="false">%1$s today</string>
+    <string name="steps_today_of_goal" translatable="false">%1$s / %2$s</string>
+    <string name="steps_by_hour" translatable="false">Today by hour</string>
+    <string name="steps_no_hourly" translatable="false">No hourly data from today yet.</string>
+    <string name="steps_last_7_days" translatable="false">Last 7 days</string>
+    <string name="steps_hour_value" translatable="false">%1$02d:00–%2$02d:00: %3$s</string>
+    <string name="steps_day_value" translatable="false">%1$s: %2$s</string>
+    <string name="steps_goal_line" translatable="false">Goal %1$s</string>
+    <string name="steps_last_read" translatable="false">Read from the watch: %1$s</string>
+    <string name="steps_setting_title" translatable="false">Step history</string>
+    <string name="steps_setting_caption" translatable="false">Read the step counter at each connection and keep the history on this phone only.</string>
     <string name="ntp_time_server" translatable="false">Server</string>
     <string name="ntp_time_server_dialog_title" translatable="false">NTP server</string>
     <string name="ntp_time_server_blank_default" translatable="false">Leave blank to use %1$s.</string>
@@ -285,6 +297,9 @@
     <string name="auto_time_adjustment_master">Automatic sync</string>
     <string name="auto_time_adjustment_master_caption">The phone updates the watch a few minutes after 00:00, 06:00, 12:00 and 18:00.</string>
     <string name="minutes_after_hour" translatable="false">Minutes after hour</string>
+    <string name="sync_hour_title" translatable="false">Sync hour</string>
+    <string name="sync_hour_caption" translatable="false">Every 6 hours: %1$s</string>
+    <string name="sync_hour_dialog_label" translatable="false">Hour of the first sync (0 to 5)</string>
     <string name="backup_title" translatable="false">Backup</string>
     <string name="backup_caption" translatable="false">Save or restore all app settings, paired watches, alarms, and sync history as a JSON file.</string>
     <string name="backup_export_button" translatable="false">Export…</string>

@@ -8,6 +8,8 @@ import org.avmedia.gshockapi.WatchInfo
 import org.avmedia.gshockapi.Settings
 import org.avmedia.gshockapi.io.IO
 import org.avmedia.gshockapi.io.TimeAdjustmentInfo
+import org.avmedia.gshockapi.model.ExerciseProfile
+import org.avmedia.gshockapi.model.StepCounterData
 
 /** Recheck at the actual write, including helpers that suspend between a read and a write. */
 fun IGShockAPI.guardWrites(
@@ -51,10 +53,13 @@ fun IGShockAPI.guardWrites(
                 val adjustment = getTimeAdjustment()
                 settings.timeAdjustment = adjustment.isTimeAdjustmentSet
                 settings.adjustmentTimeMinutes = adjustment.adjustmentTimeMinutes
+                settings.adjustmentTimeHour = adjustment.adjustmentTimeHour
             }
         }
         override suspend fun getBasicSettings(): Settings = response { delegate.getBasicSettings() }
         override suspend fun getTimeAdjustment(): TimeAdjustmentInfo = response { delegate.getTimeAdjustment() }
+        override suspend fun getStepCount(peek: Boolean): StepCounterData = response { delegate.getStepCount(peek) }
+        override suspend fun getExerciseProfile(): ExerciseProfile? = response { delegate.getExerciseProfile() }
 
         private suspend fun <T> response(
             budgetMs: Long = WATCH_RESPONSE_TIMEOUT_MS,

@@ -234,6 +234,7 @@ fun SettingsList(
 
     SettingsSectionTitle(stringResource(R.string.settings_section_advanced))
     NtpTimeSettingsCard(settingsViewModel)
+    if (WatchInfo.hasStepCounter) StepReadingCard()
     BackupSection()
 }
 

@@ -51,7 +51,9 @@ class WeeklyAlarmScheduler @Inject constructor(
             EVENT_SUBSCRIBER_ID,
             arrayOf(
                 EventAction("WatchInitializationCompleted") {
-                    AppScopes.io.launch { applyTodaySchedule() }
+                    // On a firmware auto-sync the time goes first: AutoSyncCoordinator runs
+                    // this schedule itself right after its time write.
+                    if (!api.isAutoTimeStarted()) AppScopes.io.launch { applyTodaySchedule() }
                 }
             )
         )
@@ -62,22 +64,53 @@ class WeeklyAlarmScheduler @Inject constructor(
     suspend fun applyTodaySchedule() {
         WatchSyncActivity.track {
         val ready = session.ready ?: return
-        val watchTime = watchTimeProvider.nowForWatch(ready.address)
+        // No time write on a firmware auto-sync here, so no NTP wait either.
+        val watchTime = if (api.isAutoTimeStarted()) null else watchTimeProvider.nowForWatch(ready.address)
         try {
         connectCoordinator.withSession(ready) { checkSession ->
         val api = this.api.guardWrites(checkSession)
         val addr = ready.address
-        WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession)
+        val firmwareAutoSync = api.isAutoTimeStarted()
 
         val autoTimeSyncEnabled = LocalDataStorage.getOrInitializeAutoSyncOnReconnect(
             context = context,
             address = addr,
             seed = WatchSettingsCache.load(context, addr)?.timeAdjustment,
         )
-        if (autoTimeSyncEnabled) {
+        // Time first; settings reads must not delay it.
+        if (autoTimeSyncEnabled && watchTime != null) {
             runAutoTimeSyncOnReconnect(ready, watchTime, api, checkSession)
         }
+        // On a firmware auto-sync AutoSyncCoordinator pushes pending edits after its time write.
+        if (!firmwareAutoSync) WatchSettingsCache.reconcileOnConnect(context, addr, api, checkSession)
 
+        writeScheduleInSession(ready, api, checkSession)
+        }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Timber.w(error, "Reconnect synchronization failed for %s", ready.address)
+            syncLogger.record(
+                address = ready.address,
+                trigger = SyncTrigger.AUTO_ON_RECONNECT,
+                kinds = setOf(SyncKind.SETTINGS, SyncKind.ALARMS),
+                success = false,
+                errorMessage = error.message,
+            )
+        }
+        }
+    }
+
+    /**
+     * Writes today's alarm schedule inside a session the caller already holds. Firmware
+     * auto-syncs call this from their own chain, before the time write.
+     */
+    suspend fun writeScheduleInSession(
+        ready: WatchConnectionSession.Ready,
+        api: org.avmedia.gshockapi.IGShockAPI,
+        checkSession: () -> Unit,
+    ) {
+        val addr = ready.address
         // Reconnect must expire one-time alarms even when no Alarms ViewModel exists.
         val snapshot = alarmCoordinator.snapshot(addr)
         val alarmDays = snapshot.days
@@ -85,7 +118,7 @@ class WeeklyAlarmScheduler @Inject constructor(
         val firedAts = snapshot.firedAts()
         val shouldWrite = snapshot.dirty || storedAlarms.isNotEmpty()
 
-        if (!shouldWrite) return@withSession
+        if (!shouldWrite) return
 
         val currentAlarms = api.getAlarms()
 
@@ -125,20 +158,6 @@ class WeeklyAlarmScheduler @Inject constructor(
             alarmStateAfterSuccessfulSync(current, snapshot)
         }
         alarmCoordinator.reconcile(addr)
-        }
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (error: Exception) {
-            Timber.w(error, "Reconnect synchronization failed for %s", ready.address)
-            syncLogger.record(
-                address = ready.address,
-                trigger = SyncTrigger.AUTO_ON_RECONNECT,
-                kinds = setOf(SyncKind.SETTINGS, SyncKind.ALARMS),
-                success = false,
-                errorMessage = error.message,
-            )
-        }
-        }
     }
 
     private suspend fun runAutoTimeSyncOnReconnect(
