@@ -150,4 +150,13 @@ class AlarmHubFormattersTest {
             )
         )
     }
+
+    @Test
+    fun `window and ticks follow the sync time`() {
+        assertEquals("08-19", signalTabSubtitle(HourlySignalUiState(enabled = true, startHour = 7, endHour = 18, syncShift = 1)))
+        assertEquals(8 to 19, shownWindow(7, 18, 1))
+        assertEquals(20 to 1, shownWindow(19, 0, 1))
+        assertEquals(listOf("01:55", "07:55", "13:55", "19:55", "01:55"), signalSegmentEdges(1, 55))
+        assertEquals(listOf("00:30", "06:30", "12:30", "18:30", "00:30"), signalSegmentEdges(0, 30))
+    }
 }

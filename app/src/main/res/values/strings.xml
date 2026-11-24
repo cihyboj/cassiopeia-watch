@@ -331,7 +331,7 @@
     <string name="hourly_signal_auto_sync_alert_title" translatable="false">Automatic sync is off</string>
     <string name="hourly_signal_auto_sync_info_body" translatable="false">The phone keeps this signal schedule aligned with the watch.</string>
     <string name="hourly_signal_auto_sync_dialog_title" translatable="false">Hourly signal sync</string>
-    <string name="hourly_signal_auto_sync_dialog_body" translatable="false">For this schedule, the phone updates the watch a few minutes after 00:00, 06:00, 12:00 and 18:00. You can change the delay in Settings.</string>
+    <string name="hourly_signal_auto_sync_dialog_body" translatable="false">The watch turns the signal on or off only when it syncs, at %1$s. Each part of the range runs from one sync to the next, so it follows the sync time; you can change that time in Settings.</string>
     <string name="open_sync_settings" translatable="false">Open sync settings</string>
 
     <!-- Timer card (inline) -->

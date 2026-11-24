@@ -35,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.beamburst.casswatch.R
+import com.beamburst.casswatch.data.local.AutoSyncSchedule
 import com.beamburst.casswatch.theme.Spacing
 import com.beamburst.casswatch.ui.common.AppCard
 import com.beamburst.casswatch.ui.common.AppDayPicker
@@ -46,7 +47,6 @@ import kotlin.math.roundToInt
 
 private val START_HOURS = mapOf(0 to 1, 1 to 7, 2 to 13, 3 to 19)
 private val END_HOURS   = mapOf(1 to 6, 2 to 12, 3 to 18, 4 to 0)
-private val TICK_LABELS = listOf("00", "06", "12", "18", "24")
 
 private fun startHourToPos(h: Int): Float =
     START_HOURS.entries.firstOrNull { it.value == h }?.key?.toFloat() ?: 1f
@@ -54,7 +54,7 @@ private fun startHourToPos(h: Int): Float =
 private fun endHourToPos(h: Int): Float =
     END_HOURS.entries.firstOrNull { it.value == h }?.key?.toFloat() ?: 3f
 
-private fun endHourDisplay(h: Int): String = if (h == 0) "00" else "%02d".format(h)
+private fun hourDisplay(h: Int): String = if (h == 24) "00" else "%02d".format(h)
 
 @Composable
 fun HourlySignalCard(
@@ -93,6 +93,9 @@ fun HourlySignalCardContent(
     val currentStartHour = START_HOURS[startPos] ?: state.startHour
     val currentEndHour   = END_HOURS[endPos] ?: state.endHour
     val count = chimeCount(currentStartHour, currentEndHour)
+    // Stored in the hour-0 cycle; shown as the hours the watch really chimes.
+    val (shownStart, shownEnd) = shownWindow(currentStartHour, currentEndHour, state.syncShift)
+    val tickLabels = signalSegmentEdges(state.syncShift, state.syncMinute)
 
     val controlsAlpha = if (state.enabled) 1f else 0.38f
 
@@ -163,7 +166,7 @@ fun HourlySignalCardContent(
                             .padding(horizontal = Spacing.xs),
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        TICK_LABELS.forEach { label ->
+                        tickLabels.forEach { label ->
                             Text(
                                 text = label,
                                 style = MaterialTheme.typography.labelSmall,
@@ -182,8 +185,8 @@ fun HourlySignalCardContent(
                     AppText(
                         text = stringResource(
                             R.string.hourly_signal_chimes_from,
-                            "%02d".format(currentStartHour),
-                            endHourDisplay(currentEndHour),
+                            hourDisplay(shownStart),
+                            hourDisplay(shownEnd),
                             count,
                         ),
                         style = MaterialTheme.typography.titleMedium,
@@ -253,6 +256,7 @@ fun HourlySignalCardContent(
         }
         if (showHourlySignalAutoSyncHint(state)) {
             HourlySignalSyncInfoCard(
+                syncTimes = AutoSyncSchedule.format(state.syncShift, state.syncMinute),
                 automaticSyncEnabled = automaticSyncEnabled,
                 onOpenSyncSettings = onOpenSyncSettings,
                 modifier = Modifier.fillMaxWidth(),
@@ -278,6 +282,7 @@ private fun HourlySignalPresetPill(
 
 @Composable
 private fun HourlySignalSyncInfoCard(
+    syncTimes: String,
     automaticSyncEnabled: Boolean,
     onOpenSyncSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -297,6 +302,7 @@ private fun HourlySignalSyncInfoCard(
 
     if (showDetails) {
         HourlySignalSyncDetailsDialog(
+            syncTimes = syncTimes,
             onDismiss = { showDetails = false },
             onOpenSyncSettings = {
                 showDetails = false
@@ -346,6 +352,7 @@ private fun HourlySignalSyncInfoCard(
 
 @Composable
 private fun HourlySignalSyncDetailsDialog(
+    syncTimes: String,
     onDismiss: () -> Unit,
     onOpenSyncSettings: () -> Unit,
 ) {
@@ -354,7 +361,7 @@ private fun HourlySignalSyncDetailsDialog(
         title = { Text(stringResource(R.string.hourly_signal_auto_sync_dialog_title)) },
         text = {
             Text(
-                text = stringResource(R.string.hourly_signal_auto_sync_dialog_body),
+                text = stringResource(R.string.hourly_signal_auto_sync_dialog_body, syncTimes),
                 style = MaterialTheme.typography.bodyMedium,
             )
         },

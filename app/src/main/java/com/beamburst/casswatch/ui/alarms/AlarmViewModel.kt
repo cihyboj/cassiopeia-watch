@@ -78,6 +78,10 @@ data class HourlySignalUiState(
     val startHour: Int = 7,    // ∈ {1, 7, 13, 19}
     val endHour: Int = 18,     // ∈ {6, 12, 18, 0}
     val days: Set<DayOfWeek> = DayOfWeek.entries.toSet(),
+    /** See [HourlySignalSettings.syncShift]; [startHour]/[endHour] stay in the hour-0 cycle. */
+    val syncShift: Int = 0,
+    /** The watch's sync minute, to label the segment edges with the real sync times. */
+    val syncMinute: Int = 30,
 )
 
 sealed class HourlySignalAction {
@@ -128,6 +132,7 @@ class AlarmViewModel @Inject constructor(
 ) : ViewModel() {
 
     companion object {
+        private const val DEFAULT_SYNC_MINUTE = 30
         private const val DEFAULT_LOCAL_ALARM_COUNT = 5
     }
 
@@ -198,6 +203,18 @@ class AlarmViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     init {
+        // The signal window follows the watch's sync time: refresh it whenever the selected
+        // watch's settings change (Settings edits, reconciliation on connect).
+        viewModelScope.launch(Dispatchers.IO) {
+            watchSelector.selected
+                .flatMapLatest { addr ->
+                    if (addr == null) flowOf(addr) else LocalDataStorage.valuesFlow(
+                        appContext,
+                        listOf(WatchSettingsCache.cacheKey(addr), WatchSettingsCache.baselineKey(addr), WatchSettingsCache.dirtyKey(addr)),
+                    ).map { addr }
+                }
+                .collect { refreshSignalSyncAnchor(it) }
+        }
         ProgressEvents.runEventActions(
             eventSubscriberName,
             arrayOf(
@@ -268,7 +285,7 @@ class AlarmViewModel @Inject constructor(
         }
 
         val signalSettings = loadHourlySignalSettings(addr)
-        _hourlySignal.value = HourlySignalUiState(
+        _hourlySignal.value = _hourlySignal.value.copy(
             enabled   = signalSettings.enabled,
             startHour = signalSettings.startHour,
             endHour   = signalSettings.endHour,
@@ -281,6 +298,14 @@ class AlarmViewModel @Inject constructor(
         _automaticSyncEnabled.value = addr
             ?.let { WatchSettingsCache.load(appContext, it)?.timeAdjustment }
             ?: true
+        refreshSignalSyncAnchor(addr)
+    }
+
+    /** The window moves with the watch's sync time; refresh it when the card is shown. */
+    private fun refreshSignalSyncAnchor(addr: String?) {
+        val shift = addr?.let { HourlySignalSettings.syncShift(appContext, it) } ?: 0
+        val minute = addr?.let { WatchSettingsCache.loadOnWatch(appContext, it)?.adjustmentTimeMinutes } ?: DEFAULT_SYNC_MINUTE
+        _hourlySignal.value = _hourlySignal.value.copy(syncShift = shift, syncMinute = minute.coerceIn(0, 59))
     }
 
     private fun loadHourlySignalSettings(addr: String?): HourlySignalSettings {
@@ -318,7 +343,7 @@ class AlarmViewModel @Inject constructor(
         HourlySignalSettings.save(appContext, addr, initial)
         HourlySignalSettings.markMigrated(appContext, addr)
         initializedHourlySignalAddresses += addr
-        _hourlySignal.value = HourlySignalUiState(
+        _hourlySignal.value = _hourlySignal.value.copy(
             enabled = initial.enabled,
             startHour = initial.startHour,
             endHour = initial.endHour,

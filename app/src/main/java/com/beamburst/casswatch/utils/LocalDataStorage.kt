@@ -9,6 +9,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -155,6 +156,12 @@ object LocalDataStorage {
     suspend fun setFineTimeAdjustment(context: Context, fineTimeAdjustment: Int) {
         putAsync(context, "fineTimeAdjustment", fineTimeAdjustment.toString())
     }
+
+    /** The current values of [keys], emitted again whenever one of them changes. */
+    fun valuesFlow(context: Context, keys: List<String>): Flow<List<String?>> =
+        context.dataStore.data
+            .map { prefs -> keys.map { prefs[stringPreferencesKey(it)] } }
+            .distinctUntilChanged()
 
     fun phoneAlarmBackupEnabledFlow(context: Context): Flow<Boolean> =
         context.dataStore.data.map { prefs ->
