@@ -9,6 +9,12 @@ data class HourlySignalSettings(
     val startHour: Int,  // ∈ {1, 7, 13, 19}
     val endHour: Int,    // ∈ {6, 12, 18, 0}  (0 represents 24 / end-of-day)
     val days: Set<DayOfWeek> = DayOfWeek.entries.toSet(),
+    /**
+     * Hours the window moves with the watch's sync hour ([AutoSyncSchedule.chimeShift]).
+     * Not stored: [startHour]/[endHour] stay in the hour-0 cycle, so the chosen segments
+     * follow the sync hour when it changes.
+     */
+    val syncShift: Int = 0,
 ) {
     companion object {
         val Default = HourlySignalSettings(
@@ -34,6 +40,13 @@ data class HourlySignalSettings(
                 ?.let { parseDays(it) }
                 ?.takeIf { it.isNotEmpty() }
                 ?: DayOfWeek.entries.toSet(),
+            syncShift = syncShift(context, addr),
+        )
+
+        /** [AutoSyncSchedule.chimeShift] for the sync hour the watch follows now. */
+        fun syncShift(context: Context, addr: String): Int = AutoSyncSchedule.chimeShift(
+            WatchSettingsCache.loadOnWatch(context, addr)?.adjustmentTimeHour ?: 0,
+            LocalDataStorage.getDeviceName(context, addr),
         )
 
         fun hasStoredSettings(context: Context, addr: String): Boolean =

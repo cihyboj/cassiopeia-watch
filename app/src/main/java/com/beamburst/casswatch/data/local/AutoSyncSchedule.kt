@@ -45,6 +45,17 @@ object AutoSyncSchedule {
         return now.toLocalDate().plusDays(1).atTime(hours(anchorHour).first(), m)
     }
 
+    /**
+     * How far the hourly-signal segments move with the sync hour. The chime is switched only at
+     * a sync, so a sync at H:MM covers the chimes H+1 … H+6. The stored window uses the segments
+     * of an hour-0 cycle (01–06, 07–12, 13–18, 19–24); add this to show or apply them.
+     */
+    fun chimeShift(anchorHour: Int, deviceName: String?): Int =
+        if (supportsHour(deviceName)) firstHour(anchorHour) else 0
+
+    /** A window hour (1..24) of the hour-0 cycle moved by [shift], as 1..24. */
+    fun shiftedHour(hour: Int, shift: Int): Int = Math.floorMod(hour - 1 + shift, 24) + 1
+
     fun format(anchorHour: Int, minute: Int): String =
         hours(anchorHour).joinToString(", ") { "%02d:%02d".format(Locale.ROOT, it, minute.coerceIn(0, 59)) }
 }

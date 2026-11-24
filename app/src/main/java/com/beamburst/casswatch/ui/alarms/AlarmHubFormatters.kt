@@ -1,5 +1,7 @@
 package com.beamburst.casswatch.ui.alarms
 
+import com.beamburst.casswatch.data.local.AutoSyncSchedule
+
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
@@ -39,8 +41,11 @@ internal fun timerTabSubtitle(totalSeconds: Int): String {
 
 internal fun signalTabSubtitle(state: HourlySignalUiState): String =
     if (state.enabled) {
-        val displayEnd = if (state.endHour == 0) 24 else state.endHour
-        "%02d-%02d".format(state.startHour, displayEnd)
+        val end = if (state.endHour == 0) 24 else state.endHour
+        "%02d-%02d".format(
+            AutoSyncSchedule.shiftedHour(state.startHour, state.syncShift),
+            AutoSyncSchedule.shiftedHour(end, state.syncShift),
+        )
     } else {
         "Off"
     }
@@ -51,6 +56,14 @@ internal fun showHourlySignalAutoSyncHint(state: HourlySignalUiState): Boolean =
             state.endHour == 0 &&
             state.days.containsAll(DayOfWeek.entries) &&
             state.days.size == DayOfWeek.entries.size)
+
+/** First and last chime hour (1..24) the watch really sounds for a stored window. */
+internal fun shownWindow(startHour: Int, endHour: Int, shift: Int): Pair<Int, Int> =
+    AutoSyncSchedule.shiftedHour(startHour, shift) to AutoSyncSchedule.shiftedHour(if (endHour == 0) 24 else endHour, shift)
+
+/** The sync times that start and end the four segments, for the slider ticks (5 labels). */
+internal fun signalSegmentEdges(shift: Int, minute: Int): List<String> =
+    List(5) { k -> "%02d:%02d".format(Math.floorMod(6 * k + shift, 24), minute.coerceIn(0, 59)) }
 
 internal fun chimeCount(startHour: Int, endHour: Int): Int {
     val end = if (endHour == 0) 24 else endHour

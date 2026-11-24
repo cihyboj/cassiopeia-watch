@@ -93,4 +93,28 @@ class HourlySignalEvaluatorTest {
         val s = HourlySignalSettings(enabled = true, startHour = 7, endHour = 18, days = emptySet())
         assertFalse(HourlySignalEvaluator.shouldChimeAt(dt(10), s))
     }
+
+    // ── window follows the sync hour ─────────────────────────────────────────
+
+    @Test fun `sync at 01_55 with shift 1 turns 08-19 on at 07_55 and off at 19_55`() {
+        val s = HourlySignalSettings(enabled = true, startHour = 7, endHour = 18, syncShift = 1)
+        assertFalse(HourlySignalEvaluator.shouldChimeAt(dt(1, 55), s))
+        assertTrue(HourlySignalEvaluator.shouldChimeAt(dt(7, 55), s))
+        assertTrue(HourlySignalEvaluator.shouldChimeAt(dt(13, 55), s))
+        assertFalse(HourlySignalEvaluator.shouldChimeAt(dt(19, 55), s))
+    }
+
+    @Test fun `a manual sync keeps the last chime of a shifted window`() {
+        val s = HourlySignalSettings(enabled = true, startHour = 7, endHour = 18, syncShift = 1)
+        // 19:00 is the last chime of 08-19; the unshifted rule would turn it off at 18:10.
+        assertTrue(HourlySignalEvaluator.shouldChimeAt(dt(18, 10), s))
+        assertFalse(HourlySignalEvaluator.shouldChimeAt(dt(19, 10), s))
+    }
+
+    @Test fun `a shifted night window wraps past midnight`() {
+        val s = HourlySignalSettings(enabled = true, startHour = 19, endHour = 0, syncShift = 3)
+        assertTrue(HourlySignalEvaluator.shouldChimeAt(dt(21, 30), s))
+        assertTrue(HourlySignalEvaluator.shouldChimeAt(dt(2, 30), s))
+        assertFalse(HourlySignalEvaluator.shouldChimeAt(dt(3, 30), s))
+    }
 }

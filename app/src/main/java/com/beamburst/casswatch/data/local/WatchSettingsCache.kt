@@ -51,6 +51,10 @@ object WatchSettingsCache {
 
     fun loadBaseline(context: Context, addr: String): Settings? = parse(LocalDataStorage.get(context, baselineKey(addr)))
 
+    /** The settings the watch actually follows: unsent edits are not on the watch yet. */
+    fun loadOnWatch(context: Context, addr: String): Settings? =
+        if (isDirty(context, addr)) loadBaseline(context, addr) ?: load(context, addr) else load(context, addr)
+
     private fun parse(json: String?): Settings? =
         json?.let { runCatching { gson.fromJson(it, Settings::class.java) }.getOrNull() }
 
